@@ -1,15 +1,12 @@
-import { defineConfig } from 'prisma/config';
-import { PrismaSqlServer } from '@prisma/adapter-mssql';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import 'dotenv/config';
+import { defineConfig, env } from 'prisma/config';
 
 export default defineConfig({
-  earlyAccess: true,
   schema: 'prisma/schema.prisma',
-  migrate: {
-    adapter(env: NodeJS.ProcessEnv) {
-      return new PrismaSqlServer(env.DATABASE_URL!);
-    },
+  migrations: {
+    path: 'prisma/migrations',
+  },
+  datasource: {
+    url: env('DATABASE_URL'),
   },
 });
