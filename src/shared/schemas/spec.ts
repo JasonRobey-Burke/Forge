@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { SpecPhase, Complexity } from '../types/enums.js';
 import { productContextSchema } from './product.js';
 
