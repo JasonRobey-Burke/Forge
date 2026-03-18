@@ -21,7 +21,10 @@ The full product definition lives in `docs/forge-product-definition-v1.1.md`.
 
 ```bash
 # Start dev environment (app + SQL Server containers)
-docker compose up
+podman-compose up
+
+# Stop dev environment
+podman-compose down
 
 # Run Prisma migrations against local SQL container
 npx prisma migrate dev
@@ -29,18 +32,23 @@ npx prisma migrate dev
 # Generate Prisma client after schema changes
 npx prisma generate
 
-# Seed the database
-npx prisma db seed
-
-# Start Vite dev server (proxies /api/* to Express)
+# Start Vite dev server (proxies /api/* to Express) — without containers
 npm run dev
 
 # TypeScript type-check
-npx tsc --noEmit
+npm run typecheck
 
 # Build for production
 npm run build
 ```
+
+## Prisma v7 Notes
+
+This project uses Prisma v7 with the driver adapter pattern:
+- **Connection URL** lives in `prisma.config.ts` (not in `schema.prisma`)
+- **PrismaClient** requires `PrismaMssql` adapter: `new PrismaClient({ adapter })`
+- **SQL Server enums** are not supported — use `String @db.NVarChar(50)` with Zod validation
+- See `prisma.config.ts` and `src/server/index.ts` for the pattern
 
 ## Architecture
 
