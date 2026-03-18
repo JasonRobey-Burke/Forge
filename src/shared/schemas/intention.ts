@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { Priority, IntentionStatus } from '../types/enums.js';
 
 export const createIntentionSchema = z.object({

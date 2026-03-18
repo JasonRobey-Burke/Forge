@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { ProductStatus } from '../types/enums.js';
 
 export const productContextSchema = z.object({

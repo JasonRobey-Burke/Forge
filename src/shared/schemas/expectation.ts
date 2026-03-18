@@ -1,4 +1,4 @@
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { ExpectationStatus } from '../types/enums.js';
 
 export const createExpectationSchema = z.object({
