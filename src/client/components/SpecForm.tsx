@@ -1,4 +1,4 @@
-import { useForm, useFieldArray, FormProvider, useWatch } from 'react-hook-form';
+import { useForm, FormProvider, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import ContextEditor from '@/components/ContextEditor';
+import DynamicListEditor from '@/components/DynamicListEditor';
 import { SpecPhase, Complexity } from '@shared/types/enums';
 import type { CreateSpecInput, ProductContext, Spec } from '@shared/types';
 import type { ChecklistExpectation } from '@shared/checklist/types';
@@ -85,33 +86,6 @@ function toApiValues(values: FormValues, productId: string): CreateSpecInput {
     validation_human: values.validation_human.map((v) => v.value).filter(Boolean),
     peer_reviewed: values.peer_reviewed,
   } as any;
-}
-
-interface ArrayFieldProps {
-  name: 'boundaries' | 'deliverables' | 'validation_automated' | 'validation_human';
-  label: string;
-  form: ReturnType<typeof useForm<FormValues>>;
-}
-
-function ArrayField({ name, label, form }: ArrayFieldProps) {
-  const { fields, append, remove } = useFieldArray({ control: form.control, name });
-
-  return (
-    <div className="space-y-2">
-      <Label>{label}</Label>
-      {fields.map((field, index) => (
-        <div key={field.id} className="flex gap-2">
-          <Input {...form.register(`${name}.${index}.value`)} placeholder={`${label} item`} />
-          <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
-            Remove
-          </Button>
-        </div>
-      ))}
-      <Button type="button" variant="outline" size="sm" onClick={() => append({ value: '' })}>
-        + Add {label}
-      </Button>
-    </div>
-  );
 }
 
 // Inner component that has access to form context via useWatch
@@ -269,10 +243,10 @@ export default function SpecForm({
 
       <ContextEditor />
 
-      <ArrayField name="boundaries" label="Boundaries" form={form} />
-      <ArrayField name="deliverables" label="Deliverables" form={form} />
-      <ArrayField name="validation_automated" label="Automated Validation" form={form} />
-      <ArrayField name="validation_human" label="Human Validation" form={form} />
+      <DynamicListEditor name="boundaries" label="Boundaries" />
+      <DynamicListEditor name="deliverables" label="Deliverables" />
+      <DynamicListEditor name="validation_automated" label="Automated Validation" />
+      <DynamicListEditor name="validation_human" label="Human Validation" />
 
       <div className="flex items-center gap-2">
         <input
