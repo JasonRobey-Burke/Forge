@@ -59,7 +59,7 @@ src/
   server/          # Express API
     routes/        # Route-per-resource (e.g., products.ts, intentions.ts, specs.ts)
     middleware/    # Auth (Entra JWT + dev bypass), Zod validation, error handling
-    services/     # Business logic layer
+    services/     # Business logic layer (spec.ts, phaseTransition.ts, etc.)
   client/          # React SPA
     pages/         # Route-level page components
     components/   # Shared UI components (shadcn/ui based)
@@ -68,10 +68,12 @@ src/
   shared/          # Shared between client and server
     types/         # TypeScript interfaces for all entities
     schemas/       # Zod validation schemas (used by both form validation and API)
+    checklist/     # Pure evaluator function for completeness checklist (11 criteria)
 prisma/
   schema.prisma    # Data model (sqlserver provider)
   migrations/      # Version-controlled migrations
   seed.ts          # Dev seed data
+e2e/               # Playwright E2E tests + API helpers
 ```
 
 ## Key Patterns and Conventions
@@ -103,6 +105,29 @@ Specs flow through phases: **Draft → Ready → In Progress → Review → Vali
 - SPEC-001 covers project scaffolding, Docker setup, and Prisma schema — it produces no UI beyond a placeholder
 - SPEC-002 establishes CRUD patterns (Product) that all subsequent entity CRUDs follow
 - SPEC-003 builds the full hierarchy (Intentions, Expectations, Specs CRUD)
+- SPEC-005 implements the completeness checklist evaluator and Draft→Ready gate
 - Circular Intention dependencies must be detected and rejected
 - Context inheritance: new Specs snapshot the Product's Context; existing Specs keep their version
-- The completeness checklist (11 criteria) gates Specs from Draft → Ready
+
+## Completeness Checklist (SPEC-005)
+
+The completeness checklist evaluates 11 fixed criteria and gates Draft → Ready transitions:
+
+1. Context: stack non-empty
+2. Context: patterns non-empty
+3. Context: at least one convention
+4. Context: auth non-empty
+5. At least one Expectation linked
+6. All linked Expectations have descriptions
+7. All linked Expectations have 2+ edge cases
+8. At least one boundary
+9. At least one deliverable
+10. At least one automated AND one human validation
+11. Spec has been peer-reviewed
+
+**Architecture:**
+- Pure evaluator in `src/shared/checklist/evaluator.ts` — imported by both client and server
+- Server gate: `POST /api/specs/:id/transition` returns 422 with checklist when Draft→Ready fails
+- Override: `override_reason` string bypasses gate, recorded in `PhaseTransition` for audit
+- Client: `CompletenessChecklist` component on detail/edit pages; live updates via `useWatch` on edit
+- Non-Draft transitions are unrestricted (no gate)
