@@ -7,7 +7,7 @@ COPY prisma.config.ts ./
 RUN npm ci && npx prisma generate
 COPY . .
 COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && chmod +x /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
@@ -30,7 +30,7 @@ COPY prisma.config.ts ./
 RUN npm ci --omit=dev && npx prisma generate
 COPY --from=build /app/dist ./dist
 COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 3001
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "dist/server/index.js"]
