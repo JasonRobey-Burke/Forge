@@ -13,6 +13,8 @@ export function useTransitionSpec() {
     }),
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: specKeys.detail(vars.specId) });
+      // Also invalidate any specs list queries since phase is visible in list views
+      qc.invalidateQueries({ queryKey: ['specs'] });
     },
   });
 }

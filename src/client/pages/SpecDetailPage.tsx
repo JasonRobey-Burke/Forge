@@ -333,7 +333,7 @@ export default function SpecDetailPage() {
 
       {/* Checklist sidebar */}
       <div className="lg:sticky lg:top-6 self-start">
-        <CompletenessChecklist spec={spec} expectations={checklistExpectations} />
+        <CompletenessChecklist spec={spec} expectations={checklistExpectations} result={checklistResult} />
       </div>
     </div>
   );

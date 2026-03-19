@@ -1,5 +1,5 @@
 import { evaluateChecklist } from '@shared/checklist/evaluator';
-import type { ChecklistExpectation } from '@shared/checklist/types';
+import type { ChecklistExpectation, ChecklistResult } from '@shared/checklist/types';
 import type { Spec } from '@shared/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 interface CompletenessChecklistProps {
   spec: Spec;
   expectations: ChecklistExpectation[];
+  result?: ChecklistResult;
 }
 
-export default function CompletenessChecklist({ spec, expectations }: CompletenessChecklistProps) {
-  const result = evaluateChecklist(spec, expectations);
+export default function CompletenessChecklist({ spec, expectations, result: precomputed }: CompletenessChecklistProps) {
+  const result = precomputed ?? evaluateChecklist(spec, expectations);
   const passRate = result.total > 0 ? (result.passed / result.total) * 100 : 0;
 
   return (
