@@ -1,4 +1,4 @@
-import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
+import { useForm, useFieldArray, FormProvider, useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -16,7 +16,10 @@ import {
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import ContextEditor from '@/components/ContextEditor';
 import { SpecPhase, Complexity } from '@shared/types/enums';
-import type { CreateSpecInput, ProductContext } from '@shared/types';
+import type { CreateSpecInput, ProductContext, Spec } from '@shared/types';
+import type { ChecklistExpectation } from '@shared/checklist/types';
+import { evaluateChecklist } from '@shared/checklist/evaluator';
+import CompletenessChecklist from '@/components/CompletenessChecklist';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
@@ -108,9 +111,54 @@ function ArrayField({ name, label, form }: ArrayFieldProps) {
   );
 }
 
+// Inner component that has access to form context via useWatch
+interface ChecklistSidebarProps {
+  defaultSpec: Partial<Spec>;
+  expectations: ChecklistExpectation[];
+}
+
+function ChecklistSidebar({ defaultSpec, expectations }: ChecklistSidebarProps) {
+  const values = useWatch<FormValues>();
+
+  // Build a Spec-shaped object from form values for the evaluator
+  const liveSpec: Spec = {
+    id: defaultSpec.id ?? '',
+    product_id: defaultSpec.product_id ?? '',
+    title: (values.title as string | undefined) ?? '',
+    description: (values.description as string | undefined) ?? '',
+    phase: (values.phase as Spec['phase'] | undefined) ?? 'Draft',
+    complexity: (values.complexity as Spec['complexity'] | undefined) ?? 'Medium',
+    context: {
+      stack: ((values.context as FormValues['context'] | undefined)?.stack ?? [])
+        .map((s: { value: string }) => s.value).filter(Boolean),
+      patterns: ((values.context as FormValues['context'] | undefined)?.patterns ?? [])
+        .map((p: { value: string }) => p.value).filter(Boolean),
+      conventions: ((values.context as FormValues['context'] | undefined)?.conventions ?? [])
+        .map((c: { value: string }) => c.value).filter(Boolean),
+      auth: (values.context as FormValues['context'] | undefined)?.auth ?? '',
+    },
+    boundaries: ((values.boundaries as { value: string }[] | undefined) ?? [])
+      .map((b) => b.value).filter(Boolean),
+    deliverables: ((values.deliverables as { value: string }[] | undefined) ?? [])
+      .map((d) => d.value).filter(Boolean),
+    validation_automated: ((values.validation_automated as { value: string }[] | undefined) ?? [])
+      .map((v) => v.value).filter(Boolean),
+    validation_human: ((values.validation_human as { value: string }[] | undefined) ?? [])
+      .map((v) => v.value).filter(Boolean),
+    peer_reviewed: defaultSpec.peer_reviewed ?? false,
+    created_at: defaultSpec.created_at ?? '',
+    updated_at: defaultSpec.updated_at ?? '',
+    archived_at: defaultSpec.archived_at ?? null,
+  };
+
+  return <CompletenessChecklist spec={liveSpec} expectations={expectations} />;
+}
+
 interface SpecFormProps {
   productId: string;
   defaultValues?: Partial<CreateSpecInput>;
+  defaultSpec?: Partial<Spec>;
+  checklistExpectations?: ChecklistExpectation[];
   onSubmit: (values: CreateSpecInput) => void;
   isSubmitting: boolean;
   submitLabel: string;
@@ -119,6 +167,8 @@ interface SpecFormProps {
 export default function SpecForm({
   productId,
   defaultValues,
+  defaultSpec,
+  checklistExpectations,
   onSubmit,
   isSubmitting,
   submitLabel,
@@ -134,101 +184,123 @@ export default function SpecForm({
     onSubmit(toApiValues(values, productId));
   }
 
+  const showChecklist = !!defaultSpec && !!checklistExpectations;
+
+  const formContent = (
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-w-2xl">
+      <FormField
+        control={form.control}
+        name="title"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Title</FormLabel>
+            <FormControl>
+              <Input {...field} placeholder="Spec title" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Description</FormLabel>
+            <FormControl>
+              <Textarea {...field} placeholder="Describe what this spec covers" rows={4} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
+          name="phase"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phase</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select phase" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {Object.values(SpecPhase).map((p) => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="complexity"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Complexity</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select complexity" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {Object.values(Complexity).map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+
+      <ContextEditor />
+
+      <ArrayField name="boundaries" label="Boundaries" form={form} />
+      <ArrayField name="deliverables" label="Deliverables" form={form} />
+      <ArrayField name="validation_automated" label="Automated Validation" form={form} />
+      <ArrayField name="validation_human" label="Human Validation" form={form} />
+
+      <div className="flex gap-3">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : submitLabel}
+        </Button>
+        <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+
+  if (showChecklist) {
+    return (
+      <FormProvider {...form}>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          <div>{formContent}</div>
+          <div className="lg:sticky lg:top-6 self-start">
+            <ChecklistSidebar
+              defaultSpec={defaultSpec!}
+              expectations={checklistExpectations!}
+            />
+          </div>
+        </div>
+      </FormProvider>
+    );
+  }
+
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-w-2xl">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Spec title" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea {...field} placeholder="Describe what this spec covers" rows={4} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="phase"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phase</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select phase" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {Object.values(SpecPhase).map((p) => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="complexity"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Complexity</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select complexity" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {Object.values(Complexity).map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <ContextEditor />
-
-        <ArrayField name="boundaries" label="Boundaries" form={form} />
-        <ArrayField name="deliverables" label="Deliverables" form={form} />
-        <ArrayField name="validation_automated" label="Automated Validation" form={form} />
-        <ArrayField name="validation_human" label="Human Validation" form={form} />
-
-        <div className="flex gap-3">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : submitLabel}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-            Cancel
-          </Button>
-        </div>
-      </form>
+      {formContent}
     </FormProvider>
   );
 }

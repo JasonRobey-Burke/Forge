@@ -61,7 +61,7 @@ export function useDeleteSpec() {
 export function useSpecExpectations(specId: string) {
   return useQuery({
     queryKey: specKeys.expectations(specId),
-    queryFn: () => apiFetch<{ id: string; title: string; status: string }[]>(`/specs/${specId}/expectations`),
+    queryFn: () => apiFetch<{ id: string; title: string; status: string; description: string; edge_cases: string[] }[]>(`/specs/${specId}/expectations`),
     enabled: !!specId,
   });
 }
