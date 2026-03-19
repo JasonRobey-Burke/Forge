@@ -16,6 +16,8 @@ import {
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import ContextEditor from '@/components/ContextEditor';
 import DynamicListEditor from '@/components/DynamicListEditor';
+import CollapsibleSection from '@/components/CollapsibleSection';
+import { Badge } from '@/components/ui/badge';
 import { SpecPhase, Complexity } from '@shared/types/enums';
 import type { CreateSpecInput, ProductContext, Spec } from '@shared/types';
 import type { ChecklistExpectation } from '@shared/checklist/types';
@@ -136,6 +138,7 @@ interface SpecFormProps {
   defaultValues?: Partial<CreateSpecInput>;
   defaultSpec?: Partial<Spec>;
   checklistExpectations?: ChecklistExpectation[];
+  linkedExpectations?: Array<{ id: string; title: string; description: string; status: string; edge_cases: string[] }>;
   onSubmit: (values: CreateSpecInput) => void;
   isSubmitting: boolean;
   submitLabel: string;
@@ -146,6 +149,7 @@ export default function SpecForm({
   defaultValues,
   defaultSpec,
   checklistExpectations,
+  linkedExpectations,
   onSubmit,
   isSubmitting,
   submitLabel,
@@ -241,22 +245,56 @@ export default function SpecForm({
         />
       </div>
 
-      <ContextEditor />
+      <CollapsibleSection title="Context">
+        <ContextEditor />
+      </CollapsibleSection>
 
-      <DynamicListEditor name="boundaries" label="Boundaries" />
-      <DynamicListEditor name="deliverables" label="Deliverables" />
-      <DynamicListEditor name="validation_automated" label="Automated Validation" />
-      <DynamicListEditor name="validation_human" label="Human Validation" />
+      <CollapsibleSection title="Expectations" badge={<Badge variant="secondary">{linkedExpectations?.length ?? 0}</Badge>}>
+        {linkedExpectations && linkedExpectations.length > 0 ? (
+          <ul className="space-y-3">
+            {linkedExpectations.map((exp) => (
+              <li key={exp.id} className="text-sm border rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-medium">{exp.title}</span>
+                  <Badge variant="outline">{exp.status}</Badge>
+                </div>
+                {exp.description && <p className="text-muted-foreground mb-1">{exp.description}</p>}
+                {exp.edge_cases?.length > 0 && (
+                  <ul className="list-disc list-inside text-xs text-muted-foreground">
+                    {exp.edge_cases.map((ec, i) => <li key={i}>{ec}</li>)}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No expectations linked. Link expectations from the spec detail page after creating.
+          </p>
+        )}
+      </CollapsibleSection>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="peer_reviewed"
-          {...form.register('peer_reviewed')}
-          className="h-4 w-4 rounded border-input"
-        />
-        <Label htmlFor="peer_reviewed">Peer Reviewed</Label>
-      </div>
+      <CollapsibleSection title="Boundaries">
+        <DynamicListEditor name="boundaries" label="Boundaries" />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Deliverables">
+        <DynamicListEditor name="deliverables" label="Deliverables" />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Validation">
+        <DynamicListEditor name="validation_automated" label="Automated Validation" />
+        <DynamicListEditor name="validation_human" label="Human Validation" />
+        <div className="flex items-center gap-2 mt-3">
+          <input
+            type="checkbox"
+            id="peer_reviewed"
+            {...form.register('peer_reviewed')}
+            className="h-4 w-4 rounded border-input"
+          />
+          <Label htmlFor="peer_reviewed">Peer Reviewed</Label>
+        </div>
+      </CollapsibleSection>
 
       <div className="flex gap-3">
         <Button type="submit" disabled={isSubmitting}>

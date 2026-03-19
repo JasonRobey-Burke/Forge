@@ -27,6 +27,7 @@ export default function SpecEditPage() {
         defaultValues={spec}
         defaultSpec={spec}
         checklistExpectations={checklistExpectations}
+        linkedExpectations={linkedExpectations ?? []}
         onSubmit={({ product_id: _, ...rest }) => {
           updateSpec.mutate(
             { id: id!, product_id: spec.product_id, ...rest },
