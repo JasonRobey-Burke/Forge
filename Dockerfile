@@ -1,5 +1,6 @@
 # Stage 1: Development
 FROM node:20-slim AS development
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
@@ -13,6 +14,7 @@ CMD ["npm", "run", "dev"]
 
 # Stage 2: Build
 FROM node:20-slim AS build
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
@@ -23,6 +25,7 @@ RUN npm run build
 
 # Stage 3: Production
 FROM node:20-slim AS production
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/

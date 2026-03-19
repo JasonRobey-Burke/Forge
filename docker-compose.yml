@@ -20,9 +20,6 @@ services:
     build:
       context: .
       target: development
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
       - DATABASE_URL=sqlserver://db:1433;database=forge;user=sa;password=${SA_PASSWORD:-YourStrong!Passw0rd};encrypt=true;trustServerCertificate=true
       - PORT=3001
