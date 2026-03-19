@@ -146,5 +146,6 @@ export async function getSpecExpectations(specId: string) {
     title: row.expectation.title,
     description: row.expectation.description,
     status: row.expectation.status,
+    edge_cases: JSON.parse(row.expectation.edge_cases),
   }));
 }

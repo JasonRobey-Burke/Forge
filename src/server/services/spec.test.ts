@@ -165,12 +165,13 @@ describe('getSpecExpectations', () => {
       {
         spec_id: TEST_SPEC_ID,
         expectation_id: TEST_EXPECTATION_ID,
-        expectation: { id: TEST_EXPECTATION_ID, title: 'Exp', description: 'Desc', status: 'Draft' },
+        expectation: { id: TEST_EXPECTATION_ID, title: 'Exp', description: 'Desc', status: 'Draft', edge_cases: '["Edge 1","Edge 2"]' },
       },
     ]);
 
     const result = await specService.getSpecExpectations(TEST_SPEC_ID);
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe('Exp');
+    expect(result[0].edge_cases).toEqual(['Edge 1', 'Edge 2']);
   });
 });

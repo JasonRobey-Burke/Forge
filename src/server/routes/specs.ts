@@ -1,7 +1,9 @@
 import { Router, type Request } from 'express';
 import { validate } from '../middleware/validate.js';
 import { createSpecSchema, updateSpecSchema } from '../../shared/schemas/spec.js';
+import { transitionSpecSchema } from '../../shared/schemas/transition.js';
 import * as specService from '../services/spec.js';
+import * as transitionService from '../services/phaseTransition.js';
 
 const router = Router();
 
@@ -97,6 +99,24 @@ router.put('/:id/expectations', async (req: Request<{ id: string }>, res) => {
 router.get('/:id/expectations', async (req: Request<{ id: string }>, res) => {
   const expectations = await specService.getSpecExpectations(req.params.id);
   res.json({ data: expectations, error: null, meta: { count: expectations.length } });
+});
+
+// POST /api/specs/:id/transition
+router.post('/:id/transition', validate(transitionSpecSchema), async (req: Request<{ id: string }>, res) => {
+  const { to_phase, override_reason } = req.body;
+  const userId = req.user?.oid ?? 'dev-user';
+  const result = await transitionService.transitionSpec(
+    req.params.id, to_phase, userId, override_reason
+  );
+  if (!result.success) {
+    const status = result.error === 'not_found' ? 404 : 422;
+    return res.status(status).json({
+      data: null,
+      error: { message: result.error!, code: result.error!, checklist: result.checklist },
+      meta: null,
+    });
+  }
+  res.json({ data: { transitioned: true }, error: null, meta: null });
 });
 
 export default router;
