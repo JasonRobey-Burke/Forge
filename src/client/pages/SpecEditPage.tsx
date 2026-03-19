@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpec, useUpdateSpec, useSpecExpectations } from '@/hooks/useSpecs';
+import { useProduct } from '@/hooks/useProducts';
 import SpecForm from '@/components/SpecForm';
 import type { ChecklistExpectation } from '@shared/checklist/types';
 
@@ -9,6 +10,7 @@ export default function SpecEditPage() {
   const { data: spec, isLoading, error } = useSpec(id!);
   const { data: linkedExpectations } = useSpecExpectations(id!);
   const updateSpec = useUpdateSpec();
+  const { data: product } = useProduct(spec?.product_id ?? '');
 
   if (isLoading) return <div className="text-muted-foreground">Loading...</div>;
   if (error || !spec) return <div className="text-destructive">Spec not found.</div>;
@@ -24,6 +26,7 @@ export default function SpecEditPage() {
       <h1 className="text-2xl font-bold mb-6">Edit {spec.title}</h1>
       <SpecForm
         productId={spec.product_id}
+        productContext={product?.context}
         defaultValues={spec}
         defaultSpec={spec}
         checklistExpectations={checklistExpectations}

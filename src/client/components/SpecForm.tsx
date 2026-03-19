@@ -1,4 +1,4 @@
-import { useForm, FormProvider, useWatch } from 'react-hook-form';
+import { useForm, FormProvider, useWatch, useFormContext } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +23,7 @@ import type { CreateSpecInput, ProductContext, Spec } from '@shared/types';
 import type { ChecklistExpectation } from '@shared/checklist/types';
 import { evaluateChecklist } from '@shared/checklist/evaluator';
 import CompletenessChecklist from '@/components/CompletenessChecklist';
+import { compareContext } from '@/lib/contextDiff';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
@@ -90,6 +91,22 @@ function toApiValues(values: FormValues, productId: string): CreateSpecInput {
   } as any;
 }
 
+// Inner component that computes context diff badge via useWatch
+function ContextDiffBadge({ productContext }: { productContext: ProductContext }) {
+  const { watch } = useFormContext();
+  const watchedContext = watch('context');
+  const diff = watchedContext
+    ? compareContext(productContext, {
+        stack: (watchedContext.stack ?? []).map((s: { value: string }) => s.value).filter(Boolean),
+        patterns: (watchedContext.patterns ?? []).map((p: { value: string }) => p.value).filter(Boolean),
+        conventions: (watchedContext.conventions ?? []).map((c: { value: string }) => c.value).filter(Boolean),
+        auth: watchedContext.auth ?? '',
+      })
+    : null;
+  if (!diff?.anyModified) return null;
+  return <Badge variant="secondary" className="text-xs">Modified</Badge>;
+}
+
 // Inner component that has access to form context via useWatch
 interface ChecklistSidebarProps {
   defaultSpec: Partial<Spec>;
@@ -135,6 +152,7 @@ function ChecklistSidebar({ defaultSpec, expectations }: ChecklistSidebarProps) 
 
 interface SpecFormProps {
   productId: string;
+  productContext?: ProductContext;
   defaultValues?: Partial<CreateSpecInput>;
   defaultSpec?: Partial<Spec>;
   checklistExpectations?: ChecklistExpectation[];
@@ -146,6 +164,7 @@ interface SpecFormProps {
 
 export default function SpecForm({
   productId,
+  productContext,
   defaultValues,
   defaultSpec,
   checklistExpectations,
@@ -245,8 +264,11 @@ export default function SpecForm({
         />
       </div>
 
-      <CollapsibleSection title="Context">
-        <ContextEditor />
+      <CollapsibleSection
+        title="Context"
+        badge={productContext ? <ContextDiffBadge productContext={productContext} /> : undefined}
+      >
+        <ContextEditor productContext={productContext} />
       </CollapsibleSection>
 
       <CollapsibleSection title="Expectations" badge={<Badge variant="secondary">{linkedExpectations?.length ?? 0}</Badge>}>
