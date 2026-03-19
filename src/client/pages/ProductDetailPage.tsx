@@ -181,6 +181,20 @@ export default function ProductDetailPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">Specs</CardTitle>
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/products/${product.id}/specs`}>View Specs</Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Manage the specs that implement this product's intentions.
+            </p>
+          </CardContent>
+        </Card>
+
         <Separator />
 
         <div className="text-xs text-muted-foreground flex gap-4">
