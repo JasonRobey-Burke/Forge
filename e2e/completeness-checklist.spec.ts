@@ -16,12 +16,12 @@ import {
 async function createCompleteSetup() {
   const product = await createProduct({
     name: `E2E Checklist Product ${Date.now()}`,
-    context: JSON.stringify({
+    context: {
       stack: ['React'],
       patterns: ['MVC'],
       conventions: ['ESLint'],
       auth: 'JWT',
-    }),
+    },
   });
 
   const intention = await createIntention(product.id, {
@@ -47,8 +47,10 @@ async function createCompleteSetup() {
     deliverables: ['Component'],
     validation_automated: ['Unit tests pass'],
     validation_human: ['Code review done'],
-    peer_reviewed: true,
   });
+
+  // peer_reviewed is not on createSpecSchema, so set it via update
+  await updateSpec(spec.id, { peer_reviewed: true });
 
   await linkExpectations(spec.id, [expectation.id]);
 
@@ -150,9 +152,8 @@ test.describe('Completeness Checklist — Draft→Ready succeeds when complete',
 
   test('phase changes to Ready after clicking Transition to Ready', async ({ page }) => {
     await page.goto(`/specs/${specId}`);
-    // Button should be the primary (default) variant since checklist is complete
     await page.getByRole('button', { name: 'Transition to Ready' }).click();
-    // Badge should now show "Ready"
+    // Badge should now show "Ready" — scope to the header area
     await expect(page.getByRole('heading').locator('..').getByText('Ready')).toBeVisible();
   });
 });
@@ -182,9 +183,9 @@ test.describe('Completeness Checklist — Draft→Ready with override', () => {
     await expect(dialog.getByText('Checklist Incomplete')).toBeVisible();
     await dialog.getByPlaceholder('Override reason (optional)').fill('Approved by stakeholder for early release');
     await dialog.getByRole('button', { name: 'Override and Transition' }).click();
-    // After transition the dialog closes and the Badge shows Ready
+    // After transition the dialog closes and the Badge shows Ready (scope to header)
     await expect(page.getByRole('dialog')).not.toBeVisible();
-    await expect(page.getByText('Ready')).toBeVisible();
+    await expect(page.getByRole('heading').locator('..').getByText('Ready')).toBeVisible();
   });
 });
 
@@ -244,14 +245,11 @@ test.describe('Completeness Checklist — real-time updates on edit page', () =>
     await expect(page.getByText('Completeness Checklist')).toBeVisible();
     await expect(page.getByText('✗').first()).toBeVisible();
 
-    // Find and fill the first stack input field — the SpecForm renders stack items
-    // with a button to add one; click it first to add an entry
-    const addStackButton = page.getByRole('button', { name: 'Add Stack Item' });
-    if (await addStackButton.isVisible()) {
-      await addStackButton.click();
-    }
-    // Fill the stack input (first one)
-    const stackInput = page.getByPlaceholder('e.g. React').first();
+    // Click "+ Add Stack" to add a stack input field
+    await page.getByRole('button', { name: '+ Add Stack' }).click();
+
+    // Fill the new stack input (placeholder is "Stack item")
+    const stackInput = page.getByPlaceholder('Stack item').first();
     await stackInput.fill('React');
 
     // The checklist should now show a green ✓ for "Context: stack is non-empty"
