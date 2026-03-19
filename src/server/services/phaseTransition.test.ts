@@ -107,6 +107,10 @@ describe('transitionSpec', () => {
     expect(result.success).toBe(true);
     // evaluateChecklist should NOT be called when there is an override
     expect(mockedEvaluateChecklist).not.toHaveBeenCalled();
+    // Verify override_reason is recorded in the PhaseTransition
+    expect(prismaMock.phaseTransition.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ override_reason: 'Manager approved' }),
+    });
   });
 
   it('succeeds without checklist for non-gated transitions (Ready → InProgress)', async () => {
