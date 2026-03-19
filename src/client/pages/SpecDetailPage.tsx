@@ -21,6 +21,9 @@ import {
 } from '@/components/ui/dialog';
 import type { SpecPhase } from '@shared/types';
 import { SpecPhase as SpecPhaseEnum } from '@shared/types/enums';
+import { downloadYaml } from '@/lib/exportYaml';
+import { downloadMarkdown, specToMarkdown } from '@/lib/exportMarkdown';
+import { estimateTokens } from '@/lib/tokenEstimate';
 
 const phaseVariant: Record<SpecPhase, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   Draft: 'secondary',
@@ -55,6 +58,16 @@ export default function SpecDetailPage() {
   }));
 
   const checklistResult = evaluateChecklist(spec, checklistExpectations);
+
+  const exportData = {
+    spec,
+    expectations: (linkedExpectations ?? []).map((e) => ({
+      title: e.title,
+      description: e.description ?? '',
+      edge_cases: e.edge_cases ?? [],
+    })),
+  };
+  const tokenCount = estimateTokens(specToMarkdown(exportData));
 
   function handleDelete() {
     deleteSpec.mutate(
@@ -99,6 +112,15 @@ export default function SpecDetailPage() {
             <Badge variant="outline">{spec.complexity}</Badge>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={() => downloadYaml(exportData)}>
+              Export YAML
+            </Button>
+            <Button variant="outline" onClick={() => downloadMarkdown(exportData)}>
+              Export Markdown
+              {tokenCount > 8000 && (
+                <Badge variant="destructive" className="ml-2 text-xs">&gt;8K tokens</Badge>
+              )}
+            </Button>
             <Button asChild variant="outline">
               <Link to={`/specs/${spec.id}/edit`}>Edit</Link>
             </Button>
