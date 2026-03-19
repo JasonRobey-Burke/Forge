@@ -5,8 +5,9 @@ import { PrismaMssql } from '@prisma/adapter-mssql';
 const adapter = new PrismaMssql(process.env.DATABASE_URL!);
 const prisma = new PrismaClient({ adapter });
 
-const FORGE_ID = '00000000-0000-0000-0000-000000000001';
-const SAMPLE_ID = '00000000-0000-0000-0000-000000000002';
+// Valid RFC 4122 v4 UUIDs (Zod v4 requires variant bits 8/9/a/b at position 19)
+const FORGE_ID = 'a0000000-0000-4000-a000-000000000001';
+const SAMPLE_ID = 'a0000000-0000-4000-a000-000000000002';
 
 // Intention IDs
 const INT_HIERARCHY_ID = '11000000-0000-4000-a000-000000000001';
