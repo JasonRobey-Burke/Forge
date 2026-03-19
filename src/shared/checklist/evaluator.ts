@@ -68,12 +68,14 @@ export function evaluateChecklist(
     {
       id: 'expectations-desc',
       criterion: 'All expectations have descriptions',
+      // Vacuous truth: every() on empty array returns true. Criterion 5 catches the empty case.
       passed: expectations.every((e) => e.description.trim().length > 0),
       message: '',
     },
     {
       id: 'expectations-edges',
       criterion: 'All expectations have 2+ edge cases',
+      // Vacuous truth: every() on empty array returns true. Criterion 5 catches the empty case.
       passed: expectations.every((e) => e.edge_cases.length >= 2),
       message: '',
     },
@@ -110,5 +112,5 @@ export function evaluateChecklist(
   }
 
   const passed = items.filter((i) => i.passed).length;
-  return { items, passed, total: 11, ready: passed === 11 };
+  return { items, passed, total: items.length, ready: passed === items.length };
 }
