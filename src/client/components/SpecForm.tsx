@@ -36,6 +36,7 @@ const formSchema = z.object({
   deliverables: z.array(z.object({ value: z.string() })),
   validation_automated: z.array(z.object({ value: z.string() })),
   validation_human: z.array(z.object({ value: z.string() })),
+  peer_reviewed: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -61,6 +62,7 @@ function toFormValues(input?: Partial<CreateSpecInput>): FormValues {
     deliverables: toWrapped(input?.deliverables),
     validation_automated: toWrapped(input?.validation_automated),
     validation_human: toWrapped(input?.validation_human),
+    peer_reviewed: (input as any)?.peer_reviewed ?? false,
   };
 }
 
@@ -81,7 +83,8 @@ function toApiValues(values: FormValues, productId: string): CreateSpecInput {
     deliverables: values.deliverables.map((d) => d.value).filter(Boolean),
     validation_automated: values.validation_automated.map((v) => v.value).filter(Boolean),
     validation_human: values.validation_human.map((v) => v.value).filter(Boolean),
-  };
+    peer_reviewed: values.peer_reviewed,
+  } as any;
 }
 
 interface ArrayFieldProps {
@@ -145,7 +148,7 @@ function ChecklistSidebar({ defaultSpec, expectations }: ChecklistSidebarProps) 
       .map((v) => v.value).filter(Boolean),
     validation_human: ((values.validation_human as { value: string }[] | undefined) ?? [])
       .map((v) => v.value).filter(Boolean),
-    peer_reviewed: defaultSpec.peer_reviewed ?? false,
+    peer_reviewed: (values.peer_reviewed as boolean | undefined) ?? defaultSpec.peer_reviewed ?? false,
     created_at: defaultSpec.created_at ?? '',
     updated_at: defaultSpec.updated_at ?? '',
     archived_at: defaultSpec.archived_at ?? null,
@@ -270,6 +273,16 @@ export default function SpecForm({
       <ArrayField name="deliverables" label="Deliverables" form={form} />
       <ArrayField name="validation_automated" label="Automated Validation" form={form} />
       <ArrayField name="validation_human" label="Human Validation" form={form} />
+
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="peer_reviewed"
+          {...form.register('peer_reviewed')}
+          className="h-4 w-4 rounded border-input"
+        />
+        <Label htmlFor="peer_reviewed">Peer Reviewed</Label>
+      </div>
 
       <div className="flex gap-3">
         <Button type="submit" disabled={isSubmitting}>

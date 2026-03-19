@@ -80,7 +80,7 @@ export default function SpecDetailPage() {
 
   function handleOverrideTransition() {
     transitionSpec.mutate(
-      { specId: id!, toPhase: 'Ready', overrideReason },
+      { specId: id!, toPhase: 'Ready', overrideReason: overrideReason.trim() || undefined },
       { onSuccess: () => { setOverrideOpen(false); setOverrideReason(''); } },
     );
   }
