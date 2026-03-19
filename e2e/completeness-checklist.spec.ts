@@ -209,11 +209,8 @@ test.describe('Completeness Checklist — non-gated transitions are free', () =>
 
   test('can transition from Ready to InProgress without checklist gate', async ({ page }) => {
     await page.goto(`/specs/${specId}`);
-    // The phase Select should be visible (non-Draft UI)
-    const select = page.getByRole('combobox');
-    await select.click();
-    await page.getByRole('option', { name: 'InProgress' }).click();
-    await page.getByRole('button', { name: 'Transition' }).click();
+    // Phase transition buttons should be visible (non-Draft UI)
+    await page.getByRole('button', { name: '→ InProgress' }).click();
     await expect(page.getByText('InProgress')).toBeVisible();
   });
 });
