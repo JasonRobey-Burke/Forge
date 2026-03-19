@@ -63,3 +63,24 @@ export async function createSpec(productId: string, overrides: Record<string, un
 export async function deleteEntity(type: 'products' | 'intentions' | 'expectations' | 'specs', id: string) {
   return apiCall<any>(`/${type}/${id}`, { method: 'DELETE' });
 }
+
+export async function transitionSpec(specId: string, toPhase: string, overrideReason?: string) {
+  return apiCall<any>(`/specs/${specId}/transition`, {
+    method: 'POST',
+    body: JSON.stringify({ to_phase: toPhase, ...(overrideReason ? { override_reason: overrideReason } : {}) }),
+  });
+}
+
+export async function linkExpectations(specId: string, expectationIds: string[]) {
+  return apiCall<any>(`/specs/${specId}/expectations`, {
+    method: 'PUT',
+    body: JSON.stringify({ expectation_ids: expectationIds }),
+  });
+}
+
+export async function updateSpec(specId: string, data: Record<string, unknown>) {
+  return apiCall<any>(`/specs/${specId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
