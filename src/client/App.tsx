@@ -8,6 +8,10 @@ import IntentionListPage from '@/pages/IntentionListPage';
 import IntentionCreatePage from '@/pages/IntentionCreatePage';
 import IntentionDetailPage from '@/pages/IntentionDetailPage';
 import IntentionEditPage from '@/pages/IntentionEditPage';
+import ExpectationListPage from '@/pages/ExpectationListPage';
+import ExpectationCreatePage from '@/pages/ExpectationCreatePage';
+import ExpectationDetailPage from '@/pages/ExpectationDetailPage';
+import ExpectationEditPage from '@/pages/ExpectationEditPage';
 
 export default function App() {
   return (
@@ -22,6 +26,10 @@ export default function App() {
         <Route path="products/:productId/intentions/new" element={<IntentionCreatePage />} />
         <Route path="intentions/:id" element={<IntentionDetailPage />} />
         <Route path="intentions/:id/edit" element={<IntentionEditPage />} />
+        <Route path="intentions/:intentionId/expectations" element={<ExpectationListPage />} />
+        <Route path="intentions/:intentionId/expectations/new" element={<ExpectationCreatePage />} />
+        <Route path="expectations/:id" element={<ExpectationDetailPage />} />
+        <Route path="expectations/:id/edit" element={<ExpectationEditPage />} />
       </Route>
     </Routes>
   );

@@ -1,0 +1,31 @@
+import { useParams, useNavigate } from 'react-router-dom';
+import { useExpectation, useUpdateExpectation } from '@/hooks/useExpectations';
+import ExpectationForm from '@/components/ExpectationForm';
+
+export default function ExpectationEditPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { data: expectation, isLoading, error } = useExpectation(id!);
+  const updateExpectation = useUpdateExpectation();
+
+  if (isLoading) return <div className="text-muted-foreground">Loading...</div>;
+  if (error || !expectation) return <div className="text-destructive">Expectation not found.</div>;
+
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-6">Edit {expectation.title}</h1>
+      <ExpectationForm
+        intentionId={expectation.intention_id}
+        defaultValues={expectation}
+        onSubmit={(values) => {
+          updateExpectation.mutate(
+            { id: id!, intention_id: expectation.intention_id, ...values },
+            { onSuccess: () => navigate(`/expectations/${id}`) },
+          );
+        }}
+        isSubmitting={updateExpectation.isPending}
+        submitLabel="Save Changes"
+      />
+    </div>
+  );
+}

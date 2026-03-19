@@ -6,6 +6,7 @@ import { authMiddleware } from './middleware/auth.js';
 import { prisma } from './lib/prisma.js';
 import productRouter from './routes/products.js';
 import intentionRouter from './routes/intentions.js';
+import expectationRouter from './routes/expectations.js';
 
 dotenv.config();
 
@@ -39,6 +40,7 @@ app.use(authMiddleware);
 // API routes
 app.use('/api/products', productRouter);
 app.use('/api/intentions', intentionRouter);
+app.use('/api/expectations', expectationRouter);
 
 app.use(errorHandler);
 
