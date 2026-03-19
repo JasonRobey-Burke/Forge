@@ -17,7 +17,7 @@ test.describe('Spec CRUD', () => {
     await page.goto(`/products/${productId}`);
     await page.getByRole('link', { name: 'View Specs' }).click();
     await expect(page).toHaveURL(new RegExp(`/products/${productId}/specs`));
-    await expect(page.getByText('Specs')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Specs' })).toBeVisible();
   });
 
   test('create a spec with context inheritance', async ({ page }) => {
@@ -40,7 +40,8 @@ test.describe('Spec CRUD', () => {
     const spec = await createSpec(productId, { title: 'Spec to Delete' });
     await page.goto(`/specs/${spec.id}`);
     await page.getByRole('button', { name: 'Delete' }).click();
-    await page.getByRole('button', { name: 'Delete' }).nth(1).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Delete' }).click();
     await expect(page).toHaveURL(new RegExp(`/products/${productId}/specs`));
   });
 });

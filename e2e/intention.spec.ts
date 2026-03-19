@@ -17,7 +17,7 @@ test.describe('Intention CRUD', () => {
     await page.goto(`/products/${productId}`);
     await page.getByRole('link', { name: 'View Intentions' }).click();
     await expect(page).toHaveURL(new RegExp(`/products/${productId}/intentions`));
-    await expect(page.getByText('Intentions')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Intentions' })).toBeVisible();
   });
 
   test('create a new intention', async ({ page }) => {
@@ -40,7 +40,8 @@ test.describe('Intention CRUD', () => {
     const intention = await createIntention(productId, { title: 'Intention to Delete' });
     await page.goto(`/intentions/${intention.id}`);
     await page.getByRole('button', { name: 'Delete' }).click();
-    await page.getByRole('button', { name: 'Delete' }).nth(1).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Delete' }).click();
     await expect(page).toHaveURL(new RegExp(`/products/${productId}/intentions`));
   });
 
@@ -48,9 +49,18 @@ test.describe('Intention CRUD', () => {
     const intention = await createIntention(productId, { title: 'Protected Intention' });
     await createExpectation(intention.id, { title: 'Child Expectation' });
     await page.goto(`/intentions/${intention.id}`);
+
+    // Listen for the alert dialog before triggering the delete
+    page.on('dialog', async (dialog) => {
+      expect(dialog.message()).toContain('Cannot delete intention with active expectations');
+      await dialog.accept();
+    });
+
     await page.getByRole('button', { name: 'Delete' }).click();
-    await page.getByRole('button', { name: 'Delete' }).nth(1).click();
-    // Should show error about active expectations
-    await expect(page.getByText(/cannot delete|active expectations/i)).toBeVisible();
+    const confirmDialog = page.getByRole('dialog');
+    await confirmDialog.getByRole('button', { name: 'Delete' }).click();
+
+    // Should stay on the same page after alert is dismissed
+    await expect(page).toHaveURL(new RegExp(`/intentions/${intention.id}`));
   });
 });

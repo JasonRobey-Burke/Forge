@@ -38,7 +38,8 @@ test.describe('Expectation CRUD', () => {
     const expectation = await createExpectation(intentionId, { title: 'Expectation to Delete' });
     await page.goto(`/expectations/${expectation.id}`);
     await page.getByRole('button', { name: 'Delete' }).click();
-    await page.getByRole('button', { name: 'Delete' }).nth(1).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Delete' }).click();
     await expect(page).toHaveURL(new RegExp(`/intentions/${intentionId}/expectations`));
   });
 });
