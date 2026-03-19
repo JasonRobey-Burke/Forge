@@ -1,16 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
-import { PrismaMssql } from '@prisma/adapter-mssql';
 import { errorHandler } from './middleware/errorHandler.js';
 import { authMiddleware } from './middleware/auth.js';
+import { prisma } from './lib/prisma.js';
+import productRouter from './routes/products.js';
 
 dotenv.config();
 
 const app = express();
-const adapter = new PrismaMssql(process.env.DATABASE_URL!);
-const prisma = new PrismaClient({ adapter });
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
@@ -37,7 +35,8 @@ app.get('/api/health', async (_req, res) => {
 // Auth middleware — all routes below require authentication
 app.use(authMiddleware);
 
-// API routes will be added here in future specs
+// API routes
+app.use('/api/products', productRouter);
 
 app.use(errorHandler);
 
