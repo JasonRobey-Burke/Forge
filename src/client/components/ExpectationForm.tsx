@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -131,7 +132,7 @@ export default function ExpectationForm({
         />
 
         <div className="space-y-2">
-          <FormLabel>Edge Cases (minimum 2)</FormLabel>
+          <Label>Edge Cases (minimum 2)</Label>
           {fields.map((field, index) => (
             <div key={field.id} className="flex gap-2">
               <Input
