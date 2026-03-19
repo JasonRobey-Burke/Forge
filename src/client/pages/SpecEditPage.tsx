@@ -17,9 +17,9 @@ export default function SpecEditPage() {
       <SpecForm
         productId={spec.product_id}
         defaultValues={spec}
-        onSubmit={(values) => {
+        onSubmit={({ product_id: _, ...rest }) => {
           updateSpec.mutate(
-            { id: id!, product_id: spec.product_id, ...values },
+            { id: id!, product_id: spec.product_id, ...rest },
             { onSuccess: () => navigate(`/specs/${id}`) },
           );
         }}

@@ -17,9 +17,9 @@ export default function ExpectationEditPage() {
       <ExpectationForm
         intentionId={expectation.intention_id}
         defaultValues={expectation}
-        onSubmit={(values) => {
+        onSubmit={({ intention_id: _, ...rest }) => {
           updateExpectation.mutate(
-            { id: id!, intention_id: expectation.intention_id, ...values },
+            { id: id!, intention_id: expectation.intention_id, ...rest },
             { onSuccess: () => navigate(`/expectations/${id}`) },
           );
         }}

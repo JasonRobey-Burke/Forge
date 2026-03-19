@@ -17,9 +17,9 @@ export default function IntentionEditPage() {
       <IntentionForm
         productId={intention.product_id}
         defaultValues={intention}
-        onSubmit={(values) => {
+        onSubmit={({ product_id: _, ...rest }) => {
           updateIntention.mutate(
-            { id: id!, product_id: intention.product_id, ...values },
+            { id: id!, product_id: intention.product_id, ...rest },
             { onSuccess: () => navigate(`/intentions/${id}`) },
           );
         }}
