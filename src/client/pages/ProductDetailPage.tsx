@@ -167,6 +167,20 @@ export default function ProductDetailPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">Intentions</CardTitle>
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/products/${product.id}/intentions`}>View Intentions</Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Manage the intentions that define this product's purpose.
+            </p>
+          </CardContent>
+        </Card>
+
         <Separator />
 
         <div className="text-xs text-muted-foreground flex gap-4">
