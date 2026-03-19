@@ -11,13 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -49,7 +42,7 @@ export default function SpecDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideReason, setOverrideReason] = useState('');
-  const [selectedPhase, setSelectedPhase] = useState<string>('');
+  const [transitioning, setTransitioning] = useState(false);
 
   if (isLoading) return <div className="text-muted-foreground">Loading...</div>;
   if (error || !spec) return <div className="text-destructive">Spec not found.</div>;
@@ -85,9 +78,12 @@ export default function SpecDetailPage() {
     );
   }
 
-  function handleGeneralTransition() {
-    if (!selectedPhase) return;
-    transitionSpec.mutate({ specId: id!, toPhase: selectedPhase });
+  function handleTransitionTo(phase: string) {
+    setTransitioning(true);
+    transitionSpec.mutate(
+      { specId: id!, toPhase: phase },
+      { onSettled: () => setTransitioning(false) },
+    );
   }
 
   const otherPhases = Object.values(SpecPhaseEnum).filter((p) => p !== 'Draft' && p !== spec.phase);
@@ -178,24 +174,18 @@ export default function SpecDetailPage() {
           )}
 
           {spec.phase !== 'Draft' && otherPhases.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Select value={selectedPhase} onValueChange={setSelectedPhase}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Select phase" />
-                </SelectTrigger>
-                <SelectContent>
-                  {otherPhases.map((p) => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                onClick={handleGeneralTransition}
-                disabled={!selectedPhase || transitionSpec.isPending}
-              >
-                {transitionSpec.isPending ? 'Transitioning...' : 'Transition'}
-              </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {otherPhases.map((p) => (
+                <Button
+                  key={p}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleTransitionTo(p)}
+                  disabled={transitioning}
+                >
+                  → {p}
+                </Button>
+              ))}
             </div>
           )}
 
