@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler.js';
 import { authMiddleware } from './middleware/auth.js';
 import { prisma } from './lib/prisma.js';
+import productRouter from './routes/products.js';
 
 dotenv.config();
 
@@ -34,7 +35,8 @@ app.get('/api/health', async (_req, res) => {
 // Auth middleware — all routes below require authentication
 app.use(authMiddleware);
 
-// API routes will be added here in future specs
+// API routes
+app.use('/api/products', productRouter);
 
 app.use(errorHandler);
 
