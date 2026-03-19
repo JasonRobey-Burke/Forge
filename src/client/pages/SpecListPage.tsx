@@ -1,8 +1,10 @@
 import { Link, useParams } from 'react-router-dom';
 import { useSpecs } from '@/hooks/useSpecs';
+import { useProduct } from '@/hooks/useProducts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import type { SpecPhase, Complexity } from '@shared/types';
 
 const phaseVariant: Record<SpecPhase, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -16,6 +18,7 @@ const phaseVariant: Record<SpecPhase, 'default' | 'secondary' | 'outline' | 'des
 
 export default function SpecListPage() {
   const { productId } = useParams<{ productId: string }>();
+  const { data: product } = useProduct(productId!);
   const { data: specs, isLoading, error } = useSpecs(productId!);
 
   if (isLoading) return <div className="text-muted-foreground">Loading specs...</div>;
@@ -23,6 +26,11 @@ export default function SpecListPage() {
 
   return (
     <div>
+      <Breadcrumbs items={[
+        { label: 'Products', href: '/products' },
+        { label: product?.name ?? '...', href: `/products/${productId}` },
+        { label: 'Specs' },
+      ]} />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Specs</h1>
         <Button asChild>

@@ -1,8 +1,10 @@
 import { Link, useParams } from 'react-router-dom';
 import { useIntentions } from '@/hooks/useIntentions';
+import { useProduct } from '@/hooks/useProducts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import type { Priority } from '@shared/types';
 
 const priorityVariant: Record<Priority, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -14,6 +16,7 @@ const priorityVariant: Record<Priority, 'default' | 'secondary' | 'outline' | 'd
 
 export default function IntentionListPage() {
   const { productId } = useParams<{ productId: string }>();
+  const { data: product } = useProduct(productId!);
   const { data: intentions, isLoading, error } = useIntentions(productId!);
 
   if (isLoading) return <div className="text-muted-foreground">Loading intentions...</div>;
@@ -21,6 +24,11 @@ export default function IntentionListPage() {
 
   return (
     <div>
+      <Breadcrumbs items={[
+        { label: 'Products', href: '/products' },
+        { label: product?.name ?? '...', href: `/products/${productId}` },
+        { label: 'Intentions' },
+      ]} />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Intentions</h1>
         <Button asChild>

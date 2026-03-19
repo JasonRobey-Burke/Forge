@@ -1,11 +1,14 @@
 import { Link, useParams } from 'react-router-dom';
 import { useExpectations } from '@/hooks/useExpectations';
+import { useIntention } from '@/hooks/useIntentions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import Breadcrumbs from '@/components/Breadcrumbs';
 
 export default function ExpectationListPage() {
   const { intentionId } = useParams<{ intentionId: string }>();
+  const { data: intention } = useIntention(intentionId!);
   const { data: expectations, isLoading, error } = useExpectations(intentionId!);
 
   if (isLoading) return <div className="text-muted-foreground">Loading expectations...</div>;
@@ -13,6 +16,13 @@ export default function ExpectationListPage() {
 
   return (
     <div>
+      <Breadcrumbs items={[
+        { label: 'Products', href: '/products' },
+        ...(intention ? [
+          { label: intention.title, href: `/intentions/${intentionId}` },
+        ] : []),
+        { label: 'Expectations' },
+      ]} />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Expectations</h1>
         <Button asChild>
