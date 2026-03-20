@@ -1,0 +1,42 @@
+{
+  "name": "Forge",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/Forge",
+
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+
+  "forwardPorts": [3001, 5173],
+  "portsAttributes": {
+    "3001": { "label": "API Server", "onAutoForward": "silent" },
+    "5173": { "label": "Vite Dev Server", "onAutoForward": "openBrowser" }
+  },
+
+  "containerEnv": {
+    "DATABASE_URL": "sqlserver://db:1433;database=forge;user=sa;password=YourStrong!Passw0rd;encrypt=true;trustServerCertificate=true",
+    "PORT": "3001",
+    "NODE_ENV": "development",
+    "BYPASS_AUTH": "true"
+  },
+
+  "postCreateCommand": "npm ci && npx prisma generate",
+  "postStartCommand": ".devcontainer/post-start.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "prisma.prisma",
+        "ms-playwright.playwright"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "typescript.preferences.importModuleSpecifier": "non-relative"
+      }
+    }
+  }
+}
