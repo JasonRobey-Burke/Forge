@@ -5,16 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import type { SpecPhase, Complexity } from '@shared/types';
-
-const phaseVariant: Record<SpecPhase, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  Draft: 'secondary',
-  Ready: 'outline',
-  InProgress: 'default',
-  Review: 'default',
-  Validating: 'default',
-  Done: 'secondary',
-};
+import { PhaseBadge } from '@/lib/phaseColors';
 
 export default function SpecListPage() {
   const { productId } = useParams<{ productId: string }>();
@@ -54,9 +45,7 @@ export default function SpecListPage() {
               <Card className="hover:border-primary/50 transition-colors h-full">
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                   <CardTitle className="text-lg">{spec.title}</CardTitle>
-                  <Badge variant={phaseVariant[spec.phase as SpecPhase]}>
-                    {spec.phase}
-                  </Badge>
+                  <PhaseBadge phase={spec.phase} />
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground line-clamp-2">{spec.description}</p>

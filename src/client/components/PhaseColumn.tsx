@@ -1,16 +1,8 @@
 import { useDroppable } from '@dnd-kit/core';
 import { Badge } from '@/components/ui/badge';
 import SpecCard from '@/components/SpecCard';
+import { PHASE_LABELS, PHASE_COLORS } from '@/lib/phaseColors';
 import type { Spec } from '@shared/types';
-
-const PHASE_LABELS: Record<string, string> = {
-  Draft: 'Draft',
-  Ready: 'Ready',
-  InProgress: 'In Progress',
-  Review: 'Review',
-  Validating: 'Validating',
-  Done: 'Done',
-};
 
 interface PhaseColumnProps {
   phase: string;
@@ -30,6 +22,7 @@ export default function PhaseColumn({ phase, specs, limit, onCardClick }: PhaseC
       data-phase={phase}
       className={`flex flex-col rounded-lg border bg-muted/30 min-w-[200px] ${isOver ? 'ring-2 ring-primary' : ''}`}
     >
+      <div className={`h-1 rounded-t-lg ${PHASE_COLORS[phase]?.dot ?? 'bg-slate-400'}`} />
       <div className="flex items-center justify-between px-3 py-2 border-b">
         <span className="text-sm font-medium">{PHASE_LABELS[phase] ?? phase}</span>
         <Badge variant={atLimit ? 'destructive' : 'secondary'} className="text-xs">

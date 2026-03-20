@@ -1,5 +1,6 @@
 import { useDraggable } from '@dnd-kit/core';
 import { Badge } from '@/components/ui/badge';
+import { PHASE_COLORS } from '@/lib/phaseColors';
 import type { Spec } from '@shared/types';
 
 export function daysInPhase(phaseChangedAt: string): number {
@@ -38,7 +39,7 @@ export default function SpecCard({ spec, onClick }: SpecCardProps) {
       {...attributes}
       style={style}
       onClick={onClick}
-      className={`rounded-lg border bg-card p-3 shadow-sm cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md ${isDragging ? 'opacity-50' : ''}`}
+      className={`rounded-lg border bg-card p-3 shadow-sm cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md border-l-4 ${PHASE_COLORS[spec.phase]?.border ?? 'border-slate-400'} ${isDragging ? 'opacity-50' : ''}`}
     >
       <p className="text-sm font-medium line-clamp-2 mb-2">{spec.title}</p>
       <div className="flex items-center justify-between text-xs">

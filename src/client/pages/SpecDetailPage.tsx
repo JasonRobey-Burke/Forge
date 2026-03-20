@@ -19,20 +19,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import type { SpecPhase } from '@shared/types';
 import { SpecPhase as SpecPhaseEnum } from '@shared/types/enums';
 import { downloadYaml } from '@/lib/exportYaml';
 import { downloadMarkdown, specToMarkdown } from '@/lib/exportMarkdown';
 import { estimateTokens } from '@/lib/tokenEstimate';
-
-const phaseVariant: Record<SpecPhase, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  Draft: 'secondary',
-  Ready: 'outline',
-  InProgress: 'default',
-  Review: 'default',
-  Validating: 'default',
-  Done: 'secondary',
-};
+import { PhaseBadge } from '@/lib/phaseColors';
 
 export default function SpecDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -108,7 +99,7 @@ export default function SpecDetailPage() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">{spec.title}</h1>
-            <Badge variant={phaseVariant[spec.phase as SpecPhase]}>{spec.phase}</Badge>
+            <PhaseBadge phase={spec.phase} />
             <Badge variant="outline">{spec.complexity}</Badge>
           </div>
           <div className="flex gap-2">

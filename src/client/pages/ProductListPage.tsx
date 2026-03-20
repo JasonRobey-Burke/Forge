@@ -3,14 +3,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import type { ProductStatus } from '@shared/types';
-
-const statusVariant: Record<ProductStatus, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  Active: 'default',
-  Discovery: 'secondary',
-  Maintenance: 'outline',
-  Sunset: 'destructive',
-};
+import { StatusBadge } from '@/lib/phaseColors';
 
 export default function ProductListPage() {
   const { data: products, isLoading, error } = useProducts();
@@ -48,9 +41,7 @@ export default function ProductListPage() {
               <Card className="hover:border-primary/50 transition-colors h-full">
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                   <CardTitle className="text-lg">{product.name}</CardTitle>
-                  <Badge variant={statusVariant[product.status as ProductStatus]}>
-                    {product.status}
-                  </Badge>
+                  <StatusBadge status={product.status} />
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground line-clamp-2">

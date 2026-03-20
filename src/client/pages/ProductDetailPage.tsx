@@ -14,14 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import type { ProductStatus } from '@shared/types';
-
-const statusVariant: Record<ProductStatus, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  Active: 'default',
-  Discovery: 'secondary',
-  Maintenance: 'outline',
-  Sunset: 'destructive',
-};
+import { StatusBadge } from '@/lib/phaseColors';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -49,9 +42,7 @@ export default function ProductDetailPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">{product.name}</h1>
-          <Badge variant={statusVariant[product.status as ProductStatus]}>
-            {product.status}
-          </Badge>
+          <StatusBadge status={product.status} />
         </div>
         <div className="flex gap-2">
           <Button asChild variant="outline">
