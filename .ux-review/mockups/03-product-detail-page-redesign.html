@@ -1,0 +1,412 @@
+<!--
+  Mockup: Product Detail Page Redesign
+
+  WHAT THIS DEMONSTRATES:
+  - Before: Product detail is a flat vertical stack of same-styled cards, each with a
+    section header. Information is spread thin with excessive whitespace. Navigation cards
+    (Intentions, Specs, Flow Board) look identical to content cards.
+  - After: Content is grouped into a more compact layout. Key info is in a hero section.
+    Navigation actions are promoted to a clear action bar. Context uses a tighter,
+    info-dense layout. WIP limits are visually enhanced with progress-style indicators.
+
+  KEY CHANGES:
+  1. Hero section with product name, status, and key metadata at top
+  2. Quick-action bar with prominent navigation to Intentions, Specs, Board
+  3. Consolidated Context section using a 2-column grid
+  4. WIP limits displayed as visual indicators (not just numbers in gray boxes)
+  5. Problem Statement, Vision, Target Audience in a single grouped card
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup: Product Detail Page Redesign</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #0f172a; }
+
+  .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+  .comparison-label { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+  .label-before { color: #dc2626; }
+  .label-after { color: #16a34a; }
+  .section { margin-bottom: 48px; }
+  .annotation {
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #92400e;
+    margin: 12px 0;
+  }
+
+  /* ---- AFTER DESIGN ---- */
+  .product-hero {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .hero-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+  }
+  .hero-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 600;
+    background: #dcfce7;
+    color: #166534;
+    margin-left: 12px;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .btn-outline {
+    background: white;
+    color: #374151;
+    border-color: #d1d5db;
+  }
+  .btn-outline:hover { background: #f9fafb; }
+  .btn-destructive {
+    background: #ef4444;
+    color: white;
+  }
+  .hero-description {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #475569;
+    max-width: 640px;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #94a3b8;
+  }
+
+  /* Action bar */
+  .action-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .action-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-decoration: none;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.15s;
+  }
+  .action-card:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08);
+  }
+  .action-card-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .action-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .icon-intentions { background: #ede9fe; }
+  .icon-specs { background: #dbeafe; }
+  .icon-board { background: #dcfce7; }
+  .action-card-title { font-weight: 600; font-size: 14px; }
+  .action-card-desc { font-size: 12px; color: #94a3b8; }
+  .action-arrow { color: #94a3b8; font-size: 18px; }
+
+  /* Content grid */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .content-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .content-card.full-width { grid-column: 1 / -1; }
+  .card-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    margin-bottom: 8px;
+  }
+  .card-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+  }
+
+  /* Context section */
+  .context-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .context-item-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 6px;
+  }
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #f1f5f9;
+    color: #475569;
+    margin: 2px 2px 2px 0;
+  }
+
+  /* WIP limits */
+  .wip-grid {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .wip-item {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+    padding: 12px 8px;
+    border-radius: 8px;
+    background: #fafafa;
+    border: 1px solid #e2e8f0;
+  }
+  .wip-phase {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #94a3b8;
+    margin-bottom: 4px;
+  }
+  .wip-number {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .wip-bar-track {
+    height: 3px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    margin-top: 6px;
+  }
+  .wip-bar-fill {
+    height: 3px;
+    border-radius: 2px;
+    background: #3b82f6;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1 style="font-size: 20px; font-weight: 700; margin-bottom: 32px;">Product Detail Page -- Proposed Redesign</h1>
+
+  <div class="section">
+    <p class="comparison-label label-before">CURRENT ISSUES:</p>
+    <div class="annotation">
+      The current Product Detail page is a vertical stack of 8 separate cards (Problem Statement, Vision, Target Audience, Context, WIP Limits, Intentions, Specs, Flow Board). Each card has the same visual weight, making nothing stand out. Navigation links (View Intentions, View Specs, View Board) are buried inside cards and look the same as content sections. The page requires extensive scrolling with low information density.
+    </div>
+  </div>
+
+  <div class="section">
+    <p class="comparison-label label-after">AFTER: Redesigned Layout</p>
+
+    <!-- Hero -->
+    <div class="product-hero">
+      <div class="hero-top">
+        <div>
+          <span class="hero-title">Forge</span>
+          <span class="hero-status">Active</span>
+        </div>
+        <div class="hero-actions">
+          <a href="#" class="btn btn-outline">Edit</a>
+          <a href="#" class="btn btn-destructive">Delete</a>
+        </div>
+      </div>
+      <p class="hero-description">
+        Teams adopting AI-assisted development need a spec-management tool that reflects how work flows in an AI-augmented environment.
+      </p>
+      <div class="hero-meta">
+        <span>Created Mar 20, 2026</span>
+        <span>Updated Mar 20, 2026</span>
+      </div>
+    </div>
+
+    <!-- Action bar -->
+    <div class="action-bar">
+      <a href="#" class="action-card">
+        <div class="action-card-left">
+          <div class="action-icon icon-intentions">&#127919;</div>
+          <div>
+            <div class="action-card-title">Intentions</div>
+            <div class="action-card-desc">3 intentions defined</div>
+          </div>
+        </div>
+        <span class="action-arrow">&#8250;</span>
+      </a>
+      <a href="#" class="action-card">
+        <div class="action-card-left">
+          <div class="action-icon icon-specs">&#128196;</div>
+          <div>
+            <div class="action-card-title">Specs</div>
+            <div class="action-card-desc">6 specs total</div>
+          </div>
+        </div>
+        <span class="action-arrow">&#8250;</span>
+      </a>
+      <a href="#" class="action-card">
+        <div class="action-card-left">
+          <div class="action-icon icon-board">&#128200;</div>
+          <div>
+            <div class="action-card-title">Flow Board</div>
+            <div class="action-card-desc">2 in progress</div>
+          </div>
+        </div>
+        <span class="action-arrow">&#8250;</span>
+      </a>
+    </div>
+
+    <!-- Content grid -->
+    <div class="content-grid">
+      <div class="content-card">
+        <div class="card-label">Vision</div>
+        <p class="card-text">The first tool purpose-built for Intent-Driven Development.</p>
+      </div>
+      <div class="content-card">
+        <div class="card-label">Target Audience</div>
+        <p class="card-text">Development teams (3-12 people) practicing AI-assisted development.</p>
+      </div>
+    </div>
+
+    <!-- Context -->
+    <div class="content-card full-width" style="margin-bottom: 16px;">
+      <div class="card-label">Context</div>
+      <div class="context-grid">
+        <div>
+          <div class="context-item-label">Stack</div>
+          <div>
+            <span class="tag">React 19</span>
+            <span class="tag">TypeScript</span>
+            <span class="tag">Express 5</span>
+            <span class="tag">Prisma v7</span>
+            <span class="tag">SQL Server</span>
+            <span class="tag">Tailwind CSS</span>
+            <span class="tag">shadcn/ui</span>
+          </div>
+        </div>
+        <div>
+          <div class="context-item-label">Patterns</div>
+          <div>
+            <span class="tag">IDD hierarchy</span>
+            <span class="tag">Kanban flow</span>
+            <span class="tag">Spec-centric workflow</span>
+          </div>
+          <div style="margin-top: 12px;">
+            <div class="context-item-label">Auth</div>
+            <p style="font-size: 13px; color: #475569;">Microsoft Entra ID with JWT validation</p>
+          </div>
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <div class="context-item-label">Conventions</div>
+          <div>
+            <span class="tag">Soft deletes</span>
+            <span class="tag">JSON columns for flexible data</span>
+            <span class="tag">Zod validation shared client/server</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WIP Limits -->
+    <div class="content-card full-width">
+      <div class="card-label">WIP Limits</div>
+      <div class="wip-grid">
+        <div class="wip-item">
+          <div class="wip-phase">Draft</div>
+          <div class="wip-number">5</div>
+          <div class="wip-bar-track"><div class="wip-bar-fill" style="width: 0%;"></div></div>
+        </div>
+        <div class="wip-item">
+          <div class="wip-phase">Ready</div>
+          <div class="wip-number">3</div>
+          <div class="wip-bar-track"><div class="wip-bar-fill" style="width: 33%;"></div></div>
+        </div>
+        <div class="wip-item">
+          <div class="wip-phase">In Progress</div>
+          <div class="wip-number">3</div>
+          <div class="wip-bar-track"><div class="wip-bar-fill" style="width: 66%; background: #f59e0b;"></div></div>
+        </div>
+        <div class="wip-item">
+          <div class="wip-phase">Review</div>
+          <div class="wip-number">3</div>
+          <div class="wip-bar-track"><div class="wip-bar-fill" style="width: 0%;"></div></div>
+        </div>
+        <div class="wip-item">
+          <div class="wip-phase">Validating</div>
+          <div class="wip-number">2</div>
+          <div class="wip-bar-track"><div class="wip-bar-fill" style="width: 0%;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="annotation" style="margin-top: 16px;">
+      Key improvements: (1) Problem statement promoted to hero area as the primary description. (2) Navigation actions elevated to prominent action bar with counts and icons. (3) Vision and Target Audience consolidated into a 2-column grid. (4) Context uses a denser 2-column layout instead of a full-width card. (5) WIP limits show visual progress bars indicating current usage vs. limit. Overall vertical scroll reduced by approximately 40%.
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

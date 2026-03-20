@@ -1,0 +1,245 @@
+<!--
+  Mockup: Semantic Phase Badge Colors
+
+  WHAT THIS DEMONSTRATES:
+  - Before: Phase badges use only shadcn default variants (default/secondary/outline),
+    making InProgress, Review, and Validating visually identical (all "default" = black).
+    Draft and Done are both "secondary" (light gray). No color coding.
+  - After: Each phase gets a distinct, semantically meaningful color that communicates
+    workflow status at a glance. Uses a consistent palette that works for color-blind users
+    (via shape + text + color combination).
+
+  KEY CHANGES:
+  1. Draft = gray (not started), Ready = blue (queued), InProgress = amber/yellow (active work),
+     Review = purple (needs attention), Validating = orange (testing), Done = green (complete)
+  2. Added subtle left-border color indicators to spec cards on the board
+  3. Complexity badges use a separate, non-conflicting style (dotted border)
+  4. Product status badges also get semantic colors (Active=green, Discovery=blue, etc.)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup: Semantic Phase Badges</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #0f172a; }
+
+  .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+  h2 { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+  .label-before { color: #dc2626; }
+  .label-after { color: #16a34a; }
+  .section { margin-bottom: 48px; }
+
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .badge-row .label {
+    font-size: 13px;
+    color: #64748b;
+    width: 120px;
+    flex-shrink: 0;
+  }
+
+  /* Before badges - only shadcn defaults */
+  .badge-before {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-before.default { background: #0a0a0a; color: white; }
+  .badge-before.secondary { background: #f4f4f5; color: #0a0a0a; }
+  .badge-before.outline { background: white; color: #0a0a0a; border: 1px solid #e5e7eb; }
+
+  /* After badges - semantic colors */
+  .badge-after {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+  .badge-after.draft { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+  .badge-after.ready { background: #dbeafe; color: #1e40af; }
+  .badge-after.in-progress { background: #fef3c7; color: #92400e; }
+  .badge-after.review { background: #ede9fe; color: #6d28d9; }
+  .badge-after.validating { background: #ffedd5; color: #c2410c; }
+  .badge-after.done { background: #dcfce7; color: #166534; }
+
+  /* Product status badges - after */
+  .badge-after.active { background: #dcfce7; color: #166534; }
+  .badge-after.discovery { background: #dbeafe; color: #1e40af; }
+  .badge-after.maintenance { background: #fef3c7; color: #92400e; }
+  .badge-after.sunset { background: #fecaca; color: #991b1b; }
+
+  /* Complexity badges - after (separate visual language) */
+  .complexity-after {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1.5px dashed #94a3b8;
+    color: #475569;
+    background: white;
+  }
+  .complexity-after.high { border-color: #f59e0b; color: #92400e; }
+  .complexity-after.medium { border-color: #94a3b8; color: #475569; }
+  .complexity-after.low { border-color: #86efac; color: #166534; }
+
+  /* Spec card comparison */
+  .card-row { display: flex; gap: 24px; margin-top: 16px; }
+  .spec-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    padding: 12px;
+    width: 200px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .spec-card-after {
+    border-left: 3px solid;
+  }
+  .spec-card-after.phase-draft { border-left-color: #94a3b8; }
+  .spec-card-after.phase-ready { border-left-color: #3b82f6; }
+  .spec-card-after.phase-inprogress { border-left-color: #f59e0b; }
+  .spec-card-after.phase-review { border-left-color: #8b5cf6; }
+  .spec-card-after.phase-validating { border-left-color: #f97316; }
+  .spec-card-after.phase-done { border-left-color: #22c55e; }
+
+  .spec-card .title { font-size: 13px; font-weight: 500; margin-bottom: 8px; line-height: 1.3; }
+  .spec-card .meta { display: flex; align-items: center; justify-content: space-between; }
+  .spec-card .days { font-size: 11px; color: #94a3b8; }
+
+  .annotation {
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #92400e;
+    margin: 12px 0;
+  }
+
+  .divider { border: none; border-top: 1px solid #e2e8f0; margin: 32px 0; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1 style="font-size: 20px; font-weight: 700; margin-bottom: 32px;">Phase Badge Color System Comparison</h1>
+
+  <!-- BEFORE: Phase badges -->
+  <div class="section">
+    <h2 class="label-before">BEFORE: Phase Badges (Current)</h2>
+    <div class="badge-row">
+      <span class="label">Spec Phases:</span>
+      <span class="badge-before secondary">Draft</span>
+      <span class="badge-before outline">Ready</span>
+      <span class="badge-before default">InProgress</span>
+      <span class="badge-before default">Review</span>
+      <span class="badge-before default">Validating</span>
+      <span class="badge-before secondary">Done</span>
+    </div>
+    <div class="annotation">
+      Problem: InProgress, Review, and Validating are all identical black badges. Draft and Done are both identical gray. Users cannot distinguish phases at a glance. On the Flow Board, the only way to tell a card's phase is its column position.
+    </div>
+  </div>
+
+  <!-- AFTER: Phase badges -->
+  <div class="section">
+    <h2 class="label-after">AFTER: Semantic Phase Badges</h2>
+    <div class="badge-row">
+      <span class="label">Spec Phases:</span>
+      <span class="badge-after draft">Draft</span>
+      <span class="badge-after ready">Ready</span>
+      <span class="badge-after in-progress">In Progress</span>
+      <span class="badge-after review">Review</span>
+      <span class="badge-after validating">Validating</span>
+      <span class="badge-after done">Done</span>
+    </div>
+    <div class="badge-row">
+      <span class="label">Product Status:</span>
+      <span class="badge-after active">Active</span>
+      <span class="badge-after discovery">Discovery</span>
+      <span class="badge-after maintenance">Maintenance</span>
+      <span class="badge-after sunset">Sunset</span>
+    </div>
+    <div class="badge-row">
+      <span class="label">Complexity:</span>
+      <span class="complexity-after low">Low</span>
+      <span class="complexity-after medium">Medium</span>
+      <span class="complexity-after high">High</span>
+    </div>
+    <div class="annotation">
+      Improvements: (1) Each phase has a unique color making workflow state instantly scannable. (2) Colors follow natural metaphor: gray=idle, blue=queued, amber=active, purple=needs attention, orange=testing, green=complete. (3) Complexity uses dashed-border style to visually separate it from phase badges. (4) All combinations pass WCAG AA contrast.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Board cards comparison -->
+  <div class="section">
+    <h2 class="label-before">BEFORE: Board Cards (no phase color indicator)</h2>
+    <div class="card-row">
+      <div class="spec-card">
+        <p class="title">SPEC-002: Product CRUD</p>
+        <div class="meta">
+          <span class="badge-before outline" style="font-size: 11px; padding: 1px 6px;">Medium</span>
+          <span class="days">3d</span>
+        </div>
+      </div>
+      <div class="spec-card">
+        <p class="title">SPEC-003: Hierarchy CRUD</p>
+        <div class="meta">
+          <span class="badge-before default" style="font-size: 11px; padding: 1px 6px;">High</span>
+          <span class="days">7d</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="label-after">AFTER: Board Cards (colored left border by phase)</h2>
+    <div class="card-row">
+      <div class="spec-card spec-card-after phase-done">
+        <p class="title">SPEC-002: Product CRUD</p>
+        <div class="meta">
+          <span class="complexity-after medium">Medium</span>
+          <span class="days">3d</span>
+        </div>
+      </div>
+      <div class="spec-card spec-card-after phase-inprogress">
+        <p class="title">SPEC-003: Hierarchy CRUD</p>
+        <div class="meta">
+          <span class="complexity-after high">High</span>
+          <span class="days">7d</span>
+        </div>
+      </div>
+      <div class="spec-card spec-card-after phase-review">
+        <p class="title">SPEC-005: Checklist Gate</p>
+        <div class="meta">
+          <span class="complexity-after medium">Medium</span>
+          <span class="days">2d</span>
+        </div>
+      </div>
+    </div>
+    <div class="annotation">
+      Improvements: (1) Colored left border reinforces phase identity even without reading column headers. (2) When a card is dragged between columns, the color provides immediate recognition. (3) Complexity badges use a distinct dashed style so they do not compete with phase colors.
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
