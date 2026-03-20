@@ -17,6 +17,7 @@ function serializeSpec(row: any): Spec {
     validation_automated: JSON.parse(row.validation_automated),
     validation_human: JSON.parse(row.validation_human),
     peer_reviewed: row.peer_reviewed,
+    phase_changed_at: row.phase_changed_at.toISOString(),
     created_at: row.created_at.toISOString(),
     updated_at: row.updated_at.toISOString(),
     archived_at: row.archived_at?.toISOString() ?? null,
@@ -148,4 +149,10 @@ export async function getSpecExpectations(specId: string) {
     status: row.expectation.status,
     edge_cases: JSON.parse(row.expectation.edge_cases),
   }));
+}
+
+export async function countSpecsByPhase(productId: string, phase: string): Promise<number> {
+  return prisma.spec.count({
+    where: { product_id: productId, phase, archived_at: null },
+  });
 }

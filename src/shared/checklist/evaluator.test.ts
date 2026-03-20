@@ -34,6 +34,7 @@ function fullSpec(overrides: Partial<Spec> = {}): Spec {
     validation_automated: ['Unit tests for service layer'],
     validation_human: ['Manual QA walkthrough'],
     peer_reviewed: true,
+    phase_changed_at: '2026-01-01T00:00:00.000Z',
     created_at: '2026-01-01T00:00:00.000Z',
     updated_at: '2026-01-01T00:00:00.000Z',
     archived_at: null,

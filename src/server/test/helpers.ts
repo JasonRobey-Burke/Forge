@@ -65,6 +65,7 @@ export function mockSpec(overrides: Record<string, unknown> = {}) {
     validation_automated: JSON.stringify([]),
     validation_human: JSON.stringify([]),
     peer_reviewed: false,
+    phase_changed_at: new Date('2025-01-01T00:00:00Z'),
     created_at: new Date('2025-01-01T00:00:00Z'),
     updated_at: new Date('2025-01-01T00:00:00Z'),
     archived_at: null,

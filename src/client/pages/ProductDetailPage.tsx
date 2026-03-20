@@ -195,6 +195,20 @@ export default function ProductDetailPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">Flow Board</CardTitle>
+            <Button asChild size="sm" variant="outline">
+              <Link to={`/products/${product.id}/board`}>View Board</Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Visualize spec workflow across phases with drag-and-drop.
+            </p>
+          </CardContent>
+        </Card>
+
         <Separator />
 
         <div className="text-xs text-muted-foreground flex gap-4">

@@ -142,6 +142,7 @@ function ChecklistSidebar({ defaultSpec, expectations }: ChecklistSidebarProps) 
     validation_human: ((values.validation_human as { value: string }[] | undefined) ?? [])
       .map((v) => v.value).filter(Boolean),
     peer_reviewed: (values.peer_reviewed as boolean | undefined) ?? defaultSpec.peer_reviewed ?? false,
+    phase_changed_at: defaultSpec.phase_changed_at ?? '',
     created_at: defaultSpec.created_at ?? '',
     updated_at: defaultSpec.updated_at ?? '',
     archived_at: defaultSpec.archived_at ?? null,

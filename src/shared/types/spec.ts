@@ -14,6 +14,7 @@ export interface Spec {
   validation_automated: string[];
   validation_human: string[];
   peer_reviewed: boolean;
+  phase_changed_at: string;
   created_at: string;
   updated_at: string;
   archived_at: string | null;

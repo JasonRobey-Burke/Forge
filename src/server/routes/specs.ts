@@ -112,7 +112,7 @@ router.post('/:id/transition', validate(transitionSpecSchema), async (req: Reque
     const status = result.error === 'not_found' ? 404 : 422;
     return res.status(status).json({
       data: null,
-      error: { message: result.error!, code: result.error!, checklist: result.checklist },
+      error: { message: result.error!, code: result.error!, checklist: result.checklist, wipCheck: result.wipCheck },
       meta: null,
     });
   }

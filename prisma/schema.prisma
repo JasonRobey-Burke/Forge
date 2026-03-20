@@ -98,6 +98,7 @@ model Spec {
   validation_automated String   @db.NVarChar(Max)
   validation_human     String   @db.NVarChar(Max)
   peer_reviewed        Boolean  @default(false)
+  phase_changed_at     DateTime @default(now())
   created_at           DateTime @default(now())
   updated_at           DateTime @updatedAt
   archived_at          DateTime?

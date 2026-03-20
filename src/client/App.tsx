@@ -16,6 +16,7 @@ import SpecListPage from '@/pages/SpecListPage';
 import SpecCreatePage from '@/pages/SpecCreatePage';
 import SpecDetailPage from '@/pages/SpecDetailPage';
 import SpecEditPage from '@/pages/SpecEditPage';
+import FlowBoardPage from '@/pages/FlowBoardPage';
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="products/:productId/specs/new" element={<SpecCreatePage />} />
         <Route path="specs/:id" element={<SpecDetailPage />} />
         <Route path="specs/:id/edit" element={<SpecEditPage />} />
+        <Route path="products/:productId/board" element={<FlowBoardPage />} />
       </Route>
     </Routes>
   );
