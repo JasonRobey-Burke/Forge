@@ -21,10 +21,13 @@ The full product definition lives in `docs/forge-product-definition-v1.1.md`.
 
 ```bash
 # Start dev environment (app + SQL Server containers)
-podman-compose up
+docker compose up
 
 # Stop dev environment
-podman-compose down
+docker compose down
+
+# Rebuild after dependency changes (package.json)
+docker compose up -d --build app
 
 # Run Prisma migrations against local SQL container
 npx prisma migrate dev
