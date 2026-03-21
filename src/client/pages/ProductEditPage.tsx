@@ -1,12 +1,15 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useProduct, useUpdateProduct } from '@/hooks/useProducts';
 import ProductForm from '@/components/ProductForm';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function ProductEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: product, isLoading, error } = useProduct(id!);
   const updateProduct = useUpdateProduct();
+  useDocumentTitle(product?.name ? `Edit ${product.name}` : 'Edit Product');
 
   if (isLoading) {
     return <div className="text-muted-foreground">Loading...</div>;
@@ -23,7 +26,10 @@ export default function ProductEditPage() {
         defaultValues={product}
         onSubmit={(values) => {
           updateProduct.mutate({ id: id!, ...values }, {
-            onSuccess: () => navigate(`/products/${id}`),
+            onSuccess: () => {
+              toast.success('Product updated');
+              navigate(`/products/${id}`);
+            },
           });
         }}
         isSubmitting={updateProduct.isPending}

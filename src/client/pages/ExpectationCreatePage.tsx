@@ -1,8 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useCreateExpectation } from '@/hooks/useExpectations';
 import ExpectationForm from '@/components/ExpectationForm';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function ExpectationCreatePage() {
+  useDocumentTitle('New Expectation');
   const { intentionId } = useParams<{ intentionId: string }>();
   const navigate = useNavigate();
   const createExpectation = useCreateExpectation();
@@ -14,7 +17,10 @@ export default function ExpectationCreatePage() {
         intentionId={intentionId!}
         onSubmit={(values) => {
           createExpectation.mutate(values, {
-            onSuccess: (expectation) => navigate(`/expectations/${expectation.id}`),
+            onSuccess: (expectation) => {
+              toast.success('Expectation created');
+              navigate(`/expectations/${expectation.id}`);
+            },
           });
         }}
         isSubmitting={createExpectation.isPending}

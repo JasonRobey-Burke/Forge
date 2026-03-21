@@ -1,18 +1,34 @@
+import { useState, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useSpecs } from '@/hooks/useSpecs';
 import { useProduct } from '@/hooks/useProducts';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import { PhaseBadge } from '@/lib/phaseColors';
+import { PhaseBadge, PHASE_LABELS } from '@/lib/phaseColors';
+import ListToolbar from '@/components/ListToolbar';
+import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
 
 export default function SpecListPage() {
+  useDocumentTitle('Specs');
   const { productId } = useParams<{ productId: string }>();
   const { data: product } = useProduct(productId!);
   const { data: specs, isLoading, error } = useSpecs(productId!);
+  const [search, setSearch] = useState('');
+  const [phaseFilter, setPhaseFilter] = useState('__all__');
+  const [complexityFilter, setComplexityFilter] = useState('__all__');
 
-  if (isLoading) return <div className="text-muted-foreground">Loading specs...</div>;
+  const filtered = useMemo(() => {
+    let items = specs ?? [];
+    if (search) items = items.filter(s => s.title.toLowerCase().includes(search.toLowerCase()));
+    if (phaseFilter !== '__all__') items = items.filter(s => s.phase === phaseFilter);
+    if (complexityFilter !== '__all__') items = items.filter(s => s.complexity === complexityFilter);
+    return items;
+  }, [specs, search, phaseFilter, complexityFilter]);
+
+  if (isLoading) return <CardGridSkeleton />;
   if (error) return <div className="text-destructive">Failed to load specs: {error.message}</div>;
 
   return (
@@ -29,6 +45,30 @@ export default function SpecListPage() {
         </Button>
       </div>
 
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search specs..."
+        filters={[
+          {
+            label: 'Phase',
+            value: phaseFilter,
+            onChange: setPhaseFilter,
+            options: Object.entries(PHASE_LABELS).map(([value, label]) => ({ label, value })),
+          },
+          {
+            label: 'Complexity',
+            value: complexityFilter,
+            onChange: setComplexityFilter,
+            options: [
+              { label: 'Low', value: 'Low' },
+              { label: 'Medium', value: 'Medium' },
+              { label: 'High', value: 'High' },
+            ],
+          },
+        ]}
+      />
+
       {!specs || specs.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -40,7 +80,7 @@ export default function SpecListPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {specs.map((spec) => (
+          {filtered.map((spec) => (
             <Link key={spec.id} to={`/specs/${spec.id}`} className="block">
               <Card className="hover:border-primary/50 transition-colors h-full">
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">

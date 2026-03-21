@@ -1,9 +1,12 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useProduct } from '@/hooks/useProducts';
 import { useCreateSpec } from '@/hooks/useSpecs';
 import SpecForm from '@/components/SpecForm';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function SpecCreatePage() {
+  useDocumentTitle('New Spec');
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const { data: product, isLoading } = useProduct(productId!);
@@ -22,7 +25,10 @@ export default function SpecCreatePage() {
         defaultValues={defaultValues}
         onSubmit={(values) => {
           createSpec.mutate(values, {
-            onSuccess: (spec) => navigate(`/specs/${spec.id}`),
+            onSuccess: (spec) => {
+              toast.success('Spec created');
+              navigate(`/specs/${spec.id}`);
+            },
           });
         }}
         isSubmitting={createSpec.isPending}

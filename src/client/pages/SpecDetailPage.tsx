@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useSpec, useDeleteSpec, useSpecExpectations } from '@/hooks/useSpecs';
+import { useProduct } from '@/hooks/useProducts';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useTransitionSpec } from '@/hooks/usePhaseTransition';
 import { evaluateChecklist } from '@shared/checklist/evaluator';
 import type { ChecklistExpectation } from '@shared/checklist/types';
@@ -24,12 +27,16 @@ import { downloadYaml } from '@/lib/exportYaml';
 import { downloadMarkdown, specToMarkdown } from '@/lib/exportMarkdown';
 import { estimateTokens } from '@/lib/tokenEstimate';
 import { PhaseBadge } from '@/lib/phaseColors';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 
 export default function SpecDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: spec, isLoading, error } = useSpec(id!);
   const { data: linkedExpectations } = useSpecExpectations(id!);
+  const { data: product } = useProduct(spec?.product_id ?? '');
+  useDocumentTitle(spec?.title ?? 'Spec');
   const deleteSpec = useDeleteSpec();
   const transitionSpec = useTransitionSpec();
 
@@ -38,7 +45,7 @@ export default function SpecDetailPage() {
   const [overrideReason, setOverrideReason] = useState('');
   const [transitioning, setTransitioning] = useState(false);
 
-  if (isLoading) return <div className="text-muted-foreground">Loading...</div>;
+  if (isLoading) return <DetailPageSkeleton />;
   if (error || !spec) return <div className="text-destructive">Spec not found.</div>;
 
   // Build ChecklistExpectation[] from linked expectations data
@@ -63,7 +70,7 @@ export default function SpecDetailPage() {
   function handleDelete() {
     deleteSpec.mutate(
       { id: id!, product_id: spec!.product_id },
-      { onSuccess: () => navigate(`/products/${spec!.product_id}/specs`) },
+      { onSuccess: () => { toast.success('Spec deleted'); navigate(`/products/${spec!.product_id}/specs`); } },
     );
   }
 
@@ -93,6 +100,13 @@ export default function SpecDetailPage() {
   const otherPhases = Object.values(SpecPhaseEnum).filter((p) => p !== 'Draft' && p !== spec.phase);
 
   return (
+    <>
+    <Breadcrumbs items={[
+      { label: 'Products', href: '/products' },
+      { label: product?.name ?? '...', href: `/products/${spec.product_id}` },
+      { label: 'Specs', href: `/products/${spec.product_id}/specs` },
+      { label: spec.title },
+    ]} />
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       {/* Main content */}
       <div>
@@ -339,5 +353,6 @@ export default function SpecDetailPage() {
         <CompletenessChecklist spec={spec} expectations={checklistExpectations} result={checklistResult} />
       </div>
     </div>
+    </>
   );
 }

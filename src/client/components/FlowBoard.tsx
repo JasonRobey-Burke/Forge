@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   DndContext,
   DragOverlay,
+  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { PHASE_LABELS } from '@/lib/phaseColors';
 import { useTransitionSpec } from '@/hooks/usePhaseTransition';
 import { checkWipLimit } from '@shared/lib/wipCheck';
 import PhaseColumn from '@/components/PhaseColumn';
@@ -42,7 +45,8 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
   const navigate = useNavigate();
   const transitionSpec = useTransitionSpec();
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor)
   );
 
   const [activeSpec, setActiveSpec] = useState<Spec | null>(null);
@@ -62,6 +66,9 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
     transitionSpec.mutate(
       { specId: spec.id, toPhase, overrideReason },
       {
+        onSuccess: () => {
+          toast.success(`Moved to ${PHASE_LABELS[toPhase] ?? toPhase}`);
+        },
         onError: (error: Error) => {
           const apiError = error as ApiError;
           if (
@@ -111,6 +118,28 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
         sensors={sensors}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        accessibility={{
+          announcements: {
+            onDragStart({ active }) {
+              return `Picked up ${active.data.current?.spec?.title ?? 'spec'}`;
+            },
+            onDragOver({ active: _active, over }) {
+              if (over) {
+                return `Over ${PHASE_LABELS[over.id as string] ?? over.id}`;
+              }
+              return 'Not over a droppable area';
+            },
+            onDragEnd({ active: _active, over }) {
+              if (over) {
+                return `Dropped in ${PHASE_LABELS[over.id as string] ?? over.id}`;
+              }
+              return 'Dropped outside a droppable area';
+            },
+            onDragCancel() {
+              return 'Drag cancelled';
+            },
+          },
+        }}
       >
         <div className="grid grid-cols-6 gap-3">
           {PHASES.map((phase) => (

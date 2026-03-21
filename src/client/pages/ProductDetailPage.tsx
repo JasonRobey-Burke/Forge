@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useProduct, useDeleteProduct } from '@/hooks/useProducts';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,16 +17,19 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { StatusBadge } from '@/lib/phaseColors';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: product, isLoading, error } = useProduct(id!);
+  useDocumentTitle(product?.name ?? 'Product');
   const deleteProduct = useDeleteProduct();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (isLoading) {
-    return <div className="text-muted-foreground">Loading...</div>;
+    return <DetailPageSkeleton />;
   }
 
   if (error || !product) {
@@ -33,12 +38,19 @@ export default function ProductDetailPage() {
 
   function handleDelete() {
     deleteProduct.mutate(id!, {
-      onSuccess: () => navigate('/products'),
+      onSuccess: () => {
+        toast.success('Product deleted');
+        navigate('/products');
+      },
     });
   }
 
   return (
     <div className="max-w-3xl">
+      <Breadcrumbs items={[
+        { label: 'Products', href: '/products' },
+        { label: product.name },
+      ]} />
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">{product.name}</h1>

@@ -1,7 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useSpec, useUpdateSpec, useSpecExpectations } from '@/hooks/useSpecs';
 import { useProduct } from '@/hooks/useProducts';
 import SpecForm from '@/components/SpecForm';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import type { ChecklistExpectation } from '@shared/checklist/types';
 
 export default function SpecEditPage() {
@@ -11,6 +13,7 @@ export default function SpecEditPage() {
   const { data: linkedExpectations } = useSpecExpectations(id!);
   const updateSpec = useUpdateSpec();
   const { data: product } = useProduct(spec?.product_id ?? '');
+  useDocumentTitle('Edit Spec');
 
   if (isLoading) return <div className="text-muted-foreground">Loading...</div>;
   if (error || !spec) return <div className="text-destructive">Spec not found.</div>;
@@ -34,7 +37,7 @@ export default function SpecEditPage() {
         onSubmit={({ product_id: _, ...rest }) => {
           updateSpec.mutate(
             { id: id!, product_id: spec.product_id, ...rest },
-            { onSuccess: () => navigate(`/specs/${id}`) },
+            { onSuccess: () => { toast.success('Spec updated'); navigate(`/specs/${id}`); } },
           );
         }}
         isSubmitting={updateSpec.isPending}

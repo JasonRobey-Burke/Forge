@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useIntention, useDeleteIntention } from '@/hooks/useIntentions';
+import { useProduct } from '@/hooks/useProducts';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +17,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import type { Priority } from '@shared/types';
 
 const priorityVariant: Record<Priority, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -27,20 +32,25 @@ export default function IntentionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: intention, isLoading, error } = useIntention(id!);
+  const { data: product } = useProduct(intention?.product_id ?? '');
+  useDocumentTitle(intention?.title ?? 'Intention');
   const deleteIntention = useDeleteIntention();
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  if (isLoading) return <div className="text-muted-foreground">Loading...</div>;
+  if (isLoading) return <DetailPageSkeleton />;
   if (error || !intention) return <div className="text-destructive">Intention not found.</div>;
 
   function handleDelete() {
     deleteIntention.mutate(
       { id: id!, product_id: intention!.product_id },
       {
-        onSuccess: () => navigate(`/products/${intention!.product_id}/intentions`),
+        onSuccess: () => {
+          toast.success('Intention deleted');
+          navigate(`/products/${intention!.product_id}/intentions`);
+        },
         onError: (err) => {
           setDeleteOpen(false);
-          alert(err.message);
+          toast.error(err.message);
         },
       },
     );
@@ -48,6 +58,12 @@ export default function IntentionDetailPage() {
 
   return (
     <div className="max-w-3xl">
+      <Breadcrumbs items={[
+        { label: 'Products', href: '/products' },
+        { label: product?.name ?? '...', href: `/products/${intention.product_id}` },
+        { label: 'Intentions', href: `/products/${intention.product_id}/intentions` },
+        { label: intention.title },
+      ]} />
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">{intention.title}</h1>

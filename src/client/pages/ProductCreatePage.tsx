@@ -1,8 +1,11 @@
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useCreateProduct } from '@/hooks/useProducts';
 import ProductForm from '@/components/ProductForm';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function ProductCreatePage() {
+  useDocumentTitle('New Product');
   const navigate = useNavigate();
   const createProduct = useCreateProduct();
 
@@ -12,7 +15,10 @@ export default function ProductCreatePage() {
       <ProductForm
         onSubmit={(values) => {
           createProduct.mutate(values, {
-            onSuccess: (product) => navigate(`/products/${product.id}`),
+            onSuccess: (product) => {
+              toast.success('Product created');
+              navigate(`/products/${product.id}`);
+            },
           });
         }}
         isSubmitting={createProduct.isPending}

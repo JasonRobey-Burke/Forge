@@ -1,11 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useIntention, useUpdateIntention } from '@/hooks/useIntentions';
 import IntentionForm from '@/components/IntentionForm';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function IntentionEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: intention, isLoading, error } = useIntention(id!);
+  useDocumentTitle('Edit Intention');
   const updateIntention = useUpdateIntention();
 
   if (isLoading) return <div className="text-muted-foreground">Loading...</div>;
@@ -20,7 +23,7 @@ export default function IntentionEditPage() {
         onSubmit={({ product_id: _, ...rest }) => {
           updateIntention.mutate(
             { id: id!, product_id: intention.product_id, ...rest },
-            { onSuccess: () => navigate(`/intentions/${id}`) },
+            { onSuccess: () => { toast.success('Intention updated'); navigate(`/intentions/${id}`); } },
           );
         }}
         isSubmitting={updateIntention.isPending}

@@ -1,8 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useCreateIntention } from '@/hooks/useIntentions';
 import IntentionForm from '@/components/IntentionForm';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 export default function IntentionCreatePage() {
+  useDocumentTitle('New Intention');
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const createIntention = useCreateIntention();
@@ -14,7 +17,10 @@ export default function IntentionCreatePage() {
         productId={productId!}
         onSubmit={(values) => {
           createIntention.mutate(values, {
-            onSuccess: (intention) => navigate(`/intentions/${intention.id}`),
+            onSuccess: (intention) => {
+              toast.success('Intention created');
+              navigate(`/intentions/${intention.id}`);
+            },
           });
         }}
         isSubmitting={createIntention.isPending}

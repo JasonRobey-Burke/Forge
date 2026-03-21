@@ -1,15 +1,29 @@
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProducts } from '@/hooks/useProducts';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/lib/phaseColors';
+import ListToolbar from '@/components/ListToolbar';
+import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
 
 export default function ProductListPage() {
+  useDocumentTitle('Products');
   const { data: products, isLoading, error } = useProducts();
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('__all__');
+
+  const filtered = useMemo(() => {
+    let items = products ?? [];
+    if (search) items = items.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+    if (statusFilter !== '__all__') items = items.filter(p => p.status === statusFilter);
+    return items;
+  }, [products, search, statusFilter]);
 
   if (isLoading) {
-    return <div className="text-muted-foreground">Loading products...</div>;
+    return <CardGridSkeleton />;
   }
 
   if (error) {
@@ -25,6 +39,25 @@ export default function ProductListPage() {
         </Button>
       </div>
 
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search products..."
+        filters={[
+          {
+            label: 'Status',
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: [
+              { label: 'Active', value: 'Active' },
+              { label: 'Discovery', value: 'Discovery' },
+              { label: 'Maintenance', value: 'Maintenance' },
+              { label: 'Sunset', value: 'Sunset' },
+            ],
+          },
+        ]}
+      />
+
       {!products || products.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -36,7 +69,7 @@ export default function ProductListPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
+          {filtered.map((product) => (
             <Link key={product.id} to={`/products/${product.id}`} className="block">
               <Card className="hover:border-primary/50 transition-colors h-full">
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">

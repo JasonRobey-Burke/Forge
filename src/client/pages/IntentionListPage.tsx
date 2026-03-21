@@ -1,11 +1,15 @@
+import { useState, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useIntentions } from '@/hooks/useIntentions';
 import { useProduct } from '@/hooks/useProducts';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import type { Priority } from '@shared/types';
+import ListToolbar from '@/components/ListToolbar';
+import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
 
 const priorityVariant: Record<Priority, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   Critical: 'destructive',
@@ -15,11 +19,21 @@ const priorityVariant: Record<Priority, 'default' | 'secondary' | 'outline' | 'd
 };
 
 export default function IntentionListPage() {
+  useDocumentTitle('Intentions');
   const { productId } = useParams<{ productId: string }>();
   const { data: product } = useProduct(productId!);
   const { data: intentions, isLoading, error } = useIntentions(productId!);
+  const [search, setSearch] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('__all__');
 
-  if (isLoading) return <div className="text-muted-foreground">Loading intentions...</div>;
+  const filtered = useMemo(() => {
+    let items = intentions ?? [];
+    if (search) items = items.filter(i => i.title.toLowerCase().includes(search.toLowerCase()));
+    if (priorityFilter !== '__all__') items = items.filter(i => i.priority === priorityFilter);
+    return items;
+  }, [intentions, search, priorityFilter]);
+
+  if (isLoading) return <CardGridSkeleton />;
   if (error) return <div className="text-destructive">Failed to load intentions: {error.message}</div>;
 
   return (
@@ -36,6 +50,25 @@ export default function IntentionListPage() {
         </Button>
       </div>
 
+      <ListToolbar
+        search={search}
+        onSearchChange={setSearch}
+        placeholder="Search intentions..."
+        filters={[
+          {
+            label: 'Priority',
+            value: priorityFilter,
+            onChange: setPriorityFilter,
+            options: [
+              { label: 'Critical', value: 'Critical' },
+              { label: 'High', value: 'High' },
+              { label: 'Medium', value: 'Medium' },
+              { label: 'Low', value: 'Low' },
+            ],
+          },
+        ]}
+      />
+
       {!intentions || intentions.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -47,7 +80,7 @@ export default function IntentionListPage() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {intentions.map((intention) => (
+          {filtered.map((intention) => (
             <Link key={intention.id} to={`/intentions/${intention.id}`} className="block">
               <Card className="hover:border-primary/50 transition-colors h-full">
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
