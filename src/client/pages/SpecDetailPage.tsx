@@ -26,7 +26,14 @@ import { SpecPhase as SpecPhaseEnum } from '@shared/types/enums';
 import { downloadYaml } from '@/lib/exportYaml';
 import { downloadMarkdown, specToMarkdown } from '@/lib/exportMarkdown';
 import { estimateTokens } from '@/lib/tokenEstimate';
-import { PhaseBadge } from '@/lib/phaseColors';
+import { PhaseBadge, PHASE_LABELS } from '@/lib/phaseColors';
+import { ArrowRight, ArrowLeft, MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 
@@ -97,7 +104,12 @@ export default function SpecDetailPage() {
     );
   }
 
-  const otherPhases = Object.values(SpecPhaseEnum).filter((p) => p !== 'Draft' && p !== spec.phase);
+  const PHASES = Object.values(SpecPhaseEnum);
+  const currentIndex = PHASES.indexOf(spec.phase);
+  const nextPhase = currentIndex < PHASES.length - 1 ? PHASES[currentIndex + 1] : null;
+  const prevPhase = currentIndex > 0 ? PHASES[currentIndex - 1] : null;
+  const adjacentPhases = [nextPhase, prevPhase].filter(Boolean);
+  const otherPhases = PHASES.filter((p) => p !== spec.phase && !adjacentPhases.includes(p));
 
   return (
     <>
@@ -117,22 +129,41 @@ export default function SpecDetailPage() {
             <Badge variant="outline">{spec.complexity}</Badge>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => downloadYaml(exportData)}>
-              Export YAML
-            </Button>
-            <Button variant="outline" onClick={() => downloadMarkdown(exportData)}>
-              Export Markdown
-              {tokenCount > 8000 && (
-                <Badge variant="destructive" className="ml-2 text-xs">&gt;8K tokens</Badge>
-              )}
-            </Button>
-            <Button asChild variant="outline">
+            <Button asChild>
               <Link to={`/specs/${spec.id}/edit`}>Edit</Link>
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">Export</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => downloadYaml(exportData)}>
+                  Export YAML
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => downloadMarkdown(exportData)}>
+                  Export Markdown
+                  {tokenCount > 8000 && (
+                    <Badge variant="destructive" className="ml-2 text-xs">&gt;8K tokens</Badge>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-              <DialogTrigger asChild>
-                <Button variant="destructive">Delete</Button>
-              </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Delete {spec.title}?</DialogTitle>
@@ -200,19 +231,43 @@ export default function SpecDetailPage() {
             </>
           )}
 
-          {spec.phase !== 'Draft' && otherPhases.length > 0 && (
+          {spec.phase !== 'Draft' && (
             <div className="flex items-center gap-2 flex-wrap">
-              {otherPhases.map((p) => (
+              {nextPhase && (
                 <Button
-                  key={p}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleTransitionTo(p)}
+                  onClick={() => handleTransitionTo(nextPhase)}
                   disabled={transitioning}
                 >
-                  → {p}
+                  Move to {PHASE_LABELS[nextPhase] ?? nextPhase}
+                  <ArrowRight className="ml-1 h-4 w-4" />
                 </Button>
-              ))}
+              )}
+              {prevPhase && (
+                <Button
+                  variant="outline"
+                  onClick={() => handleTransitionTo(prevPhase)}
+                  disabled={transitioning}
+                >
+                  <ArrowLeft className="mr-1 h-4 w-4" />
+                  Back to {PHASE_LABELS[prevPhase] ?? prevPhase}
+                </Button>
+              )}
+              {otherPhases.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" disabled={transitioning}>
+                      More...
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {otherPhases.map((p) => (
+                      <DropdownMenuItem key={p} onClick={() => handleTransitionTo(p)}>
+                        Move to {PHASE_LABELS[p] ?? p}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           )}
 

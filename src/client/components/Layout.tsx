@@ -1,6 +1,10 @@
 import { Outlet, Link } from 'react-router-dom';
+import { useCurrentProduct } from '@/hooks/useCurrentProduct';
+import ProductNav from '@/components/ProductNav';
 
 export default function Layout() {
+  const { productId, productName, isProductRoute } = useCurrentProduct();
+
   return (
     <div className="min-h-screen bg-background">
       <div className="h-[3px] bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500" />
@@ -19,6 +23,9 @@ export default function Layout() {
           </nav>
         </div>
       </header>
+      {isProductRoute && productId && (
+        <ProductNav productId={productId} productName={productName} />
+      )}
       <main className="container mx-auto px-4 py-6">
         <Outlet />
       </main>

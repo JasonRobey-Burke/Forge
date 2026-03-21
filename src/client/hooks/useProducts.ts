@@ -18,6 +18,7 @@ export function useProduct(id: string) {
   return useQuery({
     queryKey: productKeys.detail(id),
     queryFn: () => apiFetch<Product>(`/products/${id}`),
+    enabled: id !== '',
   });
 }
 
