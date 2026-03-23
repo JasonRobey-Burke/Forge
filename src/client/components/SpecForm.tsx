@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Separator } from '@/components/ui/separator';
 import ContextEditor from '@/components/ContextEditor';
 import DynamicListEditor from '@/components/DynamicListEditor';
 import CollapsibleSection from '@/components/CollapsibleSection';
@@ -21,7 +22,6 @@ import { Badge } from '@/components/ui/badge';
 import { SpecPhase, Complexity } from '@shared/types/enums';
 import type { CreateSpecInput, ProductContext, Spec } from '@shared/types';
 import type { ChecklistExpectation } from '@shared/checklist/types';
-import { evaluateChecklist } from '@shared/checklist/evaluator';
 import CompletenessChecklist from '@/components/CompletenessChecklist';
 import { compareContext } from '@/lib/contextDiff';
 
@@ -151,6 +151,113 @@ function ChecklistSidebar({ defaultSpec, expectations }: ChecklistSidebarProps) 
   return <CompletenessChecklist spec={liveSpec} expectations={expectations} />;
 }
 
+// Summary badge components using useWatch for live counts
+function BoundariesBadge() {
+  const boundaries = useWatch<FormValues, 'boundaries'>({ name: 'boundaries' });
+  const count = (boundaries ?? []).filter((b) => b.value.trim()).length;
+  return <Badge variant="secondary" className="text-xs">{count}</Badge>;
+}
+
+function DeliverablesBadge() {
+  const deliverables = useWatch<FormValues, 'deliverables'>({ name: 'deliverables' });
+  const count = (deliverables ?? []).filter((d) => d.value.trim()).length;
+  return <Badge variant="secondary" className="text-xs">{count}</Badge>;
+}
+
+function ValidationBadge() {
+  const automated = useWatch<FormValues, 'validation_automated'>({ name: 'validation_automated' });
+  const human = useWatch<FormValues, 'validation_human'>({ name: 'validation_human' });
+  const autoCount = (automated ?? []).filter((v) => v.value.trim()).length;
+  const humanCount = (human ?? []).filter((v) => v.value.trim()).length;
+  return (
+    <Badge variant="secondary" className="text-xs">
+      {autoCount} auto, {humanCount} human
+    </Badge>
+  );
+}
+
+// Sidebar metadata fields (Phase, Complexity, Peer Reviewed) that live inside FormProvider
+function MetadataSidebar({
+  defaultSpec,
+  checklistExpectations,
+}: {
+  defaultSpec?: Partial<Spec>;
+  checklistExpectations?: ChecklistExpectation[];
+}) {
+  const form = useFormContext<FormValues>();
+  const showChecklist = !!defaultSpec && !!checklistExpectations;
+
+  return (
+    <div className="space-y-4">
+      <FormField
+        control={form.control}
+        name="phase"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Phase</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select phase" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {Object.values(SpecPhase).map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="complexity"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Complexity</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select complexity" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {Object.values(Complexity).map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="peer_reviewed"
+          {...form.register('peer_reviewed')}
+          className="h-4 w-4 rounded border-input"
+        />
+        <Label htmlFor="peer_reviewed">Peer Reviewed</Label>
+      </div>
+
+      {showChecklist && (
+        <>
+          <Separator />
+          <ChecklistSidebar
+            defaultSpec={defaultSpec!}
+            expectations={checklistExpectations!}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
 interface SpecFormProps {
   productId: string;
   productContext?: ProductContext;
@@ -185,10 +292,8 @@ export default function SpecForm({
     onSubmit(toApiValues(values, productId));
   }
 
-  const showChecklist = !!defaultSpec && !!checklistExpectations;
-
-  const formContent = (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-w-2xl">
+  const leftColumn = (
+    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
       <FormField
         control={form.control}
         name="title"
@@ -217,62 +322,19 @@ export default function SpecForm({
         )}
       />
 
-      <div className="grid grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="phase"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phase</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select phase" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {Object.values(SpecPhase).map((p) => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="complexity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Complexity</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select complexity" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {Object.values(Complexity).map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
       <CollapsibleSection
         title="Context"
+        defaultOpen={true}
         badge={productContext ? <ContextDiffBadge productContext={productContext} /> : undefined}
       >
         <ContextEditor productContext={productContext} />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Expectations" badge={<Badge variant="secondary">{linkedExpectations?.length ?? 0}</Badge>}>
+      <CollapsibleSection
+        title="Expectations"
+        defaultOpen={false}
+        badge={<Badge variant="secondary">{linkedExpectations?.length ?? 0}</Badge>}
+      >
         {linkedExpectations && linkedExpectations.length > 0 ? (
           <ul className="space-y-3">
             {linkedExpectations.map((exp) => (
@@ -297,26 +359,29 @@ export default function SpecForm({
         )}
       </CollapsibleSection>
 
-      <CollapsibleSection title="Boundaries">
+      <CollapsibleSection
+        title="Boundaries"
+        defaultOpen={false}
+        badge={<BoundariesBadge />}
+      >
         <DynamicListEditor name="boundaries" label="Boundaries" />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Deliverables">
+      <CollapsibleSection
+        title="Deliverables"
+        defaultOpen={false}
+        badge={<DeliverablesBadge />}
+      >
         <DynamicListEditor name="deliverables" label="Deliverables" />
       </CollapsibleSection>
 
-      <CollapsibleSection title="Validation">
+      <CollapsibleSection
+        title="Validation"
+        defaultOpen={false}
+        badge={<ValidationBadge />}
+      >
         <DynamicListEditor name="validation_automated" label="Automated Validation" />
         <DynamicListEditor name="validation_human" label="Human Validation" />
-        <div className="flex items-center gap-2 mt-3">
-          <input
-            type="checkbox"
-            id="peer_reviewed"
-            {...form.register('peer_reviewed')}
-            className="h-4 w-4 rounded border-input"
-          />
-          <Label htmlFor="peer_reviewed">Peer Reviewed</Label>
-        </div>
       </CollapsibleSection>
 
       <div className="flex gap-3">
@@ -330,25 +395,28 @@ export default function SpecForm({
     </form>
   );
 
-  if (showChecklist) {
-    return (
-      <FormProvider {...form}>
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-          <div>{formContent}</div>
-          <div className="lg:sticky lg:top-6 self-start">
-            <ChecklistSidebar
-              defaultSpec={defaultSpec!}
-              expectations={checklistExpectations!}
+  return (
+    <FormProvider {...form}>
+      {/* Mobile: sidebar content above form; lg+: two-column grid */}
+      <div className="lg:hidden space-y-6 mb-6">
+        <MetadataSidebar
+          defaultSpec={defaultSpec}
+          checklistExpectations={checklistExpectations}
+        />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          {leftColumn}
+        </div>
+        <div className="hidden lg:block lg:col-span-1">
+          <div className="lg:sticky lg:top-4 self-start">
+            <MetadataSidebar
+              defaultSpec={defaultSpec}
+              checklistExpectations={checklistExpectations}
             />
           </div>
         </div>
-      </FormProvider>
-    );
-  }
-
-  return (
-    <FormProvider {...form}>
-      {formContent}
+      </div>
     </FormProvider>
   );
 }
