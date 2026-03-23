@@ -39,6 +39,7 @@ export async function getIntention(id: string): Promise<(Intention & { dependenc
     dependencies: (row as any).dependencies_as_source?.map((dep: any) => ({
       id: dep.depends_on.id,
       title: dep.depends_on.title,
+      status: dep.depends_on.status,
     })) ?? [],
   };
 }

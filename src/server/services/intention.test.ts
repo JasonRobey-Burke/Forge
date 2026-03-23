@@ -49,6 +49,21 @@ describe('getIntention', () => {
     expect(result!.dependencies).toHaveLength(1);
     expect(result!.dependencies![0].title).toBe('Dep Title');
   });
+
+  it('includes status in dependency response', async () => {
+    prismaMock.intention.findFirst.mockResolvedValue({
+      ...mockIntention(),
+      dependencies_as_source: [
+        { depends_on: { id: 'dep-id', title: 'Dep Title', status: 'Deferred' } },
+      ],
+    });
+    const result = await intentionService.getIntention(TEST_INTENTION_ID);
+    expect(result?.dependencies?.[0]).toEqual({
+      id: 'dep-id',
+      title: 'Dep Title',
+      status: 'Deferred',
+    });
+  });
 });
 
 describe('createIntention', () => {

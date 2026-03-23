@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { AlertTriangle } from 'lucide-react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import type { Priority } from '@shared/types';
@@ -114,12 +115,21 @@ export default function IntentionDetailPage() {
               <CardTitle className="text-base">Dependencies</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-1">
-                {intention.dependencies.map((dep: { id: string; title: string }) => (
-                  <li key={dep.id}>
+              <ul className="space-y-2">
+                {intention.dependencies.map((dep: { id: string; title: string; status?: string }) => (
+                  <li key={dep.id} className="flex items-center gap-2 flex-wrap">
                     <Link to={`/intentions/${dep.id}`} className="text-sm text-primary hover:underline">
                       {dep.title}
                     </Link>
+                    {dep.status && (
+                      <Badge variant="outline" className="text-xs">{dep.status}</Badge>
+                    )}
+                    {dep.status === 'Deferred' && (
+                      <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+                        <AlertTriangle className="h-3 w-3" />
+                        Deferred
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
