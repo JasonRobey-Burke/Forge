@@ -322,6 +322,15 @@ export default function SpecForm({
         )}
       />
 
+      <div className="flex gap-3">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : submitLabel}
+        </Button>
+        <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+          Cancel
+        </Button>
+      </div>
+
       <CollapsibleSection
         title="Context"
         defaultOpen={true}
@@ -384,14 +393,6 @@ export default function SpecForm({
         <DynamicListEditor name="validation_human" label="Human Validation" />
       </CollapsibleSection>
 
-      <div className="flex gap-3">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving...' : submitLabel}
-        </Button>
-        <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-          Cancel
-        </Button>
-      </div>
     </form>
   );
 

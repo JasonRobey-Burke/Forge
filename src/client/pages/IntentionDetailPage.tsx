@@ -200,16 +200,23 @@ export default function IntentionDetailPage() {
         </div>
       </div>
 
-      {editing ? (
-        <FormProvider {...form}>
-          <form className="space-y-6">
-            <IntentionFormFields control={form.control} formState={form.formState} />
-          </form>
-        </FormProvider>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Left column: Description */}
-          <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Left column: Description (editable in edit mode) */}
+        <div className="space-y-4">
+          {editing ? (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Edit Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FormProvider {...form}>
+                  <div className="space-y-4">
+                    <IntentionFormFields control={form.control} formState={form.formState} />
+                  </div>
+                </FormProvider>
+              </CardContent>
+            </Card>
+          ) : (
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">Description</CardTitle>
@@ -218,81 +225,81 @@ export default function IntentionDetailPage() {
                 <p className="text-sm">{intention.description}</p>
               </CardContent>
             </Card>
-          </div>
+          )}
+        </div>
 
-          {/* Right column: Dependencies + Expectations */}
-          <div className="space-y-4">
-            {intention.dependencies && intention.dependencies.length > 0 && (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">Dependencies</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-1.5">
-                    {intention.dependencies.map((dep: { id: string; title: string; status?: string }) => (
-                      <li key={dep.id} className="flex items-center gap-2 flex-wrap">
-                        <Link to={`/intentions/${dep.id}`} className="text-sm text-primary hover:underline">
-                          {dep.title}
-                        </Link>
-                        {dep.status && (
-                          <Badge variant="outline" className="text-xs">{dep.status}</Badge>
-                        )}
-                        {dep.status === 'Deferred' && (
-                          <span className="inline-flex items-center gap-1 text-xs text-amber-600">
-                            <AlertTriangle className="h-3 w-3" />
-                            Deferred
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
-
+        {/* Right column: Dependencies + Expectations (always visible) */}
+        <div className="space-y-4">
+          {intention.dependencies && intention.dependencies.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Expectations</CardTitle>
+                <CardTitle className="text-base">Dependencies</CardTitle>
               </CardHeader>
               <CardContent>
-                {expectations && expectations.length > 0 ? (
-                  <ul className="space-y-1.5">
-                    {expectations.map((exp) => (
-                      <li key={exp.id} className="flex items-center gap-2 flex-wrap">
-                        <Link
-                          to={`/expectations/${exp.id}`}
-                          className="text-sm text-primary hover:underline"
-                        >
-                          {exp.title}
-                        </Link>
-                        <Badge variant="outline" className="text-xs">{exp.status}</Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {exp.edge_cases.length} edge case{exp.edge_cases.length !== 1 ? 's' : ''}
+                <ul className="space-y-1.5">
+                  {intention.dependencies.map((dep: { id: string; title: string; status?: string }) => (
+                    <li key={dep.id} className="flex items-center gap-2 flex-wrap">
+                      <Link to={`/intentions/${dep.id}`} className="text-sm text-primary hover:underline">
+                        {dep.title}
+                      </Link>
+                      {dep.status && (
+                        <Badge variant="outline" className="text-xs">{dep.status}</Badge>
+                      )}
+                      {dep.status === 'Deferred' && (
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+                          <AlertTriangle className="h-3 w-3" />
+                          Deferred
                         </span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No expectations yet.</p>
-                )}
-                <div className="mt-3">
-                  <Link
-                    to={`/intentions/${intention.id}/expectations/new`}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    + New Expectation
-                  </Link>
-                </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               </CardContent>
             </Card>
-          </div>
+          )}
 
-          {/* Footer timestamps spanning both columns */}
-          <div className="lg:col-span-2 text-xs text-muted-foreground">
-            Created {formattedCreated} · Updated {formattedUpdated}
-          </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Expectations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {expectations && expectations.length > 0 ? (
+                <ul className="space-y-1.5">
+                  {expectations.map((exp) => (
+                    <li key={exp.id} className="flex items-center gap-2 flex-wrap">
+                      <Link
+                        to={`/expectations/${exp.id}`}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        {exp.title}
+                      </Link>
+                      <Badge variant="outline" className="text-xs">{exp.status}</Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {exp.edge_cases.length} edge case{exp.edge_cases.length !== 1 ? 's' : ''}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No expectations yet.</p>
+              )}
+              <div className="mt-3">
+                <Link
+                  to={`/intentions/${intention.id}/expectations/new`}
+                  className="text-sm text-primary hover:underline"
+                >
+                  + New Expectation
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      )}
+
+        {/* Footer timestamps spanning both columns */}
+        <div className="lg:col-span-2 text-xs text-muted-foreground">
+          Created {formattedCreated} · Updated {formattedUpdated}
+        </div>
+      </div>
     </div>
   );
 }
