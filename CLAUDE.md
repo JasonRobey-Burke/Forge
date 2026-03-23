@@ -10,12 +10,14 @@ The full product definition lives in `docs/forge-product-definition-v1.1.md`.
 
 ## Tech Stack
 
-- **Frontend:** React 18+, TypeScript, Vite, Tailwind CSS, shadcn/ui
-- **Backend:** Express.js (TypeScript), Node.js 20 LTS
+- **Frontend:** React 19, TypeScript, Vite 8, Tailwind CSS 3, shadcn/ui
+- **Backend:** Express.js 5 (TypeScript), Node.js 20 LTS
 - **Database:** Azure SQL (production), SQL Server 2022 container (development)
-- **ORM:** Prisma with `sqlserver` provider
-- **Auth:** Microsoft Entra ID (MSAL.js frontend, JWT validation backend); dev bypass via `BYPASS_AUTH=true`
+- **ORM:** Prisma 7 with `sqlserver` provider and `PrismaMssql` driver adapter
+- **Auth:** Microsoft Entra ID (JWT validation backend); dev bypass via `BYPASS_AUTH=true`
 - **Deployment:** Docker, Azure Container Apps, GitHub Actions
+- **DnD:** @dnd-kit/core (Flow Board drag-and-drop)
+- **Toasts:** Sonner (toast notifications)
 
 ## Development Commands
 
@@ -60,18 +62,22 @@ This project uses Prisma v7 with the driver adapter pattern:
 ```
 src/
   server/          # Express API
-    routes/        # Route-per-resource (e.g., products.ts, intentions.ts, specs.ts)
+    routes/        # Route-per-resource (products.ts, intentions.ts, expectations.ts, specs.ts)
     middleware/    # Auth (Entra JWT + dev bypass), Zod validation, error handling
-    services/     # Business logic layer (spec.ts, phaseTransition.ts, etc.)
+    services/     # Business logic (product, intention, expectation, spec, phaseTransition, intentionDependencies)
+    lib/           # Prisma client singleton (prisma.ts)
   client/          # React SPA
-    pages/         # Route-level page components
+    pages/         # Route-level pages (List, Detail, Create, Edit for each entity + FlowBoardPage)
     components/   # Shared UI components (shadcn/ui based)
-    hooks/         # React Query (TanStack Query) hooks for server state
-    lib/           # Utilities (MSAL config, API fetch wrapper, export functions)
+      ui/          # shadcn/ui primitives (button, card, dialog, form, etc.)
+      skeletons/   # Loading skeletons (CardGridSkeleton, DetailPageSkeleton, FlowBoardSkeleton)
+    hooks/         # React Query hooks for server state + useDocumentTitle, useCurrentProduct
+    lib/           # Utilities (api.ts, phaseColors, exportYaml, exportMarkdown, tokenEstimate, contextDiff)
   shared/          # Shared between client and server
-    types/         # TypeScript interfaces for all entities
+    types/         # TypeScript interfaces for all entities + enums
     schemas/       # Zod validation schemas (used by both form validation and API)
     checklist/     # Pure evaluator function for completeness checklist (11 criteria)
+    lib/           # Shared utilities (wipCheck.ts — WIP limit checking)
 prisma/
   schema.prisma    # Data model (sqlserver provider)
   migrations/      # Version-controlled migrations
@@ -92,6 +98,39 @@ e2e/               # Playwright E2E tests + API helpers
 - **Soft deletes:** All primary entities use `archived_at` timestamp pattern
 - **Dates:** Stored as UTC, displayed in user's local timezone
 - **Environment config:** Via `.env` files; no hardcoded secrets
+
+## Flow Board and Phase Transitions
+
+- **Kanban board:** `FlowBoard` component with six phase columns, drag-and-drop via @dnd-kit (including keyboard DnD for accessibility)
+- **Phase colors:** Centralized semantic color system in `src/client/lib/phaseColors.tsx` — Draft=slate, Ready=blue, InProgress=amber, Review=purple, Validating=orange, Done=green
+- **WIP limits:** Stored per-Product in `wip_limits` JSON field; enforced by `src/shared/lib/wipCheck.ts`; `WipOverrideDialog` prompts for confirmation when exceeded
+- **Validation gates:**
+  - Draft → Ready: completeness checklist must pass (or `override_reason` provided)
+  - Review → Validating: `peer_reviewed` flag must be true
+  - All other transitions: unrestricted
+- **Override dialogs:** `GateOverrideDialog` (checklist gate) and `WipOverrideDialog` (WIP limit) capture reasons for audit
+
+## Spec Export
+
+- **YAML export:** `src/client/lib/exportYaml.ts` — structured YAML matching canonical Spec schema
+- **Markdown export:** `src/client/lib/exportMarkdown.ts` — AI-ready prompt document with preamble
+- **Token estimation:** `src/client/lib/tokenEstimate.ts` — estimates tokens via `words × 1.3`
+- **Context diff:** `src/client/lib/contextDiff.ts` — compares Product vs Spec context, returns field-level inherited/modified status
+
+## UI Components
+
+- **Layout:** `Layout.tsx` with header, gradient accent bar, logo mark, and `ProductNav` tabs (Overview, Intentions, Specs, Board)
+- **Breadcrumbs:** Full ancestry navigation trail
+- **ListToolbar:** Search/filter on list pages (not on the Flow Board, by design)
+- **Skeletons:** Loading states for card grids, detail pages, and the flow board
+- **Toasts:** Sonner-based notifications for transitions, errors, and confirmations
+- **CollapsibleSection / DynamicListEditor:** Reusable components for the Spec structured editor
+
+## Testing
+
+- **Unit tests:** Vitest with separate server and client projects (`npm run test:server`, `npm run test:client`)
+- **E2E tests:** Playwright (`npm run test:e2e`, `npm run test:e2e:ui`)
+- **Test commands:** `npm test` runs all unit tests; `npm run test:watch` for watch mode
 
 ## Domain Model
 
@@ -134,3 +173,11 @@ The completeness checklist evaluates 11 fixed criteria and gates Draft → Ready
 - Override: `override_reason` string bypasses gate, recorded in `PhaseTransition` for audit
 - Client: `CompletenessChecklist` component on detail/edit pages; live updates via `useWatch` on edit
 - Non-Draft transitions are unrestricted (no gate)
+
+## Gap Analysis
+
+A gap analysis comparing the product definition against the current implementation lives in `docs/gap-analysis.md`. Key unimplemented areas:
+- **INT-006:** Process Metrics and Dashboards (raw transition data exists, no UI)
+- **INT-008:** Team and Multi-Product Support (no Team model)
+- **Owner fields:** Not on any entity yet
+- **Context Templates:** Deferred (EXP-018 is Draft status in product def)
