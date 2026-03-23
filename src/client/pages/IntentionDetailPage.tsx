@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { toast } from 'sonner';
-import { useIntention, useDeleteIntention } from '@/hooks/useIntentions';
+import { useIntention, useDeleteIntention, useUpdateIntention } from '@/hooks/useIntentions';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
@@ -20,9 +23,20 @@ import {
 import { AlertTriangle } from 'lucide-react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
-import type { Priority } from '@shared/types';
+import { IntentionFormFields } from '@/components/IntentionForm';
+import { Priority, IntentionStatus } from '@shared/types/enums';
+import type { Priority as PriorityType } from '@shared/types';
 
-const priorityVariant: Record<Priority, 'default' | 'secondary' | 'outline' | 'destructive'> = {
+const editSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255),
+  description: z.string().min(1, 'Description is required'),
+  priority: z.enum(Object.values(Priority) as [string, ...string[]]),
+  status: z.enum(Object.values(IntentionStatus) as [string, ...string[]]),
+});
+
+type EditFormValues = z.infer<typeof editSchema>;
+
+const priorityVariant: Record<PriorityType, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   Critical: 'destructive',
   High: 'default',
   Medium: 'secondary',
@@ -36,7 +50,20 @@ export default function IntentionDetailPage() {
   const { data: product } = useProduct(intention?.product_id ?? '');
   useDocumentTitle(intention?.title ?? 'Intention');
   const deleteIntention = useDeleteIntention();
+  const updateIntention = useUpdateIntention();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  const form = useForm<EditFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(editSchema) as any,
+    defaultValues: {
+      title: intention?.title ?? '',
+      description: intention?.description ?? '',
+      priority: (intention?.priority ?? 'Medium') as string,
+      status: (intention?.status ?? 'Draft') as string,
+    },
+  });
 
   if (isLoading) return <DetailPageSkeleton />;
   if (error || !intention) return <div className="text-destructive">Intention not found.</div>;
@@ -57,6 +84,45 @@ export default function IntentionDetailPage() {
     );
   }
 
+  function handleEdit() {
+    form.reset({
+      title: intention!.title,
+      description: intention!.description,
+      priority: intention!.priority as string,
+      status: intention!.status as string,
+    });
+    setEditing(true);
+  }
+
+  function handleCancel() {
+    form.reset();
+    setEditing(false);
+  }
+
+  function handleSave(values: EditFormValues) {
+    updateIntention.mutate(
+      {
+        id: id!,
+        product_id: intention!.product_id,
+        title: values.title,
+        description: values.description,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        priority: values.priority as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        status: values.status as any,
+      },
+      {
+        onSuccess: () => {
+          toast.success('Changes saved');
+          setEditing(false);
+        },
+        onError: (err) => {
+          toast.error(err.message);
+        },
+      },
+    );
+  }
+
   return (
     <div className="max-w-3xl">
       <Breadcrumbs items={[
@@ -66,98 +132,127 @@ export default function IntentionDetailPage() {
         { label: intention.title },
       ]} />
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">{intention.title}</h1>
-          <Badge variant={priorityVariant[intention.priority as Priority]}>
-            {intention.priority}
-          </Badge>
-          <Badge variant="outline">{intention.status}</Badge>
-        </div>
+        {editing ? (
+          <div className="flex-1 mr-4">
+            {/* Title/priority/status shown inline in form below */}
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">{intention.title}</h1>
+            <Badge variant={priorityVariant[intention.priority as PriorityType]}>
+              {intention.priority}
+            </Badge>
+            <Badge variant="outline">{intention.status}</Badge>
+          </div>
+        )}
         <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link to={`/intentions/${intention.id}/edit`}>Edit</Link>
-          </Button>
-          <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-            <DialogTrigger asChild>
-              <Button variant="destructive">Delete</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Delete {intention.title}?</DialogTitle>
-                <DialogDescription>
-                  This will archive the intention. It cannot be deleted if it has active expectations.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-                <Button variant="destructive" onClick={handleDelete} disabled={deleteIntention.isPending}>
-                  {deleteIntention.isPending ? 'Deleting...' : 'Delete'}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          {editing ? (
+            <>
+              <Button
+                variant="default"
+                onClick={form.handleSubmit(handleSave)}
+                disabled={updateIntention.isPending}
+              >
+                {updateIntention.isPending ? 'Saving...' : 'Save'}
+              </Button>
+              <Button variant="outline" onClick={handleCancel}>
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="outline" onClick={handleEdit}>Edit</Button>
+              <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="destructive">Delete</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete {intention.title}?</DialogTitle>
+                    <DialogDescription>
+                      This will archive the intention. It cannot be deleted if it has active expectations.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+                    <Button variant="destructive" onClick={handleDelete} disabled={deleteIntention.isPending}>
+                      {deleteIntention.isPending ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
         </div>
       </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Description</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm">{intention.description}</p>
-          </CardContent>
-        </Card>
-
-        {intention.dependencies && intention.dependencies.length > 0 && (
+      {editing ? (
+        <FormProvider {...form}>
+          <form className="space-y-6">
+            <IntentionFormFields control={form.control} formState={form.formState} />
+          </form>
+        </FormProvider>
+      ) : (
+        <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Dependencies</CardTitle>
+              <CardTitle className="text-base">Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2">
-                {intention.dependencies.map((dep: { id: string; title: string; status?: string }) => (
-                  <li key={dep.id} className="flex items-center gap-2 flex-wrap">
-                    <Link to={`/intentions/${dep.id}`} className="text-sm text-primary hover:underline">
-                      {dep.title}
-                    </Link>
-                    {dep.status && (
-                      <Badge variant="outline" className="text-xs">{dep.status}</Badge>
-                    )}
-                    {dep.status === 'Deferred' && (
-                      <span className="inline-flex items-center gap-1 text-xs text-amber-600">
-                        <AlertTriangle className="h-3 w-3" />
-                        Deferred
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              <p className="text-sm">{intention.description}</p>
             </CardContent>
           </Card>
-        )}
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Expectations</CardTitle>
-            <Button asChild size="sm" variant="outline">
-              <Link to={`/intentions/${intention.id}/expectations`}>View All</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Manage expectations linked to this intention.
-            </p>
-          </CardContent>
-        </Card>
+          {intention.dependencies && intention.dependencies.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Dependencies</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {intention.dependencies.map((dep: { id: string; title: string; status?: string }) => (
+                    <li key={dep.id} className="flex items-center gap-2 flex-wrap">
+                      <Link to={`/intentions/${dep.id}`} className="text-sm text-primary hover:underline">
+                        {dep.title}
+                      </Link>
+                      {dep.status && (
+                        <Badge variant="outline" className="text-xs">{dep.status}</Badge>
+                      )}
+                      {dep.status === 'Deferred' && (
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+                          <AlertTriangle className="h-3 w-3" />
+                          Deferred
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
 
-        <Separator />
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Expectations</CardTitle>
+              <Button asChild size="sm" variant="outline">
+                <Link to={`/intentions/${intention.id}/expectations`}>View All</Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Manage expectations linked to this intention.
+              </p>
+            </CardContent>
+          </Card>
 
-        <div className="text-xs text-muted-foreground flex gap-4">
-          <span>Created: {new Date(intention.created_at).toLocaleString()}</span>
-          <span>Updated: {new Date(intention.updated_at).toLocaleString()}</span>
+          <Separator />
+
+          <div className="text-xs text-muted-foreground flex gap-4">
+            <span>Created: {new Date(intention.created_at).toLocaleString()}</span>
+            <span>Updated: {new Date(intention.updated_at).toLocaleString()}</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

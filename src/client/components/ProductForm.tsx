@@ -2,10 +2,10 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import type { Control, FormState } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -86,6 +86,124 @@ function toApiValues(values: FormValues): CreateProductInput {
   };
 }
 
+interface ProductFormFieldsProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: Control<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  formState: FormState<any>;
+}
+
+export function ProductFormFields({ control }: ProductFormFieldsProps) {
+  return (
+    <>
+      <FormField
+        control={control}
+        name="name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Name</FormLabel>
+            <FormControl>
+              <Input {...field} placeholder="Product name" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="problem_statement"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Problem Statement</FormLabel>
+            <FormControl>
+              <Textarea {...field} placeholder="What problem does this product solve?" rows={3} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="vision"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Vision</FormLabel>
+            <FormControl>
+              <Textarea {...field} placeholder="What is the product's vision?" rows={2} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="target_audience"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Target Audience</FormLabel>
+            <FormControl>
+              <Textarea {...field} placeholder="Who is this product for?" rows={2} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="status"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Status</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {Object.values(ProductStatus).map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <ContextEditor />
+
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium">WIP Limits</h3>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          {(['draft', 'ready', 'in_progress', 'review', 'validating'] as const).map((key) => (
+            <FormField
+              key={key}
+              control={control}
+              name={`wip_limits.${key}`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="capitalize">{key.replace('_', ' ')}</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={0} {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 interface ProductFormProps {
   defaultValues?: Partial<CreateProductInput>;
   onSubmit: (values: CreateProductInput) => void;
@@ -108,110 +226,7 @@ export default function ProductForm({ defaultValues, onSubmit, isSubmitting, sub
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-w-2xl">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Product name" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="problem_statement"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Problem Statement</FormLabel>
-              <FormControl>
-                <Textarea {...field} placeholder="What problem does this product solve?" rows={3} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="vision"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Vision</FormLabel>
-              <FormControl>
-                <Textarea {...field} placeholder="What is the product's vision?" rows={2} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="target_audience"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Target Audience</FormLabel>
-              <FormControl>
-                <Textarea {...field} placeholder="Who is this product for?" rows={2} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {Object.values(ProductStatus).map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <ContextEditor />
-
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium">WIP Limits</h3>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {(['draft', 'ready', 'in_progress', 'review', 'validating'] as const).map((key) => (
-              <FormField
-                key={key}
-                control={form.control}
-                name={`wip_limits.${key}`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="capitalize">{key.replace('_', ' ')}</FormLabel>
-                    <FormControl>
-                      <Input type="number" min={0} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
-          </div>
-        </div>
+        <ProductFormFields control={form.control} formState={form.formState} />
 
         <div className="flex gap-3">
           <Button type="submit" disabled={isSubmitting}>
@@ -225,3 +240,5 @@ export default function ProductForm({ defaultValues, onSubmit, isSubmitting, sub
     </FormProvider>
   );
 }
+
+export { toFormValues as productToFormValues, toApiValues as productToApiValues };

@@ -2,6 +2,7 @@ import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import type { Control, FormState } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,101 @@ function toApiValues(values: FormValues, intentionId: string): CreateExpectation
   };
 }
 
+interface ExpectationFormFieldsProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  control: Control<any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  formState: FormState<any>;
+}
+
+export function ExpectationFormFields({ control, formState }: ExpectationFormFieldsProps) {
+  const { fields, append, remove } = useFieldArray({ control, name: 'edge_cases' });
+
+  return (
+    <>
+      <FormField
+        control={control}
+        name="title"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Title</FormLabel>
+            <FormControl>
+              <Input {...field} placeholder="Expected outcome" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Description</FormLabel>
+            <FormControl>
+              <Textarea {...field} placeholder="Describe the testable outcome" rows={4} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="status"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Status</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {Object.values(ExpectationStatus).map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <div className="space-y-2">
+        <Label>Edge Cases (minimum 2)</Label>
+        {fields.map((field, index) => (
+          <div key={field.id} className="flex gap-2">
+            <Input
+              {...control.register(`edge_cases.${index}.value`)}
+              placeholder={`Edge case ${index + 1}`}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => remove(index)}
+              disabled={fields.length <= 2}
+            >
+              Remove
+            </Button>
+          </div>
+        ))}
+        <Button type="button" variant="outline" size="sm" onClick={() => append({ value: '' })}>
+          + Add Edge Case
+        </Button>
+        {formState.errors.edge_cases && (
+          <p className="text-sm text-destructive">
+            {(formState.errors.edge_cases as { message?: string }).message}
+          </p>
+        )}
+      </div>
+    </>
+  );
+}
+
 interface ExpectationFormProps {
   intentionId: string;
   defaultValues?: Partial<CreateExpectationInput>;
@@ -68,11 +164,6 @@ export default function ExpectationForm({
     defaultValues: toFormValues(defaultValues),
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: 'edge_cases',
-  });
-
   function handleSubmit(values: FormValues) {
     onSubmit(toApiValues(values, intentionId));
   }
@@ -80,85 +171,7 @@ export default function ExpectationForm({
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-w-2xl">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Expected outcome" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea {...field} placeholder="Describe the testable outcome" rows={4} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {Object.values(ExpectationStatus).map((s) => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="space-y-2">
-          <Label>Edge Cases (minimum 2)</Label>
-          {fields.map((field, index) => (
-            <div key={field.id} className="flex gap-2">
-              <Input
-                {...form.register(`edge_cases.${index}.value`)}
-                placeholder={`Edge case ${index + 1}`}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => remove(index)}
-                disabled={fields.length <= 2}
-              >
-                Remove
-              </Button>
-            </div>
-          ))}
-          <Button type="button" variant="outline" size="sm" onClick={() => append({ value: '' })}>
-            + Add Edge Case
-          </Button>
-          {form.formState.errors.edge_cases && (
-            <p className="text-sm text-destructive">
-              {form.formState.errors.edge_cases.message}
-            </p>
-          )}
-        </div>
+        <ExpectationFormFields control={form.control} formState={form.formState} />
 
         <div className="flex gap-3">
           <Button type="submit" disabled={isSubmitting}>
@@ -172,3 +185,5 @@ export default function ExpectationForm({
     </FormProvider>
   );
 }
+
+export { toFormValues as expectationToFormValues, toApiValues as expectationToApiValues };
