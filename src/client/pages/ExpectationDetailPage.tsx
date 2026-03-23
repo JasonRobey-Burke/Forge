@@ -13,7 +13,6 @@ import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -114,6 +113,9 @@ export default function ExpectationDetailPage() {
     );
   }
 
+  const formattedCreated = new Date(expectation.created_at).toLocaleDateString();
+  const formattedUpdated = new Date(expectation.updated_at).toLocaleDateString();
+
   return (
     <div className="max-w-3xl">
       <Breadcrumbs items={[
@@ -124,7 +126,7 @@ export default function ExpectationDetailPage() {
         { label: 'Expectations', href: `/intentions/${expectation.intention_id}/expectations` },
         { label: expectation.title },
       ]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         {editing ? (
           <div className="flex-1 mr-4" />
         ) : (
@@ -181,9 +183,9 @@ export default function ExpectationDetailPage() {
           </form>
         </FormProvider>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-2">
               <CardTitle className="text-base">Description</CardTitle>
             </CardHeader>
             <CardContent>
@@ -192,24 +194,21 @@ export default function ExpectationDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-2">
               <CardTitle className="text-base">Edge Cases</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="list-disc list-inside space-y-1">
+              <ol className="space-y-1 list-decimal list-inside">
                 {expectation.edge_cases.map((ec, i) => (
                   <li key={i} className="text-sm">{ec}</li>
                 ))}
-              </ul>
+              </ol>
             </CardContent>
           </Card>
 
-          <Separator />
-
-          <div className="text-xs text-muted-foreground flex gap-4">
-            <span>Created: {new Date(expectation.created_at).toLocaleString()}</span>
-            <span>Updated: {new Date(expectation.updated_at).toLocaleString()}</span>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Created {formattedCreated} · Updated {formattedUpdated}
+          </p>
         </div>
       )}
     </div>

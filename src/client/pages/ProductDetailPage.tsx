@@ -198,22 +198,22 @@ export default function ProductDetailPage() {
         </FormProvider>
       ) : (
         /* 2-column content grid */
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left column */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader><CardTitle className="text-base">Vision</CardTitle></CardHeader>
-              <CardContent><p className="text-sm">{product.vision}</p></CardContent>
-            </Card>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Vision</p>
+              <p className="text-sm">{product.vision}</p>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Target Audience</p>
+              <p className="text-sm">{product.target_audience}</p>
+            </div>
 
             <Card>
-              <CardHeader><CardTitle className="text-base">Target Audience</CardTitle></CardHeader>
-              <CardContent><p className="text-sm">{product.target_audience}</p></CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader><CardTitle className="text-base">Context</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
+              <CardHeader className="pb-2"><CardTitle className="text-base">Context</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
                 {product.context.stack.length > 0 && (
                   <div>
                     <p className="text-sm font-medium mb-1">Stack</p>
@@ -255,16 +255,57 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Right column */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             <Card>
-              <CardHeader><CardTitle className="text-base">Intention Progress</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-base">Intention Progress</CardTitle></CardHeader>
               <CardContent>
                 <IntentionProgress intentions={intentions ?? []} />
               </CardContent>
             </Card>
 
+            {intentions && intentions.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2"><CardTitle className="text-base">Intentions</CardTitle></CardHeader>
+                <CardContent>
+                  <ul className="space-y-1.5">
+                    {intentions.slice(0, 5).map((intention) => (
+                      <li key={intention.id} className="flex items-center gap-2 flex-wrap">
+                        <Link
+                          to={`/intentions/${intention.id}`}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          {intention.title}
+                        </Link>
+                        <Badge
+                          variant={
+                            intention.priority === 'Critical' ? 'destructive' :
+                            intention.priority === 'High' ? 'default' :
+                            intention.priority === 'Medium' ? 'secondary' : 'outline'
+                          }
+                          className="text-xs"
+                        >
+                          {intention.priority}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">{intention.status}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                  {intentions.length > 5 && (
+                    <div className="mt-2">
+                      <Link
+                        to={`/products/${product.id}/intentions`}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        View all {intentions.length} intentions
+                      </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
-              <CardHeader><CardTitle className="text-base">WIP Limits</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-base">WIP Limits</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
                   {Object.entries(product.wip_limits).map(([key, value]) => (
@@ -277,10 +318,9 @@ export default function ProductDetailPage() {
               </CardContent>
             </Card>
 
-            <div className="text-xs text-muted-foreground flex gap-4">
-              <span>Created: {new Date(product.created_at).toLocaleString()}</span>
-              <span>Updated: {new Date(product.updated_at).toLocaleString()}</span>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Created {new Date(product.created_at).toLocaleDateString()} · Updated {new Date(product.updated_at).toLocaleDateString()}
+            </p>
           </div>
         </div>
       )}

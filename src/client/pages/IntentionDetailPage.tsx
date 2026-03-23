@@ -5,12 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useIntention, useDeleteIntention, useUpdateIntention } from '@/hooks/useIntentions';
+import { useExpectations } from '@/hooks/useExpectations';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import {
   Dialog,
   DialogContent,
@@ -48,6 +48,7 @@ export default function IntentionDetailPage() {
   const navigate = useNavigate();
   const { data: intention, isLoading, error } = useIntention(id!);
   const { data: product } = useProduct(intention?.product_id ?? '');
+  const { data: expectations } = useExpectations(id!);
   useDocumentTitle(intention?.title ?? 'Intention');
   const deleteIntention = useDeleteIntention();
   const updateIntention = useUpdateIntention();
@@ -123,15 +124,18 @@ export default function IntentionDetailPage() {
     );
   }
 
+  const formattedCreated = new Date(intention.created_at).toLocaleDateString();
+  const formattedUpdated = new Date(intention.updated_at).toLocaleDateString();
+
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-4xl">
       <Breadcrumbs items={[
         { label: 'Products', href: '/products' },
         { label: product?.name ?? '...', href: `/products/${intention.product_id}` },
         { label: 'Intentions', href: `/products/${intention.product_id}/intentions` },
         { label: intention.title },
       ]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         {editing ? (
           <div className="flex-1 mr-4">
             {/* Title/priority/status shown inline in form below */}
@@ -193,63 +197,89 @@ export default function IntentionDetailPage() {
           </form>
         </FormProvider>
       ) : (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Description</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm">{intention.description}</p>
-            </CardContent>
-          </Card>
-
-          {intention.dependencies && intention.dependencies.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Left column: Description */}
+          <div className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Dependencies</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Description</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-2">
-                  {intention.dependencies.map((dep: { id: string; title: string; status?: string }) => (
-                    <li key={dep.id} className="flex items-center gap-2 flex-wrap">
-                      <Link to={`/intentions/${dep.id}`} className="text-sm text-primary hover:underline">
-                        {dep.title}
-                      </Link>
-                      {dep.status && (
-                        <Badge variant="outline" className="text-xs">{dep.status}</Badge>
-                      )}
-                      {dep.status === 'Deferred' && (
-                        <span className="inline-flex items-center gap-1 text-xs text-amber-600">
-                          <AlertTriangle className="h-3 w-3" />
-                          Deferred
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-sm">{intention.description}</p>
               </CardContent>
             </Card>
-          )}
+          </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Expectations</CardTitle>
-              <Button asChild size="sm" variant="outline">
-                <Link to={`/intentions/${intention.id}/expectations`}>View All</Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Manage expectations linked to this intention.
-              </p>
-            </CardContent>
-          </Card>
+          {/* Right column: Dependencies + Expectations */}
+          <div className="space-y-4">
+            {intention.dependencies && intention.dependencies.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Dependencies</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-1.5">
+                    {intention.dependencies.map((dep: { id: string; title: string; status?: string }) => (
+                      <li key={dep.id} className="flex items-center gap-2 flex-wrap">
+                        <Link to={`/intentions/${dep.id}`} className="text-sm text-primary hover:underline">
+                          {dep.title}
+                        </Link>
+                        {dep.status && (
+                          <Badge variant="outline" className="text-xs">{dep.status}</Badge>
+                        )}
+                        {dep.status === 'Deferred' && (
+                          <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+                            <AlertTriangle className="h-3 w-3" />
+                            Deferred
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
 
-          <Separator />
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Expectations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {expectations && expectations.length > 0 ? (
+                  <ul className="space-y-1.5">
+                    {expectations.map((exp) => (
+                      <li key={exp.id} className="flex items-center gap-2 flex-wrap">
+                        <Link
+                          to={`/expectations/${exp.id}`}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          {exp.title}
+                        </Link>
+                        <Badge variant="outline" className="text-xs">{exp.status}</Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {exp.edge_cases.length} edge case{exp.edge_cases.length !== 1 ? 's' : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No expectations yet.</p>
+                )}
+                <div className="mt-3">
+                  <Link
+                    to={`/intentions/${intention.id}/expectations/new`}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    + New Expectation
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-          <div className="text-xs text-muted-foreground flex gap-4">
-            <span>Created: {new Date(intention.created_at).toLocaleString()}</span>
-            <span>Updated: {new Date(intention.updated_at).toLocaleString()}</span>
+          {/* Footer timestamps spanning both columns */}
+          <div className="lg:col-span-2 text-xs text-muted-foreground">
+            Created {formattedCreated} · Updated {formattedUpdated}
           </div>
         </div>
       )}
