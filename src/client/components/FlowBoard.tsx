@@ -12,6 +12,7 @@ import {
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { PHASE_LABELS } from '@/lib/phaseColors';
 import { useTransitionSpec } from '@/hooks/usePhaseTransition';
+import { useStaleSpecIds } from '@/hooks/useStaleness';
 import { checkWipLimit } from '@shared/lib/wipCheck';
 import PhaseColumn from '@/components/PhaseColumn';
 import SpecCard from '@/components/SpecCard';
@@ -44,6 +45,8 @@ interface FlowBoardProps {
 export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProps) {
   const navigate = useNavigate();
   const transitionSpec = useTransitionSpec();
+  const { data: staleIds } = useStaleSpecIds(productId);
+  const staleSet = new Set(staleIds ?? []);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor)
@@ -149,6 +152,7 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
               specs={specsByPhase[phase] ?? []}
               limit={getWipLimit(phase, wipLimits)}
               onCardClick={(id) => navigate(`/specs/${id}`)}
+              staleSpecIds={staleSet}
             />
           ))}
         </div>

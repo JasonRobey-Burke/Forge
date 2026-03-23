@@ -9,9 +9,10 @@ interface PhaseColumnProps {
   specs: Spec[];
   limit: number;
   onCardClick?: (specId: string) => void;
+  staleSpecIds?: Set<string>;
 }
 
-export default function PhaseColumn({ phase, specs, limit, onCardClick }: PhaseColumnProps) {
+export default function PhaseColumn({ phase, specs, limit, onCardClick, staleSpecIds }: PhaseColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: phase });
   const count = specs.length;
   const atLimit = limit > 0 && count >= limit;
@@ -34,7 +35,7 @@ export default function PhaseColumn({ phase, specs, limit, onCardClick }: PhaseC
           <p className="text-xs text-muted-foreground text-center py-4">No specs in this phase</p>
         ) : (
           specs.map((spec) => (
-            <SpecCard key={spec.id} spec={spec} onClick={() => onCardClick?.(spec.id)} />
+            <SpecCard key={spec.id} spec={spec} onClick={() => onCardClick?.(spec.id)} stale={staleSpecIds?.has(spec.id)} />
           ))
         )}
       </div>

@@ -1,5 +1,5 @@
 import { useDraggable } from '@dnd-kit/core';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { PHASE_COLORS, PHASE_LABELS } from '@/lib/phaseColors';
 import type { Spec } from '@shared/types';
@@ -19,9 +19,10 @@ const complexityVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
 interface SpecCardProps {
   spec: Spec;
   onClick?: () => void;
+  stale?: boolean;
 }
 
-export default function SpecCard({ spec, onClick }: SpecCardProps) {
+export default function SpecCard({ spec, onClick, stale }: SpecCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: spec.id,
     data: { spec },
@@ -52,9 +53,12 @@ export default function SpecCard({ spec, onClick }: SpecCardProps) {
         <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
           <p className="text-sm font-medium line-clamp-2 mb-2">{spec.title}</p>
           <div className="flex items-center justify-between text-xs">
-            <Badge variant={complexityVariant[spec.complexity] ?? 'outline'} className="text-xs">
-              {spec.complexity}
-            </Badge>
+            <div className="flex items-center gap-1">
+              <Badge variant={complexityVariant[spec.complexity] ?? 'outline'} className="text-xs">
+                {spec.complexity}
+              </Badge>
+              {stale && <AlertTriangle className="h-3 w-3 text-amber-500" aria-label="Expectations changed since gate" />}
+            </div>
             <span className="text-muted-foreground">{days}d</span>
           </div>
         </div>

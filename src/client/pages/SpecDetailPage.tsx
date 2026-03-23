@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useSpec, useDeleteSpec, useSpecExpectations } from '@/hooks/useSpecs';
+import { useSpecStaleness } from '@/hooks/useStaleness';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useTransitionSpec } from '@/hooks/usePhaseTransition';
@@ -27,7 +28,7 @@ import { downloadYaml } from '@/lib/exportYaml';
 import { downloadMarkdown, specToMarkdown } from '@/lib/exportMarkdown';
 import { estimateTokens } from '@/lib/tokenEstimate';
 import { PhaseBadge, PHASE_LABELS } from '@/lib/phaseColors';
-import { ArrowRight, ArrowLeft, MoreHorizontal } from 'lucide-react';
+import { ArrowRight, ArrowLeft, MoreHorizontal, AlertTriangle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +44,7 @@ export default function SpecDetailPage() {
   const { data: spec, isLoading, error } = useSpec(id!);
   const { data: linkedExpectations } = useSpecExpectations(id!);
   const { data: product } = useProduct(spec?.product_id ?? '');
+  const { data: staleness } = useSpecStaleness(id!, spec?.phase ?? 'Draft');
   useDocumentTitle(spec?.title ?? 'Spec');
   const deleteSpec = useDeleteSpec();
   const transitionSpec = useTransitionSpec();
@@ -278,6 +280,13 @@ export default function SpecDetailPage() {
           )}
         </div>
 
+        {staleness?.stale && (
+          <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 mb-6">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>Linked expectations have changed since this spec passed the Draft gate. Consider re-reviewing.</span>
+          </div>
+        )}
+
         <div className="space-y-6">
           <Card>
             <CardHeader><CardTitle className="text-base">Description</CardTitle></CardHeader>
@@ -378,11 +387,14 @@ export default function SpecDetailPage() {
               <CardContent>
                 <ul className="space-y-1">
                   {linkedExpectations.map((exp) => (
-                    <li key={exp.id}>
+                    <li key={exp.id} className="flex items-center gap-1">
                       <Link to={`/expectations/${exp.id}`} className="text-sm text-primary hover:underline">
                         {exp.title}
                       </Link>
                       <Badge variant="outline" className="ml-2">{exp.status}</Badge>
+                      {staleness?.staleExpectationIds?.includes(exp.id) && (
+                        <AlertTriangle className="h-3 w-3 text-amber-500" />
+                      )}
                     </li>
                   ))}
                 </ul>
