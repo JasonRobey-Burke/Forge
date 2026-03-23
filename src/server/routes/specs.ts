@@ -34,6 +34,21 @@ router.post('/', validate(createSpecSchema), async (req, res) => {
   res.status(201).json({ data: spec, error: null, meta: null });
 });
 
+// GET /api/specs/staleness?product_id=xxx
+// MUST be registered before /:id routes to avoid "staleness" being captured as an ID
+router.get('/staleness', async (req, res) => {
+  const productId = req.query.product_id as string;
+  if (!productId) {
+    return res.status(400).json({
+      data: null,
+      error: { message: 'product_id query parameter is required', code: 'VALIDATION_ERROR' },
+      meta: null,
+    });
+  }
+  const staleIds = await specService.getStaleSpecIds(productId);
+  res.json({ data: staleIds, error: null, meta: null });
+});
+
 // GET /api/specs/:id
 router.get('/:id', async (req: Request<{ id: string }>, res) => {
   const spec = await specService.getSpec(req.params.id);
@@ -99,6 +114,12 @@ router.put('/:id/expectations', async (req: Request<{ id: string }>, res) => {
 router.get('/:id/expectations', async (req: Request<{ id: string }>, res) => {
   const expectations = await specService.getSpecExpectations(req.params.id);
   res.json({ data: expectations, error: null, meta: { count: expectations.length } });
+});
+
+// GET /api/specs/:id/staleness
+router.get('/:id/staleness', async (req: Request<{ id: string }>, res) => {
+  const result = await specService.checkSpecStaleness(req.params.id);
+  res.json({ data: result, error: null, meta: null });
 });
 
 // POST /api/specs/:id/transition

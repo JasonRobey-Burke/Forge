@@ -156,3 +156,82 @@ export async function countSpecsByPhase(productId: string, phase: string): Promi
     where: { product_id: productId, phase, archived_at: null },
   });
 }
+
+export async function checkSpecStaleness(
+  specId: string
+): Promise<{ stale: boolean; staleExpectationIds: string[] }> {
+  const NOT_STALE = { stale: false, staleExpectationIds: [] };
+
+  const spec = await prisma.spec.findFirst({ where: { id: specId, archived_at: null } });
+  if (!spec || spec.phase === 'Draft') return NOT_STALE;
+
+  const gateTransition = await prisma.phaseTransition.findFirst({
+    where: { spec_id: specId, from_phase: 'Draft', to_phase: 'Ready' },
+    orderBy: { timestamp: 'desc' },
+  });
+  if (!gateTransition) return NOT_STALE;
+
+  const links = await prisma.specExpectation.findMany({
+    where: { spec_id: specId },
+    include: { expectation: { select: { id: true, updated_at: true } } },
+  });
+
+  const staleIds = links
+    .filter((link) => link.expectation.updated_at > gateTransition.timestamp)
+    .map((link) => link.expectation.id);
+
+  return { stale: staleIds.length > 0, staleExpectationIds: staleIds };
+}
+
+export async function getStaleSpecIds(productId: string): Promise<string[]> {
+  // Find all non-Draft specs for product
+  const specs = await prisma.spec.findMany({
+    where: { product_id: productId, archived_at: null, NOT: { phase: 'Draft' } },
+    select: { id: true },
+  });
+  if (specs.length === 0) return [];
+
+  const specIds = specs.map((s) => s.id);
+
+  // Get latest Draft→Ready gate timestamp per spec
+  const gateTransitions = await prisma.phaseTransition.findMany({
+    where: { spec_id: { in: specIds }, from_phase: 'Draft', to_phase: 'Ready' },
+    orderBy: { timestamp: 'desc' },
+  });
+
+  // Build map: spec_id → latest gate timestamp (first occurrence due to desc order)
+  const gateMap = new Map<string, Date>();
+  for (const t of gateTransitions) {
+    if (!gateMap.has(t.spec_id)) {
+      gateMap.set(t.spec_id, t.timestamp);
+    }
+  }
+
+  // Only consider specs that have a gate transition
+  const gatedSpecIds = specIds.filter((id) => gateMap.has(id));
+  if (gatedSpecIds.length === 0) return [];
+
+  // Get all spec-expectation links with expectation updated_at
+  const links = await prisma.specExpectation.findMany({
+    where: { spec_id: { in: gatedSpecIds } },
+    include: { expectation: { select: { id: true, updated_at: true } } },
+  });
+
+  // Group by spec_id and check staleness
+  const staleIds: string[] = [];
+  const linksBySpec = new Map<string, typeof links>();
+  for (const link of links) {
+    const group = linksBySpec.get(link.spec_id) ?? [];
+    group.push(link);
+    linksBySpec.set(link.spec_id, group);
+  }
+
+  for (const specId of gatedSpecIds) {
+    const gateTime = gateMap.get(specId)!;
+    const specLinks = linksBySpec.get(specId) ?? [];
+    const isStale = specLinks.some((link) => link.expectation.updated_at > gateTime);
+    if (isStale) staleIds.push(specId);
+  }
+
+  return staleIds;
+}

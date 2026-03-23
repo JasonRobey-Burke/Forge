@@ -175,3 +175,69 @@ describe('getSpecExpectations', () => {
     expect(result[0].edge_cases).toEqual(['Edge 1', 'Edge 2']);
   });
 });
+
+describe('checkSpecStaleness', () => {
+  const GATE_TIME = new Date('2025-03-01T00:00:00Z');
+  const BEFORE_GATE = new Date('2025-02-28T00:00:00Z');
+  const AFTER_GATE = new Date('2025-03-02T00:00:00Z');
+
+  it('returns stale: false for Draft specs', async () => {
+    prismaMock.spec.findFirst.mockResolvedValue(mockSpec({ phase: 'Draft' }));
+    const result = await specService.checkSpecStaleness(TEST_SPEC_ID);
+    expect(result).toEqual({ stale: false, staleExpectationIds: [] });
+    expect(prismaMock.phaseTransition.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('returns stale: false when no Draft→Ready transition exists', async () => {
+    prismaMock.spec.findFirst.mockResolvedValue(mockSpec({ phase: 'Ready' }));
+    prismaMock.phaseTransition.findFirst.mockResolvedValue(null);
+    const result = await specService.checkSpecStaleness(TEST_SPEC_ID);
+    expect(result).toEqual({ stale: false, staleExpectationIds: [] });
+  });
+
+  it('returns stale: false when no expectations modified after gate', async () => {
+    prismaMock.spec.findFirst.mockResolvedValue(mockSpec({ phase: 'InProgress' }));
+    prismaMock.phaseTransition.findFirst.mockResolvedValue({
+      id: 'pt-1',
+      spec_id: TEST_SPEC_ID,
+      from_phase: 'Draft',
+      to_phase: 'Ready',
+      timestamp: GATE_TIME,
+    });
+    prismaMock.specExpectation.findMany.mockResolvedValue([
+      {
+        spec_id: TEST_SPEC_ID,
+        expectation_id: TEST_EXPECTATION_ID,
+        expectation: { id: TEST_EXPECTATION_ID, updated_at: BEFORE_GATE },
+      },
+    ]);
+    const result = await specService.checkSpecStaleness(TEST_SPEC_ID);
+    expect(result).toEqual({ stale: false, staleExpectationIds: [] });
+  });
+
+  it('returns stale: true with IDs when expectations modified after gate', async () => {
+    const STALE_EXP_ID = 'e0000000-0000-4000-a000-000000000002';
+    prismaMock.spec.findFirst.mockResolvedValue(mockSpec({ phase: 'Review' }));
+    prismaMock.phaseTransition.findFirst.mockResolvedValue({
+      id: 'pt-1',
+      spec_id: TEST_SPEC_ID,
+      from_phase: 'Draft',
+      to_phase: 'Ready',
+      timestamp: GATE_TIME,
+    });
+    prismaMock.specExpectation.findMany.mockResolvedValue([
+      {
+        spec_id: TEST_SPEC_ID,
+        expectation_id: TEST_EXPECTATION_ID,
+        expectation: { id: TEST_EXPECTATION_ID, updated_at: BEFORE_GATE },
+      },
+      {
+        spec_id: TEST_SPEC_ID,
+        expectation_id: STALE_EXP_ID,
+        expectation: { id: STALE_EXP_ID, updated_at: AFTER_GATE },
+      },
+    ]);
+    const result = await specService.checkSpecStaleness(TEST_SPEC_ID);
+    expect(result).toEqual({ stale: true, staleExpectationIds: [STALE_EXP_ID] });
+  });
+});
