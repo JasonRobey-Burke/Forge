@@ -1,19 +1,27 @@
 import { useState, useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useExpectations } from '@/hooks/useExpectations';
 import { useIntention } from '@/hooks/useIntentions';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 export default function ExpectationListPage() {
   useDocumentTitle('Expectations');
   const { intentionId } = useParams<{ intentionId: string }>();
+  const navigate = useNavigate();
   const { data: intention } = useIntention(intentionId!);
   const { data: product } = useProduct(intention?.product_id ?? '');
   const { data: expectations, isLoading, error } = useExpectations(intentionId!);
@@ -69,33 +77,51 @@ export default function ExpectationListPage() {
       />
 
       {!expectations || expectations.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">No expectations yet.</p>
-            <Button asChild variant="outline">
-              <Link to={`/intentions/${intentionId}/expectations/new`}>Create your first expectation</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((exp) => (
-            <Link key={exp.id} to={`/expectations/${exp.id}`} className="block">
-              <Card className="hover:border-primary/50 transition-colors h-full">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg">{exp.title}</CardTitle>
-                  <Badge variant="outline">{exp.status}</Badge>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{exp.description}</p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {exp.edge_cases.length} edge case{exp.edge_cases.length !== 1 ? 's' : ''}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="text-muted-foreground mb-4">No expectations yet.</p>
+          <Button asChild variant="outline">
+            <Link to={`/intentions/${intentionId}/expectations/new`}>Create your first expectation</Link>
+          </Button>
         </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Edge Cases</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  No expectations found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((exp) => (
+                <TableRow
+                  key={exp.id}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/expectations/${exp.id}`)}
+                >
+                  <TableCell className="font-semibold">{exp.title}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{exp.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground max-w-sm">
+                    <span className="line-clamp-1">{exp.description}</span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground whitespace-nowrap">
+                    {exp.edge_cases.length} {exp.edge_cases.length === 1 ? 'case' : 'cases'}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       )}
     </div>
   );

@@ -1,15 +1,22 @@
 import { useState, useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useIntentions } from '@/hooks/useIntentions';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import type { Priority } from '@shared/types';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 const priorityVariant: Record<Priority, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   Critical: 'destructive',
@@ -21,6 +28,7 @@ const priorityVariant: Record<Priority, 'default' | 'secondary' | 'outline' | 'd
 export default function IntentionListPage() {
   useDocumentTitle('Intentions');
   const { productId } = useParams<{ productId: string }>();
+  const navigate = useNavigate();
   const { data: product } = useProduct(productId!);
   const { data: intentions, isLoading, error } = useIntentions(productId!);
   const [search, setSearch] = useState('');
@@ -70,35 +78,53 @@ export default function IntentionListPage() {
       />
 
       {!intentions || intentions.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">No intentions yet.</p>
-            <Button asChild variant="outline">
-              <Link to={`/products/${productId}/intentions/new`}>Create your first intention</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((intention) => (
-            <Link key={intention.id} to={`/intentions/${intention.id}`} className="block">
-              <Card className="hover:border-primary/50 transition-colors h-full">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg">{intention.title}</CardTitle>
-                  <Badge variant={priorityVariant[intention.priority as Priority]}>
-                    {intention.priority}
-                  </Badge>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{intention.description}</p>
-                  <div className="flex items-center gap-2 mt-3">
-                    <Badge variant="outline">{intention.status}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="text-muted-foreground mb-4">No intentions yet.</p>
+          <Button asChild variant="outline">
+            <Link to={`/products/${productId}/intentions/new`}>Create your first intention</Link>
+          </Button>
         </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Priority</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Description</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  No intentions found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((intention) => (
+                <TableRow
+                  key={intention.id}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/intentions/${intention.id}`)}
+                >
+                  <TableCell className="font-semibold">{intention.title}</TableCell>
+                  <TableCell>
+                    <Badge variant={priorityVariant[intention.priority as Priority]}>
+                      {intention.priority}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{intention.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground max-w-sm">
+                    <span className="line-clamp-1">{intention.description}</span>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       )}
     </div>
   );

@@ -1,19 +1,27 @@
 import { useState, useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useSpecs } from '@/hooks/useSpecs';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { PhaseBadge, PHASE_LABELS } from '@/lib/phaseColors';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 
 export default function SpecListPage() {
   useDocumentTitle('Specs');
   const { productId } = useParams<{ productId: string }>();
+  const navigate = useNavigate();
   const { data: product } = useProduct(productId!);
   const { data: specs, isLoading, error } = useSpecs(productId!);
   const [search, setSearch] = useState('');
@@ -70,33 +78,51 @@ export default function SpecListPage() {
       />
 
       {!specs || specs.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">No specs yet.</p>
-            <Button asChild variant="outline">
-              <Link to={`/products/${productId}/specs/new`}>Create your first spec</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((spec) => (
-            <Link key={spec.id} to={`/specs/${spec.id}`} className="block">
-              <Card className="hover:border-primary/50 transition-colors h-full">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                  <CardTitle className="text-lg">{spec.title}</CardTitle>
-                  <PhaseBadge phase={spec.phase} />
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{spec.description}</p>
-                  <div className="flex items-center gap-2 mt-3">
-                    <Badge variant="outline">{spec.complexity}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="text-muted-foreground mb-4">No specs yet.</p>
+          <Button asChild variant="outline">
+            <Link to={`/products/${productId}/specs/new`}>Create your first spec</Link>
+          </Button>
         </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Phase</TableHead>
+              <TableHead>Complexity</TableHead>
+              <TableHead>Description</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  No specs found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((spec) => (
+                <TableRow
+                  key={spec.id}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/specs/${spec.id}`)}
+                >
+                  <TableCell className="font-semibold">{spec.title}</TableCell>
+                  <TableCell>
+                    <PhaseBadge phase={spec.phase} />
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{spec.complexity}</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground max-w-sm">
+                    <span className="line-clamp-1">{spec.description}</span>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       )}
     </div>
   );
