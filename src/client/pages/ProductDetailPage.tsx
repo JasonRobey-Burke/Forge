@@ -20,6 +20,7 @@ import {
 import { StatusBadge } from '@/lib/phaseColors';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
+import IntentionProgress from '@/components/IntentionProgress';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -169,6 +170,13 @@ export default function ProductDetailPage() {
 
         {/* Right column */}
         <div className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Intention Progress</CardTitle></CardHeader>
+            <CardContent>
+              <IntentionProgress intentions={intentions ?? []} />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader><CardTitle className="text-base">WIP Limits</CardTitle></CardHeader>
             <CardContent>
