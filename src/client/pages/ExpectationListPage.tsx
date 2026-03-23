@@ -49,8 +49,8 @@ export default function ExpectationListPage() {
         ] : []),
         { label: 'Expectations' },
       ]} />
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Expectations</h1>
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-xl font-semibold">Expectations</h1>
         <Button asChild>
           <Link to={`/intentions/${intentionId}/expectations/new`}>New Expectation</Link>
         </Button>

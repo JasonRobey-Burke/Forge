@@ -21,7 +21,7 @@ export default function ProductEditPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Edit {product.name}</h1>
+      <h1 className="text-xl font-semibold mb-6">Edit {product.name}</h1>
       <ProductForm
         defaultValues={product}
         onSubmit={(values) => {

@@ -18,8 +18,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
+import { MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { StatusBadge } from '@/lib/phaseColors';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
@@ -124,7 +130,7 @@ export default function ProductDetailPage() {
       {/* Hero */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-3xl font-bold">{product.name}</h1>
+          <h1 className="text-xl font-semibold">{product.name}</h1>
           <StatusBadge status={product.status} />
         </div>
         <p className="text-muted-foreground">{product.problem_statement}</p>
@@ -164,13 +170,16 @@ export default function ProductDetailPage() {
           </>
         ) : (
           <>
-            <Button variant="outline" size="sm" onClick={handleEdit}>Edit</Button>
+            <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                  Delete
-                </Button>
-              </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Delete {product.name}?</DialogTitle>

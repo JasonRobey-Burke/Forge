@@ -126,7 +126,7 @@ export default function SpecDetailPage() {
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-bold">{spec.title}</h1>
+              <h1 className="text-xl font-semibold">{spec.title}</h1>
               <PhaseBadge phase={spec.phase} />
               <Badge variant="outline">{spec.complexity}</Badge>
             </div>
@@ -194,7 +194,7 @@ export default function SpecDetailPage() {
           </div>
 
           <div className="flex gap-2 shrink-0">
-            <Button asChild size="sm">
+            <Button asChild variant="ghost" size="sm">
               <Link to={`/specs/${spec.id}/edit`}>Edit</Link>
             </Button>
             <DropdownMenu>

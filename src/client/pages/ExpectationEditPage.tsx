@@ -16,7 +16,7 @@ export default function ExpectationEditPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Edit {expectation.title}</h1>
+      <h1 className="text-xl font-semibold mb-6">Edit {expectation.title}</h1>
       <ExpectationForm
         intentionId={expectation.intention_id}
         defaultValues={expectation}

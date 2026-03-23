@@ -18,9 +18,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import { IntentionFormFields } from '@/components/IntentionForm';
@@ -142,7 +147,7 @@ export default function IntentionDetailPage() {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{intention.title}</h1>
+            <h1 className="text-xl font-semibold">{intention.title}</h1>
             <Badge variant={priorityVariant[intention.priority as PriorityType]}>
               {intention.priority}
             </Badge>
@@ -165,11 +170,16 @@ export default function IntentionDetailPage() {
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={handleEdit}>Edit</Button>
+              <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="destructive">Delete</Button>
-                </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Delete {intention.title}?</DialogTitle>

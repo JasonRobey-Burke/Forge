@@ -16,7 +16,7 @@ export default function IntentionEditPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Edit {intention.title}</h1>
+      <h1 className="text-xl font-semibold mb-6">Edit {intention.title}</h1>
       <IntentionForm
         productId={intention.product_id}
         defaultValues={intention}

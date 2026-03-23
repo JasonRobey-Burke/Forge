@@ -23,7 +23,7 @@ interface ListToolbarProps {
 
 export default function ListToolbar({ search, onSearchChange, placeholder = 'Search...', filters }: ListToolbarProps) {
   return (
-    <div className="flex flex-wrap items-center gap-3 mb-4">
+    <div className="flex flex-wrap items-center gap-3 mb-3">
       <Input
         type="search"
         placeholder={placeholder}

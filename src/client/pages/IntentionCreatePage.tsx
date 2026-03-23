@@ -12,7 +12,7 @@ export default function IntentionCreatePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">New Intention</h1>
+      <h1 className="text-xl font-semibold mb-6">New Intention</h1>
       <IntentionForm
         productId={productId!}
         onSubmit={(values) => {

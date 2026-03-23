@@ -12,7 +12,7 @@ export default function ExpectationCreatePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">New Expectation</h1>
+      <h1 className="text-xl font-semibold mb-6">New Expectation</h1>
       <ExpectationForm
         intentionId={intentionId!}
         onSubmit={(values) => {

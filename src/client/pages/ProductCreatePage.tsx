@@ -11,7 +11,7 @@ export default function ProductCreatePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">New Product</h1>
+      <h1 className="text-xl font-semibold mb-6">New Product</h1>
       <ProductForm
         onSubmit={(values) => {
           createProduct.mutate(values, {

@@ -20,8 +20,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
+import { MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ExpectationFormFields } from '@/components/ExpectationForm';
 import { ExpectationStatus } from '@shared/types/enums';
 
@@ -131,7 +137,7 @@ export default function ExpectationDetailPage() {
           <div className="flex-1 mr-4" />
         ) : (
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{expectation.title}</h1>
+            <h1 className="text-xl font-semibold">{expectation.title}</h1>
             <Badge variant="outline">{expectation.status}</Badge>
           </div>
         )}
@@ -151,11 +157,16 @@ export default function ExpectationDetailPage() {
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={handleEdit}>Edit</Button>
+              <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="destructive">Delete</Button>
-                </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Delete {expectation.title}?</DialogTitle>
