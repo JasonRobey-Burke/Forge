@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useSpec, useSpecExpectations } from '@/hooks/useSpecs';
+import { useSpec, useSpecs, useSpecExpectations } from '@/hooks/useSpecs';
 import { useSpecStaleness } from '@/hooks/useStaleness';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -28,6 +28,7 @@ import { downloadMarkdown, specToMarkdown } from '@/lib/exportMarkdown';
 import { estimateTokens } from '@/lib/tokenEstimate';
 import { PhaseBadge, PHASE_LABELS, EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import CopyCommand from '@/components/CopyCommand';
+import PrevNextNav from '@/components/PrevNextNav';
 import { ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import {
   DropdownMenu,
@@ -43,6 +44,7 @@ export default function SpecDetailPage() {
   const { data: spec, isLoading, error } = useSpec(id!);
   const { data: linkedExpectations } = useSpecExpectations(id!);
   const { data: product } = useProduct(spec?.product_id ?? '');
+  const { data: siblings } = useSpecs(spec?.product_id ?? '');
   const { data: staleness } = useSpecStaleness(id!, spec?.phase ?? 'Draft');
   useDocumentTitle(spec?.title ?? 'Spec');
   const transitionSpec = useTransitionSpec();
@@ -385,6 +387,19 @@ export default function SpecDetailPage() {
             {spec.peer_reviewed && <Badge variant="secondary" className="mr-2">Peer Reviewed</Badge>}
             Created {new Date(spec.created_at).toLocaleDateString()} · Updated {new Date(spec.updated_at).toLocaleDateString()}
           </p>
+
+          {siblings && (() => {
+            const idx = siblings.findIndex(s => s.id === spec.id);
+            const prev = idx > 0 ? siblings[idx - 1] : null;
+            const next = idx < siblings.length - 1 ? siblings[idx + 1] : null;
+            return (
+              <PrevNextNav
+                prev={prev ? { id: prev.id, title: prev.title } : null}
+                next={next ? { id: next.id, title: next.title } : null}
+                buildUrl={(sibId) => `/specs/${sibId}`}
+              />
+            );
+          })()}
         </div>
       </div>
 

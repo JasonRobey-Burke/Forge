@@ -4,7 +4,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { useExpectation, useUpdateExpectation } from '@/hooks/useExpectations';
+import { useExpectation, useExpectations, useUpdateExpectation } from '@/hooks/useExpectations';
 import { useIntention } from '@/hooks/useIntentions';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -17,6 +17,7 @@ import { ExpectationFormFields } from '@/components/ExpectationForm';
 import { ExpectationStatus } from '@shared/types/enums';
 import { EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import CopyCommand from '@/components/CopyCommand';
+import PrevNextNav from '@/components/PrevNextNav';
 
 const editSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
@@ -32,6 +33,7 @@ export default function ExpectationDetailPage() {
   const { data: expectation, isLoading, error } = useExpectation(id!);
   const { data: intention } = useIntention(expectation?.intention_id ?? '');
   const { data: product } = useProduct(intention?.product_id ?? '');
+  const { data: siblings } = useExpectations(expectation?.intention_id ?? '');
   useDocumentTitle(expectation?.title ?? 'Expectation');
   const updateExpectation = useUpdateExpectation();
   const [editing, setEditing] = useState(false);
@@ -174,6 +176,19 @@ export default function ExpectationDetailPage() {
           <p className="text-xs text-muted-foreground">
             Created {formattedCreated} · Updated {formattedUpdated}
           </p>
+
+          {siblings && (() => {
+            const idx = siblings.findIndex(s => s.id === expectation.id);
+            const prev = idx > 0 ? siblings[idx - 1] : null;
+            const next = idx < siblings.length - 1 ? siblings[idx + 1] : null;
+            return (
+              <PrevNextNav
+                prev={prev ? { id: prev.id, title: prev.title } : null}
+                next={next ? { id: next.id, title: next.title } : null}
+                buildUrl={(sibId) => `/expectations/${sibId}`}
+              />
+            );
+          })()}
         </div>
       )}
     </div>

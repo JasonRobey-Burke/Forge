@@ -4,7 +4,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { useIntention, useUpdateIntention } from '@/hooks/useIntentions';
+import { useIntention, useIntentions, useUpdateIntention } from '@/hooks/useIntentions';
 import { useExpectations } from '@/hooks/useExpectations';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import CopyCommand from '@/components/CopyCommand';
 import NewBadge from '@/components/NewBadge';
+import PrevNextNav from '@/components/PrevNextNav';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import { IntentionFormFields } from '@/components/IntentionForm';
@@ -42,6 +43,7 @@ export default function IntentionDetailPage() {
   const { data: intention, isLoading, error } = useIntention(id!);
   const { data: product } = useProduct(intention?.product_id ?? '');
   const { data: expectations } = useExpectations(id!);
+  const { data: siblings } = useIntentions(intention?.product_id ?? '');
   useDocumentTitle(intention?.title ?? 'Intention');
   const updateIntention = useUpdateIntention();
   const [editing, setEditing] = useState(false);
@@ -245,6 +247,22 @@ export default function IntentionDetailPage() {
         <div className="lg:col-span-2 text-xs text-muted-foreground">
           Created {formattedCreated} · Updated {formattedUpdated}
         </div>
+
+        {/* Prev / Next navigation */}
+        {siblings && (() => {
+          const idx = siblings.findIndex(s => s.id === intention.id);
+          const prev = idx > 0 ? siblings[idx - 1] : null;
+          const next = idx < siblings.length - 1 ? siblings[idx + 1] : null;
+          return (
+            <div className="lg:col-span-2">
+              <PrevNextNav
+                prev={prev ? { id: prev.id, title: prev.title } : null}
+                next={next ? { id: next.id, title: next.title } : null}
+                buildUrl={(sibId) => `/intentions/${sibId}`}
+              />
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
