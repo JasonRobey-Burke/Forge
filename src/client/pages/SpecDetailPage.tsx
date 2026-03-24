@@ -113,6 +113,20 @@ export default function SpecDetailPage() {
       { label: 'Specs', href: `/products/${spec.product_id}/specs` },
       { label: spec.title },
     ]} />
+
+    {siblings && (() => {
+      const idx = siblings.findIndex(s => s.id === spec.id);
+      const prev = idx > 0 ? siblings[idx - 1] : null;
+      const next = idx < siblings.length - 1 ? siblings[idx + 1] : null;
+      return (
+        <PrevNextNav
+          prev={prev ? { id: prev.id, title: prev.title } : null}
+          next={next ? { id: next.id, title: next.title } : null}
+          buildUrl={(sibId) => `/specs/${sibId}`}
+        />
+      );
+    })()}
+
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       {/* Main content */}
       <div>
@@ -388,18 +402,6 @@ export default function SpecDetailPage() {
             Created {new Date(spec.created_at).toLocaleDateString()} · Updated {new Date(spec.updated_at).toLocaleDateString()}
           </p>
 
-          {siblings && (() => {
-            const idx = siblings.findIndex(s => s.id === spec.id);
-            const prev = idx > 0 ? siblings[idx - 1] : null;
-            const next = idx < siblings.length - 1 ? siblings[idx + 1] : null;
-            return (
-              <PrevNextNav
-                prev={prev ? { id: prev.id, title: prev.title } : null}
-                next={next ? { id: next.id, title: next.title } : null}
-                buildUrl={(sibId) => `/specs/${sibId}`}
-              />
-            );
-          })()}
         </div>
       </div>
 

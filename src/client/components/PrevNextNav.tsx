@@ -16,7 +16,7 @@ export default function PrevNextNav({ prev, next, buildUrl }: PrevNextNavProps) 
   if (!prev && !next) return null;
 
   return (
-    <nav className="flex items-stretch gap-3 mt-6 pt-4 border-t">
+    <nav className="flex items-stretch gap-3 mb-4 pb-4 border-b">
       {/* Prev */}
       <div className="flex-1 min-w-0">
         {prev ? (

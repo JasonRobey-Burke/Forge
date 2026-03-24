@@ -112,6 +112,20 @@ export default function IntentionDetailPage() {
         { label: 'Intentions', href: `/products/${intention.product_id}/intentions` },
         { label: intention.title },
       ]} />
+
+      {siblings && (() => {
+        const idx = siblings.findIndex(s => s.id === intention.id);
+        const prev = idx > 0 ? siblings[idx - 1] : null;
+        const next = idx < siblings.length - 1 ? siblings[idx + 1] : null;
+        return (
+          <PrevNextNav
+            prev={prev ? { id: prev.id, title: prev.title } : null}
+            next={next ? { id: next.id, title: next.title } : null}
+            buildUrl={(sibId) => `/intentions/${sibId}`}
+          />
+        );
+      })()}
+
       <div className="flex items-center justify-between mb-4">
         {editing ? (
           <div className="flex-1 mr-4">
@@ -248,21 +262,6 @@ export default function IntentionDetailPage() {
           Created {formattedCreated} · Updated {formattedUpdated}
         </div>
 
-        {/* Prev / Next navigation */}
-        {siblings && (() => {
-          const idx = siblings.findIndex(s => s.id === intention.id);
-          const prev = idx > 0 ? siblings[idx - 1] : null;
-          const next = idx < siblings.length - 1 ? siblings[idx + 1] : null;
-          return (
-            <div className="lg:col-span-2">
-              <PrevNextNav
-                prev={prev ? { id: prev.id, title: prev.title } : null}
-                next={next ? { id: next.id, title: next.title } : null}
-                buildUrl={(sibId) => `/intentions/${sibId}`}
-              />
-            </div>
-          );
-        })()}
       </div>
     </div>
   );

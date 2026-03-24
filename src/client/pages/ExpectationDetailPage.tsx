@@ -106,6 +106,20 @@ export default function ExpectationDetailPage() {
         { label: 'Expectations', href: `/intentions/${expectation.intention_id}/expectations` },
         { label: expectation.title },
       ]} />
+
+      {siblings && (() => {
+        const idx = siblings.findIndex(s => s.id === expectation.id);
+        const prev = idx > 0 ? siblings[idx - 1] : null;
+        const next = idx < siblings.length - 1 ? siblings[idx + 1] : null;
+        return (
+          <PrevNextNav
+            prev={prev ? { id: prev.id, title: prev.title } : null}
+            next={next ? { id: next.id, title: next.title } : null}
+            buildUrl={(sibId) => `/expectations/${sibId}`}
+          />
+        );
+      })()}
+
       <div className="flex items-center justify-between mb-4">
         {editing ? (
           <div className="flex-1 mr-4" />
@@ -177,18 +191,6 @@ export default function ExpectationDetailPage() {
             Created {formattedCreated} · Updated {formattedUpdated}
           </p>
 
-          {siblings && (() => {
-            const idx = siblings.findIndex(s => s.id === expectation.id);
-            const prev = idx > 0 ? siblings[idx - 1] : null;
-            const next = idx < siblings.length - 1 ? siblings[idx + 1] : null;
-            return (
-              <PrevNextNav
-                prev={prev ? { id: prev.id, title: prev.title } : null}
-                next={next ? { id: next.id, title: next.title } : null}
-                buildUrl={(sibId) => `/expectations/${sibId}`}
-              />
-            );
-          })()}
         </div>
       )}
     </div>
