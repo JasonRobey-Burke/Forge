@@ -5,6 +5,7 @@ import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import NewBadge from '@/components/NewBadge';
 import { PhaseBadge, PHASE_LABELS } from '@/lib/phaseColors';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
@@ -104,6 +105,7 @@ export default function SpecListPage() {
                   <TableCell className="font-semibold">
                     <span className="text-xs text-muted-foreground font-mono mr-1.5">{spec.id}</span>
                     {spec.title}
+                    <NewBadge createdAt={spec.created_at} />
                   </TableCell>
                   <TableCell>
                     <PhaseBadge phase={spec.phase} />

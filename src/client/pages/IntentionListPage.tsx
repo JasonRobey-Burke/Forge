@@ -11,6 +11,7 @@ import { INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import NewBadge from '@/components/NewBadge';
 import {
   Table,
   TableHeader,
@@ -165,6 +166,7 @@ export default function IntentionListPage() {
                   <TableCell className="font-semibold">
                     <span className="text-xs text-muted-foreground font-mono mr-1.5">{intention.id}</span>
                     {intention.title}
+                    <NewBadge createdAt={intention.created_at} />
                   </TableCell>
                   <TableCell>
                     <Badge variant={priorityVariant[intention.priority as Priority]}>

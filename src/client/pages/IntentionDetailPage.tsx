@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
 import CopyCommand from '@/components/CopyCommand';
+import NewBadge from '@/components/NewBadge';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import { IntentionFormFields } from '@/components/IntentionForm';
@@ -222,6 +223,7 @@ export default function IntentionDetailPage() {
                         {exp.title}
                       </Link>
                       <Badge variant="outline" className="text-xs">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
+                      <NewBadge createdAt={exp.created_at} />
                       <span className="text-xs text-muted-foreground">
                         {exp.edge_cases.length} edge case{exp.edge_cases.length !== 1 ? 's' : ''}
                       </span>

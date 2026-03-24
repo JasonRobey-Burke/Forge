@@ -16,6 +16,7 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import IntentionProgress from '@/components/IntentionProgress';
 import CopyCommand from '@/components/CopyCommand';
+import NewBadge from '@/components/NewBadge';
 import { ProductFormFields, productToFormValues, productToApiValues } from '@/components/ProductForm';
 import { ProductStatus } from '@shared/types/enums';
 import type { CreateProductInput } from '@shared/types';
@@ -263,6 +264,7 @@ export default function ProductDetailPage() {
                         {intention.priority}
                       </Badge>
                       <Badge variant="outline" className="text-xs">{INTENTION_STATUS_LABELS[intention.status] ?? intention.status}</Badge>
+                      <NewBadge createdAt={intention.created_at} />
                     </li>
                   ))}
                 </ul>

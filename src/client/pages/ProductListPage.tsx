@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { StatusBadge } from '@/lib/phaseColors';
+import NewBadge from '@/components/NewBadge';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
 import {
@@ -92,6 +93,7 @@ export default function ProductListPage() {
                   <TableCell className="font-semibold">
                     <span className="text-xs text-muted-foreground font-mono mr-1.5">{product.id}</span>
                     {product.name}
+                    <NewBadge createdAt={product.created_at} />
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={product.status} />
