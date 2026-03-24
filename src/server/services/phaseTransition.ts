@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma.js';
+import { getStore } from '../lib/yamlStore.js';
 import { evaluateChecklist } from '../../shared/checklist/evaluator.js';
 import { getSpec, getSpecExpectations, countSpecsByPhase } from './spec.js';
 import { getProduct } from './product.js';
@@ -44,21 +44,7 @@ export async function transitionSpec(
     }
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.spec.update({
-      where: { id: specId },
-      data: { phase: toPhase, phase_changed_at: new Date() },
-    });
-    await tx.phaseTransition.create({
-      data: {
-        spec_id: specId,
-        from_phase: spec.phase,
-        to_phase: toPhase,
-        user_id: userId,
-        override_reason: overrideReason ?? null,
-      },
-    });
-  });
+  getStore().addPhaseTransition(specId, spec.phase, toPhase, userId, overrideReason);
 
   return { success: true };
 }

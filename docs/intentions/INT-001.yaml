@@ -1,0 +1,13 @@
+intention:
+  id: INT-001
+  product_id: PROD-001
+  title: Teams can define and decompose product intent
+  description: >
+    Teams need to capture what a product should be and progressively decompose
+    that intent into testable expectations. This intention covers the full
+    hierarchy from Product definition through Intentions and Expectations.
+  priority: Critical
+  status: InProgress
+  dependencies: []
+  created_at: "2026-03-01T00:00:00Z"
+  updated_at: "2026-03-20T00:00:00Z"

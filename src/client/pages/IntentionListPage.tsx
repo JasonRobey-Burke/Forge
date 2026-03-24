@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useIntentions } from '@/hooks/useIntentions';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import type { Priority } from '@shared/types';
 import ListToolbar from '@/components/ListToolbar';
@@ -53,9 +52,6 @@ export default function IntentionListPage() {
       ]} />
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-xl font-semibold">Intentions</h1>
-        <Button asChild>
-          <Link to={`/products/${productId}/intentions/new`}>New Intention</Link>
-        </Button>
       </div>
 
       <ListToolbar
@@ -79,10 +75,7 @@ export default function IntentionListPage() {
 
       {!intentions || intentions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">No intentions yet.</p>
-          <Button asChild variant="outline">
-            <Link to={`/products/${productId}/intentions/new`}>Create your first intention</Link>
-          </Button>
+          <p className="text-muted-foreground">No intentions found. Add YAML files to the docs/intentions/ directory.</p>
         </div>
       ) : (
         <Table>

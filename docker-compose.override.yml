@@ -1,9 +1,0 @@
-services:
-  app:
-    volumes:
-      - .:/app
-      - app-node-modules:/app/node_modules
-    command: npm run dev
-
-volumes:
-  app-node-modules:

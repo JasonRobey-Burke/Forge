@@ -1,31 +1,17 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { useIntention, useDeleteIntention, useUpdateIntention } from '@/hooks/useIntentions';
+import { useIntention, useUpdateIntention } from '@/hooks/useIntentions';
 import { useExpectations } from '@/hooks/useExpectations';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { AlertTriangle, MoreHorizontal } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { AlertTriangle } from 'lucide-react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import { IntentionFormFields } from '@/components/IntentionForm';
@@ -50,14 +36,11 @@ const priorityVariant: Record<PriorityType, 'default' | 'secondary' | 'outline' 
 
 export default function IntentionDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { data: intention, isLoading, error } = useIntention(id!);
   const { data: product } = useProduct(intention?.product_id ?? '');
   const { data: expectations } = useExpectations(id!);
   useDocumentTitle(intention?.title ?? 'Intention');
-  const deleteIntention = useDeleteIntention();
   const updateIntention = useUpdateIntention();
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [editing, setEditing] = useState(false);
 
   const form = useForm<EditFormValues>({
@@ -73,22 +56,6 @@ export default function IntentionDetailPage() {
 
   if (isLoading) return <DetailPageSkeleton />;
   if (error || !intention) return <div className="text-destructive">Intention not found.</div>;
-
-  function handleDelete() {
-    deleteIntention.mutate(
-      { id: id!, product_id: intention!.product_id },
-      {
-        onSuccess: () => {
-          toast.success('Intention deleted');
-          navigate(`/products/${intention!.product_id}/intentions`);
-        },
-        onError: (err) => {
-          setDeleteOpen(false);
-          toast.error(err.message);
-        },
-      },
-    );
-  }
 
   function handleEdit() {
     form.reset({
@@ -169,33 +136,7 @@ export default function IntentionDetailPage() {
               </Button>
             </>
           ) : (
-            <>
-              <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Delete {intention.title}?</DialogTitle>
-                    <DialogDescription>
-                      This will archive the intention. It cannot be deleted if it has active expectations.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-                    <Button variant="destructive" onClick={handleDelete} disabled={deleteIntention.isPending}>
-                      {deleteIntention.isPending ? 'Deleting...' : 'Delete'}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </>
+            <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
           )}
         </div>
       </div>
@@ -283,14 +224,6 @@ export default function IntentionDetailPage() {
               ) : (
                 <p className="text-sm text-muted-foreground">No expectations yet.</p>
               )}
-              <div className="mt-3">
-                <Link
-                  to={`/intentions/${intention.id}/expectations/new`}
-                  className="text-sm text-primary hover:underline"
-                >
-                  + New Expectation
-                </Link>
-              </div>
             </CardContent>
           </Card>
         </div>

@@ -1,0 +1,16 @@
+expectation:
+  id: EXP-006
+  intention_id: INT-003
+  title: Flow Board with phase transitions
+  description: >
+    A Kanban-style board showing Specs in phase columns with drag-and-drop
+    transitions, WIP limit enforcement, and validation gates (completeness
+    checklist for Draft→Ready, peer review for Review→Validating).
+  status: Done
+  edge_cases:
+    - WIP limit of 0 means unlimited for that phase
+    - Override dialog must capture reason for audit trail
+    - Completeness checklist evaluates 11 fixed criteria
+    - Keyboard drag-and-drop must work for accessibility
+  created_at: "2026-03-01T00:00:00Z"
+  updated_at: "2026-03-20T00:00:00Z"

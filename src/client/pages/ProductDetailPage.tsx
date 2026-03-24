@@ -1,31 +1,16 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { useProduct, useDeleteProduct, useUpdateProduct } from '@/hooks/useProducts';
+import { useProduct, useUpdateProduct } from '@/hooks/useProducts';
 import { useIntentions } from '@/hooks/useIntentions';
 import { useSpecs } from '@/hooks/useSpecs';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { MoreHorizontal } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { StatusBadge } from '@/lib/phaseColors';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
@@ -59,12 +44,10 @@ type EditFormValues = z.infer<typeof formSchema>;
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+
   const { data: product, isLoading, error } = useProduct(id!);
   useDocumentTitle(product?.name ?? 'Product');
-  const deleteProduct = useDeleteProduct();
   const updateProduct = useUpdateProduct();
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const { data: intentions } = useIntentions(id!);
   const { data: specs } = useSpecs(id!);
@@ -83,15 +66,6 @@ export default function ProductDetailPage() {
 
   if (error || !product) {
     return <div className="text-destructive">Product not found.</div>;
-  }
-
-  function handleDelete() {
-    deleteProduct.mutate(id!, {
-      onSuccess: () => {
-        toast.success('Product deleted');
-        navigate('/products');
-      },
-    });
   }
 
   function handleEdit() {
@@ -169,33 +143,7 @@ export default function ProductDetailPage() {
             </Button>
           </>
         ) : (
-          <>
-            <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Delete {product.name}?</DialogTitle>
-                  <DialogDescription>
-                    This will archive the product. It will no longer appear in lists.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-                  <Button variant="destructive" onClick={handleDelete} disabled={deleteProduct.isPending}>
-                    {deleteProduct.isPending ? 'Deleting...' : 'Delete'}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </>
+          <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
         )}
       </div>
 

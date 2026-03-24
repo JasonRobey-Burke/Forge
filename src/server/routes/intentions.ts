@@ -1,6 +1,6 @@
 import { Router, type Request } from 'express';
 import { validate } from '../middleware/validate.js';
-import { createIntentionSchema, updateIntentionSchema } from '../../shared/schemas/intention.js';
+import { updateIntentionSchema } from '../../shared/schemas/intention.js';
 import * as intentionService from '../services/intention.js';
 import * as depService from '../services/intentionDependencies.js';
 
@@ -18,19 +18,6 @@ router.get('/', async (req, res) => {
   }
   const intentions = await intentionService.listIntentions(productId);
   res.json({ data: intentions, error: null, meta: { count: intentions.length } });
-});
-
-// POST /api/intentions
-router.post('/', validate(createIntentionSchema), async (req, res) => {
-  const intention = await intentionService.createIntention(req.body);
-  if (!intention) {
-    return res.status(404).json({
-      data: null,
-      error: { message: 'Parent product not found', code: 'NOT_FOUND' },
-      meta: null,
-    });
-  }
-  res.status(201).json({ data: intention, error: null, meta: null });
 });
 
 // GET /api/intentions/:id
@@ -57,26 +44,6 @@ router.put('/:id', validate(updateIntentionSchema), async (req: Request<{ id: st
     });
   }
   res.json({ data: intention, error: null, meta: null });
-});
-
-// DELETE /api/intentions/:id
-router.delete('/:id', async (req: Request<{ id: string }>, res) => {
-  const result = await intentionService.deleteIntention(req.params.id);
-  if (!result.success) {
-    if (result.error === 'has_children') {
-      return res.status(409).json({
-        data: null,
-        error: { message: 'Cannot delete intention with active expectations', code: 'HAS_CHILDREN' },
-        meta: null,
-      });
-    }
-    return res.status(404).json({
-      data: null,
-      error: { message: 'Intention not found', code: 'NOT_FOUND' },
-      meta: null,
-    });
-  }
-  res.json({ data: { archived: true }, error: null, meta: null });
 });
 
 // POST /api/intentions/:id/dependencies

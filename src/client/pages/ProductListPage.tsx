@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useProducts } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/lib/phaseColors';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
@@ -41,9 +40,6 @@ export default function ProductListPage() {
     <div>
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-xl font-semibold">Products</h1>
-        <Button asChild>
-          <Link to="/products/new">New Product</Link>
-        </Button>
       </div>
 
       <ListToolbar
@@ -67,10 +63,7 @@ export default function ProductListPage() {
 
       {!products || products.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">No products yet.</p>
-          <Button asChild variant="outline">
-            <Link to="/products/new">Create your first product</Link>
-          </Button>
+          <p className="text-muted-foreground">No products found. Add YAML files to the docs/products/ directory.</p>
         </div>
       ) : (
         <Table>

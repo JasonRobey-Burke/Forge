@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useSpecs } from '@/hooks/useSpecs';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { PhaseBadge, PHASE_LABELS } from '@/lib/phaseColors';
 import ListToolbar from '@/components/ListToolbar';
@@ -48,9 +47,6 @@ export default function SpecListPage() {
       ]} />
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-xl font-semibold">Specs</h1>
-        <Button asChild>
-          <Link to={`/products/${productId}/specs/new`}>New Spec</Link>
-        </Button>
       </div>
 
       <ListToolbar
@@ -79,10 +75,7 @@ export default function SpecListPage() {
 
       {!specs || specs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">No specs yet.</p>
-          <Button asChild variant="outline">
-            <Link to={`/products/${productId}/specs/new`}>Create your first spec</Link>
-          </Button>
+          <p className="text-muted-foreground">No specs found. Add YAML files to the docs/specs/ directory.</p>
         </div>
       ) : (
         <Table>

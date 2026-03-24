@@ -1,0 +1,15 @@
+expectation:
+  id: EXP-004
+  intention_id: INT-002
+  title: Spec structured editor
+  description: >
+    Spec authors can create and edit Specs with structured sections: context
+    (inherited from Product), expectations (linked), boundaries, deliverables,
+    and validation criteria (automated + human).
+  status: Done
+  edge_cases:
+    - Context inheritance should snapshot Product context at creation time
+    - Existing specs should retain their context version even if Product context changes
+    - Linking/unlinking expectations should be transactional
+  created_at: "2026-03-01T00:00:00Z"
+  updated_at: "2026-03-18T00:00:00Z"

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { useExpectation, useDeleteExpectation, useUpdateExpectation } from '@/hooks/useExpectations';
+import { useExpectation, useUpdateExpectation } from '@/hooks/useExpectations';
 import { useIntention } from '@/hooks/useIntentions';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -13,21 +13,6 @@ import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { MoreHorizontal } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { ExpectationFormFields } from '@/components/ExpectationForm';
 import { ExpectationStatus } from '@shared/types/enums';
 
@@ -42,14 +27,11 @@ type EditFormValues = z.infer<typeof editSchema>;
 
 export default function ExpectationDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { data: expectation, isLoading, error } = useExpectation(id!);
   const { data: intention } = useIntention(expectation?.intention_id ?? '');
   const { data: product } = useProduct(intention?.product_id ?? '');
   useDocumentTitle(expectation?.title ?? 'Expectation');
-  const deleteExpectation = useDeleteExpectation();
   const updateExpectation = useUpdateExpectation();
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [editing, setEditing] = useState(false);
 
   const form = useForm<EditFormValues>({
@@ -65,18 +47,6 @@ export default function ExpectationDetailPage() {
 
   if (isLoading) return <DetailPageSkeleton />;
   if (error || !expectation) return <div className="text-destructive">Expectation not found.</div>;
-
-  function handleDelete() {
-    deleteExpectation.mutate(
-      { id: id!, intention_id: expectation!.intention_id },
-      {
-        onSuccess: () => {
-          toast.success('Expectation deleted');
-          navigate(`/intentions/${expectation!.intention_id}/expectations`);
-        },
-      },
-    );
-  }
 
   function handleEdit() {
     const edgeCases = expectation!.edge_cases.map((v) => ({ value: v }));
@@ -156,33 +126,7 @@ export default function ExpectationDetailPage() {
               </Button>
             </>
           ) : (
-            <>
-              <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Delete {expectation.title}?</DialogTitle>
-                    <DialogDescription>
-                      This will archive the expectation.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-                    <Button variant="destructive" onClick={handleDelete} disabled={deleteExpectation.isPending}>
-                      {deleteExpectation.isPending ? 'Deleting...' : 'Delete'}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </>
+            <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
           )}
         </div>
       </div>

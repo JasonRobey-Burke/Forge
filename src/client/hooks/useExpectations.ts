@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import type { Expectation, CreateExpectationInput, UpdateExpectationInput } from '@shared/types';
+import type { Expectation, UpdateExpectationInput } from '@shared/types';
 
 export const expectationKeys = {
   all: (intentionId: string) => ['expectations', intentionId] as const,
@@ -23,17 +23,6 @@ export function useExpectation(id: string) {
   });
 }
 
-export function useCreateExpectation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: CreateExpectationInput) =>
-      apiFetch<Expectation>('/expectations', { method: 'POST', body: JSON.stringify(input) }),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: expectationKeys.all(vars.intention_id) });
-    },
-  });
-}
-
 export function useUpdateExpectation() {
   const qc = useQueryClient();
   return useMutation({
@@ -42,17 +31,6 @@ export function useUpdateExpectation() {
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: expectationKeys.all(vars.intention_id) });
       qc.invalidateQueries({ queryKey: expectationKeys.detail(vars.id) });
-    },
-  });
-}
-
-export function useDeleteExpectation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id }: { id: string; intention_id: string }) =>
-      apiFetch<{ archived: true }>(`/expectations/${id}`, { method: 'DELETE' }),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: expectationKeys.all(vars.intention_id) });
     },
   });
 }

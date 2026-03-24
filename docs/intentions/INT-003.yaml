@@ -1,0 +1,14 @@
+intention:
+  id: INT-003
+  product_id: PROD-001
+  title: Teams can visualize and manage Spec flow
+  description: >
+    Teams need a Kanban-style flow board to visualize specs moving through
+    phases (Draft, Ready, InProgress, Review, Validating, Done) with WIP limits
+    and validation gates to enforce process discipline.
+  priority: High
+  status: InProgress
+  dependencies:
+    - INT-002
+  created_at: "2026-03-01T00:00:00Z"
+  updated_at: "2026-03-20T00:00:00Z"

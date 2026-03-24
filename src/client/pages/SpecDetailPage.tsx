@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useSpec, useDeleteSpec, useSpecExpectations } from '@/hooks/useSpecs';
+import { useSpec, useSpecExpectations } from '@/hooks/useSpecs';
 import { useSpecStaleness } from '@/hooks/useStaleness';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -20,14 +20,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+
 } from '@/components/ui/dialog';
 import { SpecPhase as SpecPhaseEnum } from '@shared/types/enums';
 import { downloadYaml } from '@/lib/exportYaml';
 import { downloadMarkdown, specToMarkdown } from '@/lib/exportMarkdown';
 import { estimateTokens } from '@/lib/tokenEstimate';
 import { PhaseBadge, PHASE_LABELS } from '@/lib/phaseColors';
-import { ArrowRight, ArrowLeft, MoreHorizontal, AlertTriangle } from 'lucide-react';
+import { ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,16 +39,13 @@ import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 
 export default function SpecDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { data: spec, isLoading, error } = useSpec(id!);
   const { data: linkedExpectations } = useSpecExpectations(id!);
   const { data: product } = useProduct(spec?.product_id ?? '');
   const { data: staleness } = useSpecStaleness(id!, spec?.phase ?? 'Draft');
   useDocumentTitle(spec?.title ?? 'Spec');
-  const deleteSpec = useDeleteSpec();
   const transitionSpec = useTransitionSpec();
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideReason, setOverrideReason] = useState('');
   const [transitioning, setTransitioning] = useState(false);
@@ -74,13 +71,6 @@ export default function SpecDetailPage() {
     })),
   };
   const tokenCount = estimateTokens(specToMarkdown(exportData));
-
-  function handleDelete() {
-    deleteSpec.mutate(
-      { id: id!, product_id: spec!.product_id },
-      { onSuccess: () => { toast.success('Spec deleted'); navigate(`/products/${spec!.product_id}/specs`); } },
-    );
-  }
 
   function handleTransitionToReady() {
     if (checklistResult.ready) {
@@ -213,35 +203,6 @@ export default function SpecDetailPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Delete {spec.title}?</DialogTitle>
-                  <DialogDescription>This will archive the spec.</DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-                  <Button variant="destructive" onClick={handleDelete} disabled={deleteSpec.isPending}>
-                    {deleteSpec.isPending ? 'Deleting...' : 'Delete'}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
 

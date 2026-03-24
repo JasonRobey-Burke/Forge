@@ -1,0 +1,64 @@
+spec:
+  id: SPEC-001
+  product_id: PROD-001
+  title: Project scaffolding and infrastructure
+  description: >
+    Set up the monorepo with React + Express + Prisma + Docker Compose.
+    Establish folder structure, build pipeline, and development workflow.
+  status: Done
+  complexity: High
+  owner: Jason Robey
+  expectations:
+    - EXP-001
+  context:
+    stack:
+      - React 19, TypeScript, Vite 8, Tailwind CSS 3, shadcn/ui
+      - Express.js 5 (TypeScript), Node.js 20 LTS
+    patterns:
+      - "Monorepo: single repo, single container"
+      - Route-per-resource pattern on backend
+    conventions:
+      - "All API routes return consistent shape: { data, error, meta }"
+      - "Use shadcn/ui components for all UI elements"
+    auth: None (local dev tool)
+  expectations_detail:
+    - id: EXP-001
+      description: Product CRUD with all required fields
+      edge_cases:
+        - Duplicate product names should be allowed
+        - Archiving should not cascade-delete children
+  boundaries:
+    - Do not implement authentication in this spec
+    - Do not add production deployment configuration
+    - Do not implement any entity beyond Product
+  deliverables:
+    - Express API server with health check endpoint
+    - React SPA with Vite dev server and proxy configuration
+    - Docker Compose for local development
+    - Prisma schema with Product model
+  validation:
+    automated:
+      - npm run build succeeds without errors
+      - npm run typecheck passes
+      - Docker compose up starts all services
+    human:
+      - Developer can create and view a Product via API
+    peer_reviewed: true
+  phase_history:
+    - from: Draft
+      to: Ready
+      timestamp: "2026-03-02T10:00:00Z"
+    - from: Ready
+      to: InProgress
+      timestamp: "2026-03-03T09:00:00Z"
+    - from: InProgress
+      to: Review
+      timestamp: "2026-03-08T16:00:00Z"
+    - from: Review
+      to: Validating
+      timestamp: "2026-03-09T10:00:00Z"
+    - from: Validating
+      to: Done
+      timestamp: "2026-03-10T14:00:00Z"
+  created_at: "2026-03-01T00:00:00Z"
+  updated_at: "2026-03-10T14:00:00Z"
