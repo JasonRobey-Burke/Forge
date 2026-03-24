@@ -74,6 +74,12 @@ export class YamlStore {
 
   // ── Helpers ─────────────────────────────────────────────────────────
 
+  /** Capitalize first letter to match Forge enum values (e.g. "critical" → "Critical") */
+  private capitalizeFirst(value: string): string {
+    if (!value) return value;
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+
   /** Coerce a value to string[]: handles arrays, multiline strings, objects, and nulls */
   private toStringArray(value: unknown): string[] {
     if (Array.isArray(value)) return value.map(String);
@@ -123,7 +129,7 @@ export class YamlStore {
       target_audience: typeof p.audience === 'object'
         ? (p.audience.primary ?? '')
         : (p.target_audience ?? p.audience ?? ''),
-      status: p.status ?? 'Active',
+      status: this.capitalizeFirst(p.status ?? 'Active') as Product['status'],
       context,
       wip_limits: wipLimits,
       created_at: p.created_at ?? new Date().toISOString(),
@@ -141,11 +147,11 @@ export class YamlStore {
 
     const intention: Intention = {
       id: i.id,
-      product_id: i.product_id,
-      title: i.title ?? '',
-      description: i.description ?? i.rationale ?? '',
-      priority: i.priority ?? 'Medium',
-      status: i.status ?? 'Draft',
+      product_id: i.product_id ?? i.product ?? '',
+      title: i.title ?? i.statement?.trim().split('\n')[0] ?? '',
+      description: i.description ?? i.rationale ?? i.statement ?? '',
+      priority: this.capitalizeFirst(i.priority ?? 'Medium') as Intention['priority'],
+      status: this.capitalizeFirst(i.status ?? 'Draft') as Intention['status'],
       created_at: i.created_at ?? new Date().toISOString(),
       updated_at: i.updated_at ?? new Date().toISOString(),
       archived_at: i.archived_at ?? null,
@@ -162,10 +168,10 @@ export class YamlStore {
 
     const expectation: Expectation = {
       id: e.id,
-      intention_id: e.intention_id,
-      title: e.title ?? '',
+      intention_id: e.intention_id ?? e.intention ?? '',
+      title: e.title ?? e.description?.trim().split('\n')[0]?.slice(0, 100) ?? '',
       description: e.description ?? '',
-      status: e.status ?? 'Draft',
+      status: this.capitalizeFirst(e.status ?? 'Draft') as Expectation['status'],
       edge_cases: e.edge_cases ?? [],
       created_at: e.created_at ?? new Date().toISOString(),
       updated_at: e.updated_at ?? new Date().toISOString(),
@@ -192,11 +198,11 @@ export class YamlStore {
 
     const spec: Spec = {
       id: s.id,
-      product_id: s.product_id,
+      product_id: s.product_id ?? s.product ?? '',
       title: s.title ?? '',
       description: s.description ?? '',
-      phase: s.status ?? s.phase ?? 'Draft',
-      complexity: s.complexity ?? 'Medium',
+      phase: this.capitalizeFirst(s.status ?? s.phase ?? 'Draft') as Spec['phase'],
+      complexity: this.capitalizeFirst(s.complexity ?? 'Medium') as Spec['complexity'],
       context,
       boundaries: this.flattenBoundaries(s.boundaries),
       deliverables: this.flattenDeliverables(s.deliverables),
