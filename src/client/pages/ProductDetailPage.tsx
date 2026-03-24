@@ -15,6 +15,7 @@ import { StatusBadge, INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import IntentionProgress from '@/components/IntentionProgress';
+import CopyCommand from '@/components/CopyCommand';
 import { ProductFormFields, productToFormValues, productToApiValues } from '@/components/ProductForm';
 import { ProductStatus } from '@shared/types/enums';
 import type { CreateProductInput } from '@shared/types';
@@ -104,7 +105,10 @@ export default function ProductDetailPage() {
       {/* Hero */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-xl font-semibold">{product.name}</h1>
+          <h1 className="text-xl font-semibold">
+            <span className="text-sm text-muted-foreground font-mono mr-2">{product.id}</span>
+            {product.name}
+          </h1>
           <StatusBadge status={product.status} />
         </div>
         <p className="text-muted-foreground">{product.problem_statement}</p>
@@ -225,6 +229,12 @@ export default function ProductDetailPage() {
             <CardHeader className="pb-2"><CardTitle className="text-base">Intention Progress</CardTitle></CardHeader>
             <CardContent>
               <IntentionProgress intentions={intentions ?? []} />
+              {(!intentions || intentions.length === 0) && (
+                <CopyCommand
+                  label="Define intentions in Claude Code:"
+                  command={`/idd-framework:define-intentions ${product.id}`}
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -239,6 +249,7 @@ export default function ProductDetailPage() {
                         to={`/intentions/${intention.id}`}
                         className="text-sm text-primary hover:underline"
                       >
+                        <span className="text-muted-foreground font-mono mr-1">{intention.id}</span>
                         {intention.title}
                       </Link>
                       <Badge
@@ -265,6 +276,10 @@ export default function ProductDetailPage() {
                     </Link>
                   </div>
                 )}
+                <CopyCommand
+                  label="Add new intentions in Claude Code:"
+                  command={`/idd-framework:define-intentions ${product.id}`}
+                />
               </CardContent>
             </Card>
           )}

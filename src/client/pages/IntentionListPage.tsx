@@ -162,7 +162,10 @@ export default function IntentionListPage() {
                   className="cursor-pointer"
                   onClick={() => navigate(`/intentions/${intention.id}`)}
                 >
-                  <TableCell className="font-semibold">{intention.title}</TableCell>
+                  <TableCell className="font-semibold">
+                    <span className="text-xs text-muted-foreground font-mono mr-1.5">{intention.id}</span>
+                    {intention.title}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={priorityVariant[intention.priority as Priority]}>
                       {intention.priority}

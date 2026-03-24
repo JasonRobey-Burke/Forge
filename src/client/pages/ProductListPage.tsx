@@ -89,7 +89,10 @@ export default function ProductListPage() {
                   className="cursor-pointer"
                   onClick={() => navigate(`/products/${product.id}`)}
                 >
-                  <TableCell className="font-semibold">{product.name}</TableCell>
+                  <TableCell className="font-semibold">
+                    <span className="text-xs text-muted-foreground font-mono mr-1.5">{product.id}</span>
+                    {product.name}
+                  </TableCell>
                   <TableCell>
                     <StatusBadge status={product.status} />
                   </TableCell>

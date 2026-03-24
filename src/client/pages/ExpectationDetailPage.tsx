@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExpectationFormFields } from '@/components/ExpectationForm';
 import { ExpectationStatus } from '@shared/types/enums';
 import { EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
+import CopyCommand from '@/components/CopyCommand';
 
 const editSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
@@ -108,7 +109,10 @@ export default function ExpectationDetailPage() {
           <div className="flex-1 mr-4" />
         ) : (
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold">{expectation.title}</h1>
+            <h1 className="text-xl font-semibold">
+              <span className="text-sm text-muted-foreground font-mono mr-2">{expectation.id}</span>
+              {expectation.title}
+            </h1>
             <Badge variant="outline">{EXPECTATION_STATUS_LABELS[expectation.status] ?? expectation.status}</Badge>
           </div>
         )}
@@ -161,6 +165,11 @@ export default function ExpectationDetailPage() {
               </ol>
             </CardContent>
           </Card>
+
+          <CopyCommand
+            label="Write a spec for this expectation in Claude Code:"
+            command={`/idd-framework:write-spec ${expectation.id}`}
+          />
 
           <p className="text-xs text-muted-foreground">
             Created {formattedCreated} · Updated {formattedUpdated}

@@ -27,6 +27,7 @@ import { downloadYaml } from '@/lib/exportYaml';
 import { downloadMarkdown, specToMarkdown } from '@/lib/exportMarkdown';
 import { estimateTokens } from '@/lib/tokenEstimate';
 import { PhaseBadge, PHASE_LABELS, EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
+import CopyCommand from '@/components/CopyCommand';
 import { ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import {
   DropdownMenu,
@@ -116,7 +117,10 @@ export default function SpecDetailPage() {
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-xl font-semibold">{spec.title}</h1>
+              <h1 className="text-xl font-semibold">
+                <span className="text-sm text-muted-foreground font-mono mr-2">{spec.id}</span>
+                {spec.title}
+              </h1>
               <PhaseBadge phase={spec.phase} />
               <Badge variant="outline">{spec.complexity}</Badge>
             </div>
@@ -352,6 +356,7 @@ export default function SpecDetailPage() {
                   {linkedExpectations.map((exp) => (
                     <li key={exp.id} className="flex items-center gap-1">
                       <Link to={`/expectations/${exp.id}`} className="text-sm text-primary hover:underline">
+                        <span className="text-muted-foreground font-mono mr-1">{exp.id}</span>
                         {exp.title}
                       </Link>
                       <Badge variant="outline" className="ml-2">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
@@ -364,6 +369,17 @@ export default function SpecDetailPage() {
               </CardContent>
             </Card>
           )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <CopyCommand
+              label="Tech review this spec in Claude Code:"
+              command={`/idd-framework:tech-review ${spec.id}`}
+            />
+            <CopyCommand
+              label="Validate output against this spec:"
+              command={`/idd-framework:review-spec ${spec.id}`}
+            />
+          </div>
 
           <p className="text-xs text-muted-foreground">
             {spec.peer_reviewed && <Badge variant="secondary" className="mr-2">Peer Reviewed</Badge>}

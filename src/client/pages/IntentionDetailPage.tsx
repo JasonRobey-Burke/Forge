@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertTriangle } from 'lucide-react';
+import CopyCommand from '@/components/CopyCommand';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import { IntentionFormFields } from '@/components/IntentionForm';
@@ -115,7 +116,10 @@ export default function IntentionDetailPage() {
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold">{intention.title}</h1>
+            <h1 className="text-xl font-semibold">
+              <span className="text-sm text-muted-foreground font-mono mr-2">{intention.id}</span>
+              {intention.title}
+            </h1>
             <Badge variant={priorityVariant[intention.priority as PriorityType]}>
               {intention.priority}
             </Badge>
@@ -182,6 +186,7 @@ export default function IntentionDetailPage() {
                   {intention.dependencies.map((dep: { id: string; title: string; status?: string }) => (
                     <li key={dep.id} className="flex items-center gap-2 flex-wrap">
                       <Link to={`/intentions/${dep.id}`} className="text-sm text-primary hover:underline">
+                        <span className="text-muted-foreground font-mono mr-1">{dep.id}</span>
                         {dep.title}
                       </Link>
                       {dep.status && (
@@ -213,6 +218,7 @@ export default function IntentionDetailPage() {
                         to={`/expectations/${exp.id}`}
                         className="text-sm text-primary hover:underline"
                       >
+                        <span className="text-muted-foreground font-mono mr-1">{exp.id}</span>
                         {exp.title}
                       </Link>
                       <Badge variant="outline" className="text-xs">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
@@ -225,6 +231,10 @@ export default function IntentionDetailPage() {
               ) : (
                 <p className="text-sm text-muted-foreground">No expectations yet.</p>
               )}
+              <CopyCommand
+                label="Add new expectations in Claude Code:"
+                command={`/idd-framework:define-expectations ${intention.id}`}
+              />
             </CardContent>
           </Card>
         </div>

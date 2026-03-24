@@ -101,7 +101,10 @@ export default function ExpectationListPage() {
                   className="cursor-pointer"
                   onClick={() => navigate(`/expectations/${exp.id}`)}
                 >
-                  <TableCell className="font-semibold">{exp.title}</TableCell>
+                  <TableCell className="font-semibold">
+                    <span className="text-xs text-muted-foreground font-mono mr-1.5">{exp.id}</span>
+                    {exp.title}
+                  </TableCell>
                   <TableCell>
                     <Badge variant="outline">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
                   </TableCell>

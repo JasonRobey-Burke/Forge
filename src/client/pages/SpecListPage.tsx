@@ -101,7 +101,10 @@ export default function SpecListPage() {
                   className="cursor-pointer"
                   onClick={() => navigate(`/specs/${spec.id}`)}
                 >
-                  <TableCell className="font-semibold">{spec.title}</TableCell>
+                  <TableCell className="font-semibold">
+                    <span className="text-xs text-muted-foreground font-mono mr-1.5">{spec.id}</span>
+                    {spec.title}
+                  </TableCell>
                   <TableCell>
                     <PhaseBadge phase={spec.phase} />
                   </TableCell>
