@@ -72,6 +72,25 @@ export class YamlStore {
     };
   }
 
+  // ── Helpers ─────────────────────────────────────────────────────────
+
+  /** Coerce a value to string[]: handles arrays, multiline strings, objects, and nulls */
+  private toStringArray(value: unknown): string[] {
+    if (Array.isArray(value)) return value.map(String);
+    if (typeof value === 'string') {
+      // Split multiline strings on newlines, then trim and filter empty/comment lines
+      return value
+        .split('\n')
+        .map((line) => line.replace(/^[\s-]+/, '').trim())
+        .filter((line) => line.length > 0 && !line.startsWith('#'));
+    }
+    if (typeof value === 'object' && value !== null) {
+      // Handle { backend: "...", frontend: "..." } style objects
+      return Object.values(value).map(String);
+    }
+    return [];
+  }
+
   // ── Parsers (YAML → Forge types) ───────────────────────────────────
 
   parseProduct(filePath: string): void {
@@ -81,9 +100,9 @@ export class YamlStore {
 
     const techCtx = p.technical_context ?? p.context ?? {};
     const context: ProductContext = {
-      stack: Array.isArray(techCtx.stack) ? techCtx.stack : Object.values(techCtx.stack ?? {}),
-      patterns: techCtx.patterns ?? [],
-      conventions: techCtx.conventions ?? [],
+      stack: this.toStringArray(techCtx.stack),
+      patterns: this.toStringArray(techCtx.patterns),
+      conventions: this.toStringArray(techCtx.conventions),
       auth: typeof techCtx.auth === 'string' ? techCtx.auth : JSON.stringify(techCtx.auth ?? ''),
     };
 
@@ -163,9 +182,9 @@ export class YamlStore {
 
     const ctx = s.context ?? {};
     const context: ProductContext = {
-      stack: Array.isArray(ctx.stack) ? ctx.stack : [],
-      patterns: ctx.patterns ?? [],
-      conventions: ctx.conventions ?? [],
+      stack: this.toStringArray(ctx.stack),
+      patterns: this.toStringArray(ctx.patterns),
+      conventions: this.toStringArray(ctx.conventions),
       auth: typeof ctx.auth === 'string' ? ctx.auth : '',
     };
 
