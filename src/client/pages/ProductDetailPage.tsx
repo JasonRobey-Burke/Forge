@@ -11,7 +11,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatusBadge, INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
+import { PRODUCT_STATUS_LABELS, INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
+import InlineStatusSelect from '@/components/InlineStatusSelect';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import IntentionProgress from '@/components/IntentionProgress';
@@ -110,7 +111,17 @@ export default function ProductDetailPage() {
             <span className="text-sm text-muted-foreground font-mono mr-2">{product.id}</span>
             {product.name}
           </h1>
-          <StatusBadge status={product.status} />
+          <InlineStatusSelect
+            value={product.status}
+            labels={PRODUCT_STATUS_LABELS}
+            disabled={updateProduct.isPending}
+            onChange={(newStatus) => {
+              updateProduct.mutate(
+                { id: id!, status: newStatus as any },
+                { onSuccess: () => toast.success(`Status changed to ${PRODUCT_STATUS_LABELS[newStatus] ?? newStatus}`) },
+              );
+            }}
+          />
         </div>
         <p className="text-muted-foreground">{product.problem_statement}</p>
       </div>

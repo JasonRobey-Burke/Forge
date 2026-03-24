@@ -9,6 +9,13 @@ export const PHASE_LABELS: Record<string, string> = {
   Done: 'Done',
 };
 
+export const PRODUCT_STATUS_LABELS: Record<string, string> = {
+  Discovery: 'Discovery',
+  Active: 'Active',
+  Maintenance: 'Maintenance',
+  Sunset: 'Sunset',
+};
+
 export const INTENTION_STATUS_LABELS: Record<string, string> = {
   Draft: 'Draft',
   Defined: 'Defined',

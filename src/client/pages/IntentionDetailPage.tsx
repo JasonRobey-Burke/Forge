@@ -15,6 +15,7 @@ import { AlertTriangle } from 'lucide-react';
 import CopyCommand from '@/components/CopyCommand';
 import NewBadge from '@/components/NewBadge';
 import PrevNextNav from '@/components/PrevNextNav';
+import InlineStatusSelect from '@/components/InlineStatusSelect';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import { IntentionFormFields } from '@/components/IntentionForm';
@@ -140,7 +141,17 @@ export default function IntentionDetailPage() {
             <Badge variant={priorityVariant[intention.priority as PriorityType]}>
               {intention.priority}
             </Badge>
-            <Badge variant="outline">{INTENTION_STATUS_LABELS[intention.status] ?? intention.status}</Badge>
+            <InlineStatusSelect
+              value={intention.status}
+              labels={INTENTION_STATUS_LABELS}
+              disabled={updateIntention.isPending}
+              onChange={(newStatus) => {
+                updateIntention.mutate(
+                  { id: id!, product_id: intention.product_id, status: newStatus as any },
+                  { onSuccess: () => toast.success(`Status changed to ${INTENTION_STATUS_LABELS[newStatus] ?? newStatus}`) },
+                );
+              }}
+            />
           </div>
         )}
         <div className="flex gap-2">

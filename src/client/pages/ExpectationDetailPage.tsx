@@ -18,6 +18,7 @@ import { ExpectationStatus } from '@shared/types/enums';
 import { EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import CopyCommand from '@/components/CopyCommand';
 import PrevNextNav from '@/components/PrevNextNav';
+import InlineStatusSelect from '@/components/InlineStatusSelect';
 
 const editSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
@@ -129,7 +130,17 @@ export default function ExpectationDetailPage() {
               <span className="text-sm text-muted-foreground font-mono mr-2">{expectation.id}</span>
               {expectation.title}
             </h1>
-            <Badge variant="outline">{EXPECTATION_STATUS_LABELS[expectation.status] ?? expectation.status}</Badge>
+            <InlineStatusSelect
+              value={expectation.status}
+              labels={EXPECTATION_STATUS_LABELS}
+              disabled={updateExpectation.isPending}
+              onChange={(newStatus) => {
+                updateExpectation.mutate(
+                  { id: id!, intention_id: expectation.intention_id, status: newStatus as any },
+                  { onSuccess: () => toast.success(`Status changed to ${EXPECTATION_STATUS_LABELS[newStatus] ?? newStatus}`) },
+                );
+              }}
+            />
           </div>
         )}
         <div className="flex gap-2">
