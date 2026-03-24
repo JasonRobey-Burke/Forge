@@ -15,10 +15,12 @@ const docsDir = resolve(process.cwd(), process.env.FORGE_DOCS ?? './docs');
 if (existsSync(srcEntry)) {
   // Development / npm link: use tsx to run TypeScript source directly
   const { spawn } = await import('child_process');
+  // Resolve tsx from Forge's own node_modules, not the user's project
+  const tsxPath = resolve(__dirname, '../node_modules/tsx/dist/esm/index.mjs');
 
   const child = spawn(
     process.execPath,
-    ['--import', 'tsx', srcEntry],
+    ['--import', pathToFileURL(tsxPath).href, srcEntry],
     { stdio: 'inherit', env: { ...process.env, PORT: String(port), FORGE_DOCS: docsDir } }
   );
   child.on('exit', (code) => process.exit(code ?? 0));
