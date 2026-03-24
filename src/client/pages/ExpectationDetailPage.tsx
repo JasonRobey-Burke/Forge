@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExpectationFormFields } from '@/components/ExpectationForm';
 import { ExpectationStatus } from '@shared/types/enums';
+import { EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 
 const editSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
@@ -108,7 +109,7 @@ export default function ExpectationDetailPage() {
         ) : (
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-semibold">{expectation.title}</h1>
-            <Badge variant="outline">{expectation.status}</Badge>
+            <Badge variant="outline">{EXPECTATION_STATUS_LABELS[expectation.status] ?? expectation.status}</Badge>
           </div>
         )}
         <div className="flex gap-2">

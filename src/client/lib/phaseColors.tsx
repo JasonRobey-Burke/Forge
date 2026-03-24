@@ -9,6 +9,22 @@ export const PHASE_LABELS: Record<string, string> = {
   Done: 'Done',
 };
 
+export const INTENTION_STATUS_LABELS: Record<string, string> = {
+  Draft: 'Draft',
+  Defined: 'Defined',
+  InProgress: 'In Progress',
+  Fulfilled: 'Fulfilled',
+  Deferred: 'Deferred',
+};
+
+export const EXPECTATION_STATUS_LABELS: Record<string, string> = {
+  Draft: 'Draft',
+  Ready: 'Ready',
+  Specced: 'Specced',
+  Validated: 'Validated',
+  Done: 'Done',
+};
+
 export const PHASE_COLORS: Record<string, { bg: string; text: string; border: string; dot: string }> = {
   Draft:      { bg: 'bg-slate-100',  text: 'text-slate-700',  border: 'border-slate-400',  dot: 'bg-slate-400' },
   Ready:      { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-400',   dot: 'bg-blue-400' },

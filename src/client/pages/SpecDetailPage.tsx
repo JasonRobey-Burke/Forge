@@ -26,7 +26,7 @@ import { SpecPhase as SpecPhaseEnum } from '@shared/types/enums';
 import { downloadYaml } from '@/lib/exportYaml';
 import { downloadMarkdown, specToMarkdown } from '@/lib/exportMarkdown';
 import { estimateTokens } from '@/lib/tokenEstimate';
-import { PhaseBadge, PHASE_LABELS } from '@/lib/phaseColors';
+import { PhaseBadge, PHASE_LABELS, EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import { ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import {
   DropdownMenu,
@@ -354,7 +354,7 @@ export default function SpecDetailPage() {
                       <Link to={`/expectations/${exp.id}`} className="text-sm text-primary hover:underline">
                         {exp.title}
                       </Link>
-                      <Badge variant="outline" className="ml-2">{exp.status}</Badge>
+                      <Badge variant="outline" className="ml-2">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
                       {staleness?.staleExpectationIds?.includes(exp.id) && (
                         <AlertTriangle className="h-3 w-3 text-amber-500" />
                       )}

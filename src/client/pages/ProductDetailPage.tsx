@@ -11,7 +11,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatusBadge } from '@/lib/phaseColors';
+import { StatusBadge, INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import IntentionProgress from '@/components/IntentionProgress';
@@ -251,7 +251,7 @@ export default function ProductDetailPage() {
                       >
                         {intention.priority}
                       </Badge>
-                      <Badge variant="outline" className="text-xs">{intention.status}</Badge>
+                      <Badge variant="outline" className="text-xs">{INTENTION_STATUS_LABELS[intention.status] ?? intention.status}</Badge>
                     </li>
                   ))}
                 </ul>

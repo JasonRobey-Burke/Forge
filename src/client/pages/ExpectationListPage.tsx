@@ -5,6 +5,7 @@ import { useIntention } from '@/hooks/useIntentions';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
+import { EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
@@ -102,7 +103,7 @@ export default function ExpectationListPage() {
                 >
                   <TableCell className="font-semibold">{exp.title}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{exp.status}</Badge>
+                    <Badge variant="outline">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground max-w-sm">
                     <span className="line-clamp-1">{exp.description}</span>

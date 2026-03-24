@@ -20,6 +20,7 @@ import DynamicListEditor from '@/components/DynamicListEditor';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import { Badge } from '@/components/ui/badge';
 import { SpecPhase, Complexity } from '@shared/types/enums';
+import { PHASE_LABELS, EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import type { CreateSpecInput, ProductContext, Spec } from '@shared/types';
 import type { ChecklistExpectation } from '@shared/checklist/types';
 import CompletenessChecklist from '@/components/CompletenessChecklist';
@@ -203,7 +204,7 @@ function MetadataSidebar({
               </FormControl>
               <SelectContent>
                 {Object.values(SpecPhase).map((p) => (
-                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                  <SelectItem key={p} value={p}>{PHASE_LABELS[p] ?? p}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -350,7 +351,7 @@ export default function SpecForm({
               <li key={exp.id} className="text-sm border rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium">{exp.title}</span>
-                  <Badge variant="outline">{exp.status}</Badge>
+                  <Badge variant="outline">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
                 </div>
                 {exp.description && <p className="text-muted-foreground mb-1">{exp.description}</p>}
                 {exp.edge_cases?.length > 0 && (

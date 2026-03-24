@@ -16,6 +16,7 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import { IntentionFormFields } from '@/components/IntentionForm';
 import { Priority, IntentionStatus } from '@shared/types/enums';
+import { INTENTION_STATUS_LABELS, EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import type { Priority as PriorityType } from '@shared/types';
 
 const editSchema = z.object({
@@ -118,7 +119,7 @@ export default function IntentionDetailPage() {
             <Badge variant={priorityVariant[intention.priority as PriorityType]}>
               {intention.priority}
             </Badge>
-            <Badge variant="outline">{intention.status}</Badge>
+            <Badge variant="outline">{INTENTION_STATUS_LABELS[intention.status] ?? intention.status}</Badge>
           </div>
         )}
         <div className="flex gap-2">
@@ -184,7 +185,7 @@ export default function IntentionDetailPage() {
                         {dep.title}
                       </Link>
                       {dep.status && (
-                        <Badge variant="outline" className="text-xs">{dep.status}</Badge>
+                        <Badge variant="outline" className="text-xs">{INTENTION_STATUS_LABELS[dep.status] ?? dep.status}</Badge>
                       )}
                       {dep.status === 'Deferred' && (
                         <span className="inline-flex items-center gap-1 text-xs text-amber-600">
@@ -214,7 +215,7 @@ export default function IntentionDetailPage() {
                       >
                         {exp.title}
                       </Link>
-                      <Badge variant="outline" className="text-xs">{exp.status}</Badge>
+                      <Badge variant="outline" className="text-xs">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
                       <span className="text-xs text-muted-foreground">
                         {exp.edge_cases.length} edge case{exp.edge_cases.length !== 1 ? 's' : ''}
                       </span>

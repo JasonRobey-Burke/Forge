@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Priority, IntentionStatus } from '@shared/types/enums';
+import { INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
 import type { CreateIntentionInput } from '@shared/types';
 
 const formSchema = z.object({
@@ -101,7 +102,7 @@ export function IntentionFormFields({ control }: IntentionFormFieldsProps) {
               </FormControl>
               <SelectContent>
                 {Object.values(IntentionStatus).map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                  <SelectItem key={s} value={s}>{INTENTION_STATUS_LABELS[s] ?? s}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
