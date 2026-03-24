@@ -2,7 +2,7 @@
 
 import { existsSync } from 'fs';
 import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const distEntry = resolve(__dirname, '../dist/server/index.js');
@@ -13,7 +13,7 @@ const docsDir = process.env.FORGE_DOCS ?? './docs';
 
 if (existsSync(distEntry)) {
   // Production: run compiled output
-  const { startServer } = await import(distEntry);
+  const { startServer } = await import(pathToFileURL(distEntry).href);
   startServer({ port, docsDir });
 } else if (existsSync(srcEntry)) {
   // Development: use tsx to run TypeScript source directly
