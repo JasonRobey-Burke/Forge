@@ -12,35 +12,38 @@ Forge scans `docs/` for YAML artifacts (Products, Intentions, Expectations, Spec
 
 ## Installation
 
-### GitHub Packages
+### Step 1: Create a GitHub Personal Access Token
 
-Add to your project's `.npmrc`:
+Go to **GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)** and create a token with the `read:packages` scope.
+
+### Step 2: Configure `.npmrc` in your repo
+
+Create a `.npmrc` file in the root of the repo where you want to use Forge:
 
 ```ini
 @jasonrobey-burke:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
 ```
 
-Then:
+Replace `YOUR_GITHUB_TOKEN` with the token from Step 1. Add `.npmrc` to your `.gitignore` to avoid committing the token.
+
+### Step 3: Run Forge
 
 ```bash
 npx @jasonrobey-burke/idd-forge
 ```
 
-### Azure DevOps Artifacts
+That's it. Forge will scan `docs/` for IDD artifacts and open a browser to `http://localhost:4000`.
 
-Add to your project's `.npmrc`:
+### Alternative: Azure DevOps Artifacts
+
+If your team uses Azure DevOps, configure `.npmrc` with your feed instead:
 
 ```ini
 @jasonrobey-burke:registry=https://pkgs.dev.azure.com/YOUR_ORG/_packaging/YOUR_FEED/npm/registry/
 ```
 
-Then:
-
-```bash
-npx @jasonrobey-burke/idd-forge
-```
-
-### Global Install
+### Alternative: Global Install
 
 ```bash
 npm install -g @jasonrobey-burke/idd-forge
