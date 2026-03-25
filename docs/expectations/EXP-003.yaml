@@ -1,0 +1,15 @@
+expectation:
+  id: EXP-003
+  intention_id: INT-001
+  title: Expectation CRUD with edge cases
+  description: >
+    Users can create, view, edit, and archive Expectations under an Intention.
+    Each Expectation must have at least 2 edge cases to ensure thorough
+    specification.
+  status: Done
+  edge_cases:
+    - Minimum 2 edge cases enforced at validation layer
+    - Edge cases stored as string array, displayed as bullet list
+    - Empty edge case strings should be rejected
+  created_at: "2026-03-01T00:00:00Z"
+  updated_at: "2026-03-15T00:00:00Z"

@@ -1,0 +1,15 @@
+expectation:
+  id: EXP-001
+  intention_id: INT-001
+  title: Product CRUD
+  description: >
+    Users can create, view, edit, and archive Products with all required fields
+    including name, problem statement, vision, target audience, status, and
+    product-level context.
+  status: Done
+  edge_cases:
+    - Duplicate product names should be allowed (different teams may use same name)
+    - Archiving a product should not cascade-delete child intentions
+    - Context fields (stack, patterns, conventions, auth) should accept empty arrays
+  created_at: "2026-03-01T00:00:00Z"
+  updated_at: "2026-03-15T00:00:00Z"

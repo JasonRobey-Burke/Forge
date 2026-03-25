@@ -30,9 +30,11 @@ test.describe('Intention CRUD', () => {
 
   test('edit an intention', async ({ page }) => {
     const intention = await createIntention(productId, { title: 'Intention to Edit' });
-    await page.goto(`/intentions/${intention.id}/edit`);
-    await page.getByLabel('Title').fill('Edited Intention');
-    await page.getByRole('button', { name: 'Save Changes' }).click();
+    await page.goto(`/intentions/${intention.id}`);
+    await page.getByRole('button', { name: 'Edit' }).click();
+    const titleInput = page.locator('input[name="title"]');
+    await titleInput.fill('Edited Intention');
+    await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('Edited Intention')).toBeVisible();
   });
 

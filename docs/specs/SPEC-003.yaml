@@ -1,0 +1,90 @@
+spec:
+  id: SPEC-003
+  product_id: PROD-001
+  title: Full entity hierarchy and Flow Board
+  description: >
+    Implement Intention, Expectation, and Spec CRUD on API and UI. Build the
+    Kanban Flow Board with drag-and-drop phase transitions, WIP limits, and
+    validation gates.
+  status: Review
+  complexity: High
+  owner: Jason Robey
+  expectations:
+    - EXP-002
+    - EXP-003
+    - EXP-004
+    - EXP-005
+    - EXP-006
+  context:
+    stack:
+      - React 19, TypeScript, Vite 8, Tailwind CSS 3, shadcn/ui
+      - Express.js 5 (TypeScript), Node.js 20 LTS
+    patterns:
+      - React Query for server state management
+      - "@dnd-kit/core for drag-and-drop"
+      - Zod for runtime validation
+    conventions:
+      - "All API routes return consistent shape: { data, error, meta }"
+      - "Soft-delete pattern (archived_at timestamp)"
+      - "Phase colors centralized in phaseColors.tsx"
+    auth: None (local dev tool)
+  expectations_detail:
+    - id: EXP-002
+      description: Intention CRUD with dependency management
+      edge_cases:
+        - Circular dependencies must be detected and rejected
+        - Deleting intention with children should be blocked
+    - id: EXP-003
+      description: Expectation CRUD with minimum 2 edge cases
+      edge_cases:
+        - Minimum 2 edge cases enforced at validation layer
+        - Empty edge case strings should be rejected
+    - id: EXP-004
+      description: Spec structured editor with context inheritance
+      edge_cases:
+        - Context snapshot at creation time
+        - Linking/unlinking expectations is transactional
+    - id: EXP-005
+      description: Spec export to YAML and Markdown
+      edge_cases:
+        - YAML includes all structured fields
+        - Markdown includes AI preamble
+    - id: EXP-006
+      description: Flow Board with phase transitions and gates
+      edge_cases:
+        - WIP limit 0 means unlimited
+        - Override reason captured for audit
+  boundaries:
+    - Do not implement team/multi-product support
+    - Do not implement process metrics dashboards
+    - Do not implement context templates
+  deliverables:
+    - Intention, Expectation, Spec CRUD API endpoints
+    - List, Detail, Create, Edit pages for each entity
+    - Flow Board page with drag-and-drop Kanban columns
+    - Completeness checklist evaluator and Draft→Ready gate
+    - WIP limit enforcement with override dialog
+    - YAML and Markdown export functions
+  validation:
+    automated:
+      - All entity CRUD endpoints return correct response shape
+      - Circular dependency detection rejects invalid graphs
+      - Completeness checklist evaluates all 11 criteria correctly
+      - Phase transitions respect WIP limits
+    human:
+      - Full hierarchy navigation works in browser
+      - Drag-and-drop transitions work on Flow Board
+      - Export produces valid YAML/Markdown
+    peer_reviewed: false
+  phase_history:
+    - from: Draft
+      to: Ready
+      timestamp: "2026-03-10T10:00:00Z"
+    - from: Ready
+      to: InProgress
+      timestamp: "2026-03-11T09:00:00Z"
+    - from: InProgress
+      to: Review
+      timestamp: "2026-03-20T16:00:00Z"
+  created_at: "2026-03-10T00:00:00Z"
+  updated_at: "2026-03-20T16:00:00Z"

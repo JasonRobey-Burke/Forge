@@ -1,0 +1,65 @@
+spec:
+  id: SPEC-002
+  product_id: PROD-001
+  title: Product CRUD and navigation shell
+  description: >
+    Implement full Product CRUD (create, read, update, soft-delete) on both
+    API and UI. Establish the React SPA navigation shell with layout, header,
+    breadcrumbs, and product-scoped navigation tabs.
+  status: Done
+  complexity: Medium
+  owner: Jason Robey
+  expectations:
+    - EXP-001
+  context:
+    stack:
+      - React 19, TypeScript, Vite 8, Tailwind CSS 3, shadcn/ui
+      - Express.js 5 (TypeScript), Node.js 20 LTS
+    patterns:
+      - React Query for server state management
+      - React Hook Form for form state
+      - Zod for runtime validation
+    conventions:
+      - "All API routes return consistent shape: { data, error, meta }"
+      - "Soft-delete pattern (archived_at timestamp)"
+    auth: None (local dev tool)
+  expectations_detail:
+    - id: EXP-001
+      description: Product CRUD with all required fields
+      edge_cases:
+        - Duplicate product names should be allowed
+        - Archiving should not cascade-delete children
+  boundaries:
+    - Do not implement Intention, Expectation, or Spec entities
+    - Do not implement the Flow Board
+  deliverables:
+    - GET/POST/PUT/DELETE /api/products endpoints
+    - ProductListPage, ProductDetailPage, ProductCreatePage, ProductEditPage
+    - Layout component with header and navigation
+    - React Query hooks for product data fetching
+  validation:
+    automated:
+      - All product API endpoints return correct response shape
+      - Product list page renders with data from API
+      - Form validation prevents invalid submissions
+    human:
+      - Full CRUD flow works end-to-end in browser
+    peer_reviewed: true
+  phase_history:
+    - from: Draft
+      to: Ready
+      timestamp: "2026-03-05T10:00:00Z"
+    - from: Ready
+      to: InProgress
+      timestamp: "2026-03-06T09:00:00Z"
+    - from: InProgress
+      to: Review
+      timestamp: "2026-03-12T16:00:00Z"
+    - from: Review
+      to: Validating
+      timestamp: "2026-03-13T10:00:00Z"
+    - from: Validating
+      to: Done
+      timestamp: "2026-03-14T14:00:00Z"
+  created_at: "2026-03-05T00:00:00Z"
+  updated_at: "2026-03-14T14:00:00Z"

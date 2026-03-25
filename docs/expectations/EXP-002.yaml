@@ -1,0 +1,15 @@
+expectation:
+  id: EXP-002
+  intention_id: INT-001
+  title: Intention CRUD with dependencies
+  description: >
+    Users can create, view, edit, and archive Intentions under a Product.
+    Intentions support dependency relationships with circular dependency
+    detection and prevention.
+  status: Done
+  edge_cases:
+    - Circular dependency chains (A→B→C→A) must be detected and rejected
+    - Deleting an intention with child expectations should be blocked
+    - Self-referencing dependencies must be rejected
+  created_at: "2026-03-01T00:00:00Z"
+  updated_at: "2026-03-15T00:00:00Z"

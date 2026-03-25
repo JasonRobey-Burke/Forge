@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useExpectations } from '@/hooks/useExpectations';
 import { useIntention } from '@/hooks/useIntentions';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import NewBadge from '@/components/NewBadge';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
 import {
@@ -51,9 +52,6 @@ export default function ExpectationListPage() {
       ]} />
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-xl font-semibold">Expectations</h1>
-        <Button asChild>
-          <Link to={`/intentions/${intentionId}/expectations/new`}>New Expectation</Link>
-        </Button>
       </div>
 
       <ListToolbar
@@ -78,10 +76,7 @@ export default function ExpectationListPage() {
 
       {!expectations || expectations.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">No expectations yet.</p>
-          <Button asChild variant="outline">
-            <Link to={`/intentions/${intentionId}/expectations/new`}>Create your first expectation</Link>
-          </Button>
+          <p className="text-muted-foreground">No expectations found. Add YAML files to the docs/expectations/ directory.</p>
         </div>
       ) : (
         <Table>
@@ -107,9 +102,13 @@ export default function ExpectationListPage() {
                   className="cursor-pointer"
                   onClick={() => navigate(`/expectations/${exp.id}`)}
                 >
-                  <TableCell className="font-semibold">{exp.title}</TableCell>
+                  <TableCell className="font-semibold">
+                    <span className="text-xs text-muted-foreground font-mono mr-1.5">{exp.id}</span>
+                    {exp.title}
+                    <NewBadge createdAt={exp.created_at} />
+                  </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{exp.status}</Badge>
+                    <Badge variant="outline">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground max-w-sm">
                     <span className="line-clamp-1">{exp.description}</span>

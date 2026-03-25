@@ -28,9 +28,11 @@ test.describe('Expectation CRUD', () => {
 
   test('edit an expectation', async ({ page }) => {
     const expectation = await createExpectation(intentionId, { title: 'Expectation to Edit' });
-    await page.goto(`/expectations/${expectation.id}/edit`);
-    await page.getByLabel('Title').fill('Edited Expectation');
-    await page.getByRole('button', { name: 'Save Changes' }).click();
+    await page.goto(`/expectations/${expectation.id}`);
+    await page.getByRole('button', { name: 'Edit' }).click();
+    const titleInput = page.locator('input[name="title"]');
+    await titleInput.fill('Edited Expectation');
+    await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('Edited Expectation')).toBeVisible();
   });
 

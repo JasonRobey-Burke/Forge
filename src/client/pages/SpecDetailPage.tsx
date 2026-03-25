@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useSpec, useDeleteSpec, useSpecExpectations } from '@/hooks/useSpecs';
+import { useSpec, useSpecs, useSpecExpectations } from '@/hooks/useSpecs';
 import { useSpecStaleness } from '@/hooks/useStaleness';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -20,14 +20,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+
 } from '@/components/ui/dialog';
 import { SpecPhase as SpecPhaseEnum } from '@shared/types/enums';
 import { downloadYaml } from '@/lib/exportYaml';
 import { downloadMarkdown, specToMarkdown } from '@/lib/exportMarkdown';
 import { estimateTokens } from '@/lib/tokenEstimate';
-import { PhaseBadge, PHASE_LABELS } from '@/lib/phaseColors';
-import { ArrowRight, ArrowLeft, MoreHorizontal, AlertTriangle } from 'lucide-react';
+import { PhaseBadge, PHASE_LABELS, EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
+import CopyCommand from '@/components/CopyCommand';
+import PrevNextNav from '@/components/PrevNextNav';
+import { ArrowRight, ArrowLeft, AlertTriangle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,16 +41,14 @@ import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 
 export default function SpecDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { data: spec, isLoading, error } = useSpec(id!);
   const { data: linkedExpectations } = useSpecExpectations(id!);
   const { data: product } = useProduct(spec?.product_id ?? '');
+  const { data: siblings } = useSpecs(spec?.product_id ?? '');
   const { data: staleness } = useSpecStaleness(id!, spec?.phase ?? 'Draft');
   useDocumentTitle(spec?.title ?? 'Spec');
-  const deleteSpec = useDeleteSpec();
   const transitionSpec = useTransitionSpec();
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideReason, setOverrideReason] = useState('');
   const [transitioning, setTransitioning] = useState(false);
@@ -74,13 +74,6 @@ export default function SpecDetailPage() {
     })),
   };
   const tokenCount = estimateTokens(specToMarkdown(exportData));
-
-  function handleDelete() {
-    deleteSpec.mutate(
-      { id: id!, product_id: spec!.product_id },
-      { onSuccess: () => { toast.success('Spec deleted'); navigate(`/products/${spec!.product_id}/specs`); } },
-    );
-  }
 
   function handleTransitionToReady() {
     if (checklistResult.ready) {
@@ -120,13 +113,30 @@ export default function SpecDetailPage() {
       { label: 'Specs', href: `/products/${spec.product_id}/specs` },
       { label: spec.title },
     ]} />
+
+    {siblings && (() => {
+      const idx = siblings.findIndex(s => s.id === spec.id);
+      const prev = idx > 0 ? siblings[idx - 1] : null;
+      const next = idx < siblings.length - 1 ? siblings[idx + 1] : null;
+      return (
+        <PrevNextNav
+          prev={prev ? { id: prev.id, title: prev.title } : null}
+          next={next ? { id: next.id, title: next.title } : null}
+          buildUrl={(sibId) => `/specs/${sibId}`}
+        />
+      );
+    })()}
+
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       {/* Main content */}
       <div>
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-xl font-semibold">{spec.title}</h1>
+              <h1 className="text-xl font-semibold">
+                <span className="text-sm text-muted-foreground font-mono mr-2">{spec.id}</span>
+                {spec.title}
+              </h1>
               <PhaseBadge phase={spec.phase} />
               <Badge variant="outline">{spec.complexity}</Badge>
             </div>
@@ -213,35 +223,6 @@ export default function SpecDetailPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Delete {spec.title}?</DialogTitle>
-                  <DialogDescription>This will archive the spec.</DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
-                  <Button variant="destructive" onClick={handleDelete} disabled={deleteSpec.isPending}>
-                    {deleteSpec.isPending ? 'Deleting...' : 'Delete'}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
 
@@ -391,9 +372,10 @@ export default function SpecDetailPage() {
                   {linkedExpectations.map((exp) => (
                     <li key={exp.id} className="flex items-center gap-1">
                       <Link to={`/expectations/${exp.id}`} className="text-sm text-primary hover:underline">
+                        <span className="text-muted-foreground font-mono mr-1">{exp.id}</span>
                         {exp.title}
                       </Link>
-                      <Badge variant="outline" className="ml-2">{exp.status}</Badge>
+                      <Badge variant="outline" className="ml-2">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
                       {staleness?.staleExpectationIds?.includes(exp.id) && (
                         <AlertTriangle className="h-3 w-3 text-amber-500" />
                       )}
@@ -404,10 +386,22 @@ export default function SpecDetailPage() {
             </Card>
           )}
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <CopyCommand
+              label="Tech review this spec in Claude Code:"
+              command={`/idd-framework:tech-review ${spec.id}`}
+            />
+            <CopyCommand
+              label="Validate output against this spec:"
+              command={`/idd-framework:review-spec ${spec.id}`}
+            />
+          </div>
+
           <p className="text-xs text-muted-foreground">
             {spec.peer_reviewed && <Badge variant="secondary" className="mr-2">Peer Reviewed</Badge>}
             Created {new Date(spec.created_at).toLocaleDateString()} · Updated {new Date(spec.updated_at).toLocaleDateString()}
           </p>
+
         </div>
       </div>
 

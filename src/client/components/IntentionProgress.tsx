@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import type { Intention } from '@shared/types';
 import { IntentionStatus } from '@shared/types/enums';
+import { INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
 
 const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   Draft: 'outline',
@@ -36,9 +37,9 @@ export default function IntentionProgress({ intentions }: IntentionProgressProps
         <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
       </div>
       <div className="flex flex-wrap gap-2">
-        {Object.entries(IntentionStatus).map(([key, label]) => (
+        {Object.entries(IntentionStatus).map(([key]) => (
           <Badge key={key} variant={STATUS_VARIANTS[key] ?? 'outline'} className="text-xs">
-            {label}: {statusCounts[key] ?? 0}
+            {INTENTION_STATUS_LABELS[key] ?? key}: {statusCounts[key] ?? 0}
           </Badge>
         ))}
       </div>

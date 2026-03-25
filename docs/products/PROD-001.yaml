@@ -1,0 +1,51 @@
+product:
+  id: PROD-001
+  name: Forge
+  version: "1.1"
+  status: Active
+  owner: Jason Robey
+  problem: >
+    Teams adopting AI-assisted development need a way to manage the lifecycle of
+    software delivery that reflects how work actually flows in an AI-augmented
+    environment. Traditional project management tools are built around a
+    work-decomposition model optimized for human sprint capacity. This model
+    breaks down when AI agents compress the build phase by 5-10x.
+  audience:
+    primary: >
+      Development teams (3-12 people) practicing AI-assisted development using
+      tools like Claude Code, GitHub Copilot, or similar AI coding agents.
+    secondary: >
+      Product owners, tech leads, and spec authors who define products, author
+      intentions, and write AI-ready specs.
+  value_proposition: >
+    Forge is the first tool purpose-built for Intent-Driven Development. It
+    provides a native artifact hierarchy, flow-based workflow engine with WIP
+    limits, AI-ready spec export, process metrics, and spec completeness
+    enforcement.
+  technical_context:
+    stack:
+      - React 19, TypeScript, Vite 8, Tailwind CSS 3, shadcn/ui
+      - Express.js 5 (TypeScript), Node.js 20 LTS
+      - YAML file storage (repo-local)
+    patterns:
+      - "Monorepo: single repo, single container serving React SPA + Express API"
+      - Component-per-feature folder structure on frontend
+      - Route-per-resource pattern on backend
+      - React Query (TanStack Query) for server state management
+      - Zod for runtime validation (shared between client and server)
+      - React Hook Form for form state
+    conventions:
+      - "All data models defined as TypeScript interfaces in /src/shared/types/"
+      - "Zod schemas in /src/shared/schemas/ — used for both form validation and API request validation"
+      - "All API routes return consistent shape: { data, error, meta }"
+      - "Use shadcn/ui components for all UI elements"
+      - "Soft-delete pattern (archived_at timestamp) for all primary entities"
+    auth: None (local dev tool)
+  wip_limits:
+    draft: 0
+    ready: 5
+    in_progress: 3
+    review: 5
+    validating: 3
+  created_at: "2026-03-01T00:00:00Z"
+  updated_at: "2026-03-23T00:00:00Z"

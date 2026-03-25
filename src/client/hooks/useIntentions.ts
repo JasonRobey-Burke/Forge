@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import type { Intention, CreateIntentionInput, UpdateIntentionInput } from '@shared/types';
+import type { Intention, UpdateIntentionInput } from '@shared/types';
 
 export const intentionKeys = {
   all: (productId: string) => ['intentions', productId] as const,
@@ -23,17 +23,6 @@ export function useIntention(id: string) {
   });
 }
 
-export function useCreateIntention() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: CreateIntentionInput) =>
-      apiFetch<Intention>('/intentions', { method: 'POST', body: JSON.stringify(input) }),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: intentionKeys.all(vars.product_id) });
-    },
-  });
-}
-
 export function useUpdateIntention() {
   const qc = useQueryClient();
   return useMutation({
@@ -42,17 +31,6 @@ export function useUpdateIntention() {
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: intentionKeys.all(vars.product_id) });
       qc.invalidateQueries({ queryKey: intentionKeys.detail(vars.id) });
-    },
-  });
-}
-
-export function useDeleteIntention() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id }: { id: string; product_id: string }) =>
-      apiFetch<{ archived: true }>(`/intentions/${id}`, { method: 'DELETE' }),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: intentionKeys.all(vars.product_id) });
     },
   });
 }

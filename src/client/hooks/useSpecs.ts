@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
-import type { Spec, CreateSpecInput, UpdateSpecInput } from '@shared/types';
+import type { Spec, UpdateSpecInput } from '@shared/types';
 
 export const specKeys = {
   all: (productId: string) => ['specs', productId] as const,
@@ -24,17 +24,6 @@ export function useSpec(id: string) {
   });
 }
 
-export function useCreateSpec() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: CreateSpecInput) =>
-      apiFetch<Spec>('/specs', { method: 'POST', body: JSON.stringify(input) }),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: specKeys.all(vars.product_id) });
-    },
-  });
-}
-
 export function useUpdateSpec() {
   const qc = useQueryClient();
   return useMutation({
@@ -43,17 +32,6 @@ export function useUpdateSpec() {
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: specKeys.all(vars.product_id) });
       qc.invalidateQueries({ queryKey: specKeys.detail(vars.id) });
-    },
-  });
-}
-
-export function useDeleteSpec() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id }: { id: string; product_id: string }) =>
-      apiFetch<{ archived: true }>(`/specs/${id}`, { method: 'DELETE' }),
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: specKeys.all(vars.product_id) });
     },
   });
 }

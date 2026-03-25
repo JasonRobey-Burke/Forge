@@ -1,0 +1,14 @@
+expectation:
+  id: EXP-005
+  intention_id: INT-002
+  title: Spec export to YAML and Markdown
+  description: >
+    Specs can be exported as structured YAML (machine-readable) and Markdown
+    (AI-ready prompt document) formats for consumption by AI coding agents.
+  status: Done
+  edge_cases:
+    - YAML export must include all structured fields in canonical format
+    - Markdown export must include AI preamble instructions
+    - Token estimation should approximate export size for context window planning
+  created_at: "2026-03-01T00:00:00Z"
+  updated_at: "2026-03-18T00:00:00Z"

@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma.js';
+import { getStore } from '../lib/yamlStore.js';
 
 interface Edge {
   intention_id: string;
@@ -23,7 +23,6 @@ export function detectCircularDependency(
     adjacency.set(edge.intention_id, targets);
   }
 
-  // DFS: can we reach intentionId starting from dependsOnId?
   const visited = new Set<string>();
   const stack = [dependsOnId];
 
@@ -50,31 +49,17 @@ export async function addDependency(
     return { success: false, error: 'Self-reference is not allowed' };
   }
 
-  // Fetch the intention to get its product_id
-  const intention = await prisma.intention.findFirst({
-    where: { id: intentionId, archived_at: null },
-  });
+  const store = getStore();
+  const intention = store.getIntention(intentionId);
   if (!intention) return { success: false, error: 'Intention not found' };
 
-  // Fetch all dependency edges for this product's intentions
-  const productIntentions = await prisma.intention.findMany({
-    where: { product_id: intention.product_id, archived_at: null },
-    select: { id: true },
-  });
-  const intentionIds = productIntentions.map((i) => i.id);
-
-  const existingEdges = await prisma.intentionDependency.findMany({
-    where: { intention_id: { in: intentionIds } },
-  });
+  const existingEdges = store.getAllDependencyEdges(intention.product_id);
 
   if (detectCircularDependency(intentionId, dependsOnId, existingEdges)) {
     return { success: false, error: 'Adding this dependency would create a circular reference' };
   }
 
-  await prisma.intentionDependency.create({
-    data: { intention_id: intentionId, depends_on_id: dependsOnId },
-  });
-
+  store.addIntentionDep(intentionId, dependsOnId);
   return { success: true };
 }
 
@@ -82,17 +67,5 @@ export async function removeDependency(
   intentionId: string,
   dependsOnId: string,
 ): Promise<boolean> {
-  try {
-    await prisma.intentionDependency.delete({
-      where: {
-        intention_id_depends_on_id: {
-          intention_id: intentionId,
-          depends_on_id: dependsOnId,
-        },
-      },
-    });
-    return true;
-  } catch {
-    return false;
-  }
+  return getStore().removeIntentionDep(intentionId, dependsOnId);
 }

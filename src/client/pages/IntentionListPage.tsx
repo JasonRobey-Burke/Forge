@@ -1,14 +1,17 @@
 import { useState, useMemo } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useIntentions } from '@/hooks/useIntentions';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import type { Intention } from '@shared/types';
 import type { Priority } from '@shared/types';
+import { INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
+import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import NewBadge from '@/components/NewBadge';
 import {
   Table,
   TableHeader,
@@ -25,6 +28,12 @@ const priorityVariant: Record<Priority, 'default' | 'secondary' | 'outline' | 'd
   Low: 'outline',
 };
 
+const priorityRank: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+const statusRank: Record<string, number> = { Draft: 0, Defined: 1, InProgress: 2, Fulfilled: 3, Deferred: 4 };
+
+type SortKey = 'title' | 'priority' | 'status' | 'description';
+type SortDir = 'asc' | 'desc';
+
 export default function IntentionListPage() {
   useDocumentTitle('Intentions');
   const { productId } = useParams<{ productId: string }>();
@@ -33,13 +42,41 @@ export default function IntentionListPage() {
   const { data: intentions, isLoading, error } = useIntentions(productId!);
   const [search, setSearch] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('__all__');
+  const [statusFilter, setStatusFilter] = useState('__all__');
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
 
   const filtered = useMemo(() => {
     let items = intentions ?? [];
     if (search) items = items.filter(i => i.title.toLowerCase().includes(search.toLowerCase()));
     if (priorityFilter !== '__all__') items = items.filter(i => i.priority === priorityFilter);
+    if (statusFilter !== '__all__') items = items.filter(i => i.status === statusFilter);
+
+    if (sortKey) {
+      items = [...items].sort((a, b) => {
+        let cmp = 0;
+        if (sortKey === 'priority') {
+          cmp = (priorityRank[a.priority] ?? 99) - (priorityRank[b.priority] ?? 99);
+        } else if (sortKey === 'status') {
+          cmp = (statusRank[a.status] ?? 99) - (statusRank[b.status] ?? 99);
+        } else {
+          cmp = (a[sortKey as keyof Intention] as string ?? '').localeCompare(b[sortKey as keyof Intention] as string ?? '');
+        }
+        return sortDir === 'desc' ? -cmp : cmp;
+      });
+    }
+
     return items;
-  }, [intentions, search, priorityFilter]);
+  }, [intentions, search, priorityFilter, statusFilter, sortKey, sortDir]);
 
   if (isLoading) return <CardGridSkeleton />;
   if (error) return <div className="text-destructive">Failed to load intentions: {error.message}</div>;
@@ -53,9 +90,6 @@ export default function IntentionListPage() {
       ]} />
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-xl font-semibold">Intentions</h1>
-        <Button asChild>
-          <Link to={`/products/${productId}/intentions/new`}>New Intention</Link>
-        </Button>
       </div>
 
       <ListToolbar
@@ -74,24 +108,45 @@ export default function IntentionListPage() {
               { label: 'Low', value: 'Low' },
             ],
           },
+          {
+            label: 'Status',
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: [
+              { label: 'Draft', value: 'Draft' },
+              { label: 'Defined', value: 'Defined' },
+              { label: 'In Progress', value: 'InProgress' },
+              { label: 'Fulfilled', value: 'Fulfilled' },
+              { label: 'Deferred', value: 'Deferred' },
+            ],
+          },
         ]}
       />
 
       {!intentions || intentions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">No intentions yet.</p>
-          <Button asChild variant="outline">
-            <Link to={`/products/${productId}/intentions/new`}>Create your first intention</Link>
-          </Button>
+          <p className="text-muted-foreground">No intentions found. Add YAML files to the docs/intentions/ directory.</p>
         </div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Priority</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Description</TableHead>
+              {(['title', 'priority', 'status', 'description'] as const).map((key) => {
+                const label = key.charAt(0).toUpperCase() + key.slice(1);
+                const SortIcon = sortKey === key ? (sortDir === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+                return (
+                  <TableHead
+                    key={key}
+                    className="cursor-pointer select-none"
+                    onClick={() => toggleSort(key)}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {label}
+                      <SortIcon className={`h-3.5 w-3.5 ${sortKey === key ? 'text-foreground' : 'text-muted-foreground/50'}`} />
+                    </span>
+                  </TableHead>
+                );
+              })}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -108,14 +163,18 @@ export default function IntentionListPage() {
                   className="cursor-pointer"
                   onClick={() => navigate(`/intentions/${intention.id}`)}
                 >
-                  <TableCell className="font-semibold">{intention.title}</TableCell>
+                  <TableCell className="font-semibold">
+                    <span className="text-xs text-muted-foreground font-mono mr-1.5">{intention.id}</span>
+                    {intention.title}
+                    <NewBadge createdAt={intention.created_at} />
+                  </TableCell>
                   <TableCell>
                     <Badge variant={priorityVariant[intention.priority as Priority]}>
                       {intention.priority}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{intention.status}</Badge>
+                    <Badge variant="outline">{INTENTION_STATUS_LABELS[intention.status] ?? intention.status}</Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground max-w-sm">
                     <span className="line-clamp-1">{intention.description}</span>

@@ -1,6 +1,6 @@
 import { Router, type Request } from 'express';
 import { validate } from '../middleware/validate.js';
-import { createSpecSchema, updateSpecSchema } from '../../shared/schemas/spec.js';
+import { updateSpecSchema } from '../../shared/schemas/spec.js';
 import { transitionSpecSchema } from '../../shared/schemas/transition.js';
 import * as specService from '../services/spec.js';
 import * as transitionService from '../services/phaseTransition.js';
@@ -19,19 +19,6 @@ router.get('/', async (req, res) => {
   }
   const specs = await specService.listSpecs(productId);
   res.json({ data: specs, error: null, meta: { count: specs.length } });
-});
-
-// POST /api/specs
-router.post('/', validate(createSpecSchema), async (req, res) => {
-  const spec = await specService.createSpec(req.body);
-  if (!spec) {
-    return res.status(404).json({
-      data: null,
-      error: { message: 'Parent product not found', code: 'NOT_FOUND' },
-      meta: null,
-    });
-  }
-  res.status(201).json({ data: spec, error: null, meta: null });
 });
 
 // GET /api/specs/staleness?product_id=xxx
@@ -75,19 +62,6 @@ router.put('/:id', validate(updateSpecSchema), async (req: Request<{ id: string 
   res.json({ data: spec, error: null, meta: null });
 });
 
-// DELETE /api/specs/:id
-router.delete('/:id', async (req: Request<{ id: string }>, res) => {
-  const deleted = await specService.deleteSpec(req.params.id);
-  if (!deleted) {
-    return res.status(404).json({
-      data: null,
-      error: { message: 'Spec not found', code: 'NOT_FOUND' },
-      meta: null,
-    });
-  }
-  res.json({ data: { archived: true }, error: null, meta: null });
-});
-
 // PUT /api/specs/:id/expectations
 router.put('/:id/expectations', async (req: Request<{ id: string }>, res) => {
   const { expectation_ids } = req.body;
@@ -125,7 +99,7 @@ router.get('/:id/staleness', async (req: Request<{ id: string }>, res) => {
 // POST /api/specs/:id/transition
 router.post('/:id/transition', validate(transitionSpecSchema), async (req: Request<{ id: string }>, res) => {
   const { to_phase, override_reason } = req.body;
-  const userId = req.user?.oid ?? 'dev-user';
+  const userId = 'local-user';
   const result = await transitionService.transitionSpec(
     req.params.id, to_phase, userId, override_reason
   );
