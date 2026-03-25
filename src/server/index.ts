@@ -20,11 +20,15 @@ export async function startServer(options: ServerOptions = {}) {
   const port = options.port ?? parseInt(process.env.PORT ?? '4000');
   const docsDir = path.resolve(options.docsDir ?? process.env.FORGE_DOCS ?? './docs');
 
+  const quiet = process.env.FORGE_QUIET === '1';
+
   // Initialize YAML store
   const store = await initStore(docsDir);
   const stats = store.getStats();
-  console.log(`Forge reading artifacts from ${docsDir}`);
-  console.log(`Found: ${stats.products} product(s), ${stats.intentions} intention(s), ${stats.expectations} expectation(s), ${stats.specs} spec(s)`);
+  if (!quiet) {
+    console.log(`Forge reading artifacts from ${docsDir}`);
+    console.log(`Found: ${stats.products} product(s), ${stats.intentions} intention(s), ${stats.expectations} expectation(s), ${stats.specs} spec(s)`);
+  }
 
   const app = express();
   app.use(express.json());
@@ -83,11 +87,13 @@ export async function startServer(options: ServerOptions = {}) {
     });
   });
 
-  app.listen(port, () => {
-    console.log(`Forge running at http://localhost:${port}`);
+  return new Promise<{ app: typeof app; url: string }>((resolve) => {
+    app.listen(port, () => {
+      const url = `http://localhost:${port}`;
+      if (!quiet) console.log(`Forge running at ${url}`);
+      resolve({ app, url });
+    });
   });
-
-  return app;
 }
 
 // Auto-start when run directly (not imported)
@@ -96,5 +102,5 @@ const isDirectRun = process.argv[1] && (
   process.argv[1].endsWith('index.js')
 );
 if (isDirectRun) {
-  startServer();
+  await startServer();
 }

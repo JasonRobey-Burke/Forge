@@ -1,13 +1,29 @@
 {
-  "name": "forge",
-  "version": "0.2.0",
+  "name": "@jasonrobey-burke/idd-forge",
+  "version": "0.3.0",
+  "description": "Repo-local web UI for Intent-Driven Development artifacts",
   "type": "module",
   "bin": {
-    "forge": "./bin/forge.js"
+    "idd-forge": "./bin/idd-forge.js"
   },
   "files": [
     "dist/",
     "bin/"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JasonRobey-Burke/Forge.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "idd",
+    "intent-driven-development",
+    "spec-management",
+    "yaml",
+    "forge"
   ],
   "scripts": {
     "dev": "concurrently \"npm:dev:server\" \"npm:dev:client\"",
@@ -38,6 +54,7 @@
     "chokidar": "^4.0.3",
     "express": "^5.2.1",
     "js-yaml": "^4.1.1",
+    "open": "^11.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.71.2",
