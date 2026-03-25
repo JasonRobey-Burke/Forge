@@ -17,7 +17,7 @@ Replace the current "swap left column with form card" pattern with true inline e
 
 A thin visual wrapper that handles edit-mode styling:
 
-- **Props:** `editing: boolean`, `label?: string`, `children: ReactNode`
+- **Props:** `editing: boolean`, `className?: string`, `children: ReactNode`
 - **When `editing` is false:** renders children as-is with no visual change
 - **When `editing` is true:** wraps children with `border-blue-300 bg-blue-50` border and a pencil icon at top-right
 - Contains no form logic — purely visual
