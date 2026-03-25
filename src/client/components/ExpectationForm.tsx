@@ -1,6 +1,4 @@
-import { useForm, useFieldArray, FormProvider } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useFieldArray } from 'react-hook-form';
 import { z } from 'zod';
 import type { Control, FormState } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
@@ -140,50 +138,6 @@ export function ExpectationFormFields({ control, formState }: ExpectationFormFie
         )}
       </div>
     </>
-  );
-}
-
-interface ExpectationFormProps {
-  intentionId: string;
-  defaultValues?: Partial<CreateExpectationInput>;
-  onSubmit: (values: CreateExpectationInput) => void;
-  isSubmitting: boolean;
-  submitLabel: string;
-}
-
-export default function ExpectationForm({
-  intentionId,
-  defaultValues,
-  onSubmit,
-  isSubmitting,
-  submitLabel,
-}: ExpectationFormProps) {
-  const navigate = useNavigate();
-  const form = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(formSchema) as any,
-    defaultValues: toFormValues(defaultValues),
-  });
-
-  function handleSubmit(values: FormValues) {
-    onSubmit(toApiValues(values, intentionId));
-  }
-
-  return (
-    <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-w-2xl">
-        <ExpectationFormFields control={form.control} formState={form.formState} />
-
-        <div className="flex gap-3">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : submitLabel}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </FormProvider>
   );
 }
 

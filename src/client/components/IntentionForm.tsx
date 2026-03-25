@@ -1,11 +1,7 @@
-import { useForm, FormProvider } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Control, FormState } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -16,7 +12,6 @@ import {
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Priority, IntentionStatus } from '@shared/types/enums';
 import { INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
-import type { CreateIntentionInput } from '@shared/types';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
@@ -114,57 +109,3 @@ export function IntentionFormFields({ control }: IntentionFormFieldsProps) {
   );
 }
 
-interface IntentionFormProps {
-  productId: string;
-  defaultValues?: Partial<CreateIntentionInput>;
-  onSubmit: (values: CreateIntentionInput) => void;
-  isSubmitting: boolean;
-  submitLabel: string;
-}
-
-export default function IntentionForm({
-  productId,
-  defaultValues,
-  onSubmit,
-  isSubmitting,
-  submitLabel,
-}: IntentionFormProps) {
-  const navigate = useNavigate();
-  const form = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(formSchema) as any,
-    defaultValues: {
-      title: defaultValues?.title ?? '',
-      description: defaultValues?.description ?? '',
-      priority: (defaultValues?.priority ?? 'Medium') as string,
-      status: (defaultValues?.status ?? 'Draft') as string,
-    },
-  });
-
-  function handleSubmit(values: FormValues) {
-    onSubmit({
-      product_id: productId,
-      title: values.title,
-      description: values.description,
-      priority: values.priority as CreateIntentionInput['priority'],
-      status: values.status as CreateIntentionInput['status'],
-    });
-  }
-
-  return (
-    <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-w-2xl">
-        <IntentionFormFields control={form.control} formState={form.formState} />
-
-        <div className="flex gap-3">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : submitLabel}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </FormProvider>
-  );
-}

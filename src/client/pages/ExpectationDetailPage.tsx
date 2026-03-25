@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
+import type { Control, FormState } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -10,15 +11,18 @@ import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExpectationFormFields } from '@/components/ExpectationForm';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
 import { ExpectationStatus } from '@shared/types/enums';
 import { EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import CopyCommand from '@/components/CopyCommand';
 import PrevNextNav from '@/components/PrevNextNav';
 import InlineStatusSelect from '@/components/InlineStatusSelect';
+import InlineField from '@/components/InlineField';
+import StickyEditBar from '@/components/StickyEditBar';
 
 const editSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
@@ -29,6 +33,30 @@ const editSchema = z.object({
 
 type EditFormValues = z.infer<typeof editSchema>;
 
+function EdgeCaseEditor({ control, formState }: { control: Control<any>; formState: FormState<any> }) {
+  const { fields, append, remove } = useFieldArray({ control, name: 'edge_cases' });
+  return (
+    <div className="space-y-2">
+      {fields.map((field, index) => (
+        <div key={field.id} className="flex gap-2">
+          <Input {...control.register(`edge_cases.${index}.value`)} placeholder={`Edge case ${index + 1}`} />
+          <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)} disabled={fields.length <= 2}>
+            Remove
+          </Button>
+        </div>
+      ))}
+      <Button type="button" variant="outline" size="sm" onClick={() => append({ value: '' })}>
+        + Add Edge Case
+      </Button>
+      {formState.errors.edge_cases && (
+        <p className="text-sm text-destructive">
+          {(formState.errors.edge_cases as { message?: string }).message}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ExpectationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: expectation, isLoading, error } = useExpectation(id!);
@@ -38,6 +66,7 @@ export default function ExpectationDetailPage() {
   useDocumentTitle(expectation?.title ?? 'Expectation');
   const updateExpectation = useUpdateExpectation();
   const [editing, setEditing] = useState(false);
+  const actionBarRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<EditFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,15 +150,24 @@ export default function ExpectationDetailPage() {
         );
       })()}
 
-      <div className="flex items-center justify-between mb-4">
-        {editing ? (
-          <div className="flex-1 mr-4" />
-        ) : (
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold">
-              <span className="text-sm text-muted-foreground font-mono mr-2">{expectation.id}</span>
-              {expectation.title}
-            </h1>
+      <FormProvider {...form}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3 flex-1 mr-4">
+            <span className="text-sm text-muted-foreground font-mono">{expectation.id}</span>
+            {editing ? (
+              <InlineField editing={editing} className="flex-1">
+                <FormField control={form.control} name="title" render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input {...field} className="text-xl font-semibold h-auto py-1 border-0 shadow-none bg-transparent p-0 focus-visible:ring-0" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </InlineField>
+            ) : (
+              <h1 className="text-xl font-semibold">{expectation.title}</h1>
+            )}
             <InlineStatusSelect
               value={expectation.status}
               labels={EXPECTATION_STATUS_LABELS}
@@ -142,54 +180,61 @@ export default function ExpectationDetailPage() {
               }}
             />
           </div>
-        )}
-        <div className="flex gap-2">
-          {editing ? (
-            <>
-              <Button
-                variant="default"
-                onClick={form.handleSubmit(handleSave)}
-                disabled={updateExpectation.isPending}
-              >
-                {updateExpectation.isPending ? 'Saving...' : 'Save'}
-              </Button>
-              <Button variant="outline" onClick={handleCancel}>
-                Cancel
-              </Button>
-            </>
-          ) : (
-            <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
-          )}
+          <div ref={actionBarRef} className="flex gap-2">
+            {editing ? (
+              <>
+                <Button
+                  variant="default"
+                  onClick={form.handleSubmit(handleSave)}
+                  disabled={updateExpectation.isPending}
+                >
+                  {updateExpectation.isPending ? 'Saving...' : 'Save'}
+                </Button>
+                <Button variant="outline" onClick={handleCancel}>
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
+            )}
+          </div>
         </div>
-      </div>
 
-      {editing ? (
-        <FormProvider {...form}>
-          <form className="space-y-6">
-            <ExpectationFormFields control={form.control} formState={form.formState} />
-          </form>
-        </FormProvider>
-      ) : (
         <div className="space-y-4">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Description</CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-base">Description</CardTitle></CardHeader>
             <CardContent>
-              <p className="text-sm">{expectation.description}</p>
+              <InlineField editing={editing}>
+                {editing ? (
+                  <FormField control={form.control} name="description" render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea {...field} className="border-0 shadow-none bg-transparent p-0 resize-none focus-visible:ring-0" rows={4} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                ) : (
+                  <p className="text-sm">{expectation.description}</p>
+                )}
+              </InlineField>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Edge Cases</CardTitle>
-            </CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-base">Edge Cases</CardTitle></CardHeader>
             <CardContent>
-              <ol className="space-y-1 list-decimal list-inside">
-                {expectation.edge_cases.map((ec, i) => (
-                  <li key={i} className="text-sm">{ec}</li>
-                ))}
-              </ol>
+              <InlineField editing={editing}>
+                {editing ? (
+                  <EdgeCaseEditor control={form.control} formState={form.formState} />
+                ) : (
+                  <ol className="space-y-1 list-decimal list-inside">
+                    {expectation.edge_cases.map((ec, i) => (
+                      <li key={i} className="text-sm">{ec}</li>
+                    ))}
+                  </ol>
+                )}
+              </InlineField>
             </CardContent>
           </Card>
 
@@ -201,9 +246,16 @@ export default function ExpectationDetailPage() {
           <p className="text-xs text-muted-foreground">
             Created {formattedCreated} · Updated {formattedUpdated}
           </p>
-
         </div>
-      )}
+
+        <StickyEditBar
+          editing={editing}
+          actionBarRef={actionBarRef}
+          onSave={form.handleSubmit(handleSave)}
+          onCancel={handleCancel}
+          isPending={updateExpectation.isPending}
+        />
+      </FormProvider>
     </div>
   );
 }

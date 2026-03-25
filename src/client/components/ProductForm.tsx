@@ -1,11 +1,7 @@
-import { useForm, FormProvider } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Control, FormState } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -201,43 +197,6 @@ export function ProductFormFields({ control }: ProductFormFieldsProps) {
         </div>
       </div>
     </>
-  );
-}
-
-interface ProductFormProps {
-  defaultValues?: Partial<CreateProductInput>;
-  onSubmit: (values: CreateProductInput) => void;
-  isSubmitting: boolean;
-  submitLabel: string;
-}
-
-export default function ProductForm({ defaultValues, onSubmit, isSubmitting, submitLabel }: ProductFormProps) {
-  const navigate = useNavigate();
-  const form = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(formSchema) as any,
-    defaultValues: toFormValues(defaultValues),
-  });
-
-  function handleSubmit(values: FormValues) {
-    onSubmit(toApiValues(values));
-  }
-
-  return (
-    <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 max-w-2xl">
-        <ProductFormFields control={form.control} formState={form.formState} />
-
-        <div className="flex gap-3">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : submitLabel}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </FormProvider>
   );
 }
 

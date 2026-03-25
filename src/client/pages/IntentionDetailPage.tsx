@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,14 +11,21 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import { FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
 import { AlertTriangle } from 'lucide-react';
 import CopyCommand from '@/components/CopyCommand';
 import NewBadge from '@/components/NewBadge';
 import PrevNextNav from '@/components/PrevNextNav';
 import InlineStatusSelect from '@/components/InlineStatusSelect';
+import InlineField from '@/components/InlineField';
+import StickyEditBar from '@/components/StickyEditBar';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
-import { IntentionFormFields } from '@/components/IntentionForm';
 import { Priority, IntentionStatus } from '@shared/types/enums';
 import { INTENTION_STATUS_LABELS, EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import type { Priority as PriorityType } from '@shared/types';
@@ -48,6 +55,7 @@ export default function IntentionDetailPage() {
   useDocumentTitle(intention?.title ?? 'Intention');
   const updateIntention = useUpdateIntention();
   const [editing, setEditing] = useState(false);
+  const actionBarRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<EditFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,20 +135,46 @@ export default function IntentionDetailPage() {
         );
       })()}
 
-      <div className="flex items-center justify-between mb-4">
-        {editing ? (
-          <div className="flex-1 mr-4">
-            {/* Title/priority/status shown inline in form below */}
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold">
-              <span className="text-sm text-muted-foreground font-mono mr-2">{intention.id}</span>
-              {intention.title}
-            </h1>
-            <Badge variant={priorityVariant[intention.priority as PriorityType]}>
-              {intention.priority}
-            </Badge>
+      <FormProvider {...form}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3 flex-1 mr-4">
+            <span className="text-sm text-muted-foreground font-mono">{intention.id}</span>
+            {editing ? (
+              <InlineField editing={editing} className="flex-1">
+                <FormField control={form.control} name="title" render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input {...field} className="text-xl font-semibold h-auto py-1 border-0 shadow-none bg-transparent p-0 focus-visible:ring-0" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </InlineField>
+            ) : (
+              <h1 className="text-xl font-semibold">{intention.title}</h1>
+            )}
+            {editing ? (
+              <InlineField editing={editing}>
+                <FormField control={form.control} name="priority" render={({ field }) => (
+                  <FormItem>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-7 w-auto"><SelectValue /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.values(Priority).map((p) => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )} />
+              </InlineField>
+            ) : (
+              <Badge variant={priorityVariant[intention.priority as PriorityType]}>
+                {intention.priority}
+              </Badge>
+            )}
             <InlineStatusSelect
               value={intention.status}
               labels={INTENTION_STATUS_LABELS}
@@ -153,127 +187,133 @@ export default function IntentionDetailPage() {
               }}
             />
           </div>
-        )}
-        <div className="flex gap-2">
-          {editing ? (
-            <>
-              <Button
-                variant="default"
-                onClick={form.handleSubmit(handleSave)}
-                disabled={updateIntention.isPending}
-              >
-                {updateIntention.isPending ? 'Saving...' : 'Save'}
-              </Button>
-              <Button variant="outline" onClick={handleCancel}>
-                Cancel
-              </Button>
-            </>
-          ) : (
-            <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
-          )}
+          <div ref={actionBarRef} className="flex gap-2">
+            {editing ? (
+              <>
+                <Button
+                  variant="default"
+                  onClick={form.handleSubmit(handleSave)}
+                  disabled={updateIntention.isPending}
+                >
+                  {updateIntention.isPending ? 'Saving...' : 'Save'}
+                </Button>
+                <Button variant="outline" onClick={handleCancel}>
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Left column: Description (editable in edit mode) */}
-        <div className="space-y-4">
-          {editing ? (
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Edit Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FormProvider {...form}>
-                  <div className="space-y-4">
-                    <IntentionFormFields control={form.control} formState={form.formState} />
-                  </div>
-                </FormProvider>
-              </CardContent>
-            </Card>
-          ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Left column: Description */}
+          <div className="space-y-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">Description</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">{intention.description}</p>
+                <InlineField editing={editing}>
+                  {editing ? (
+                    <FormField control={form.control} name="description" render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Textarea {...field} className="border-0 shadow-none bg-transparent p-0 resize-none focus-visible:ring-0" rows={4} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  ) : (
+                    <p className="text-sm">{intention.description}</p>
+                  )}
+                </InlineField>
               </CardContent>
             </Card>
-          )}
-        </div>
+          </div>
 
-        {/* Right column: Dependencies + Expectations (always visible) */}
-        <div className="space-y-4">
-          {intention.dependencies && intention.dependencies.length > 0 && (
+          {/* Right column: Dependencies + Expectations (always visible) */}
+          <div className="space-y-4">
+            {intention.dependencies && intention.dependencies.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Dependencies</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-1.5">
+                    {intention.dependencies.map((dep: { id: string; title: string; status?: string }) => (
+                      <li key={dep.id} className="flex items-center gap-2 flex-wrap">
+                        <Link to={`/intentions/${dep.id}`} className="text-sm text-primary hover:underline">
+                          <span className="text-muted-foreground font-mono mr-1">{dep.id}</span>
+                          {dep.title}
+                        </Link>
+                        {dep.status && (
+                          <Badge variant="outline" className="text-xs">{INTENTION_STATUS_LABELS[dep.status] ?? dep.status}</Badge>
+                        )}
+                        {dep.status === 'Deferred' && (
+                          <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+                            <AlertTriangle className="h-3 w-3" />
+                            Deferred
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Dependencies</CardTitle>
+                <CardTitle className="text-base">Expectations</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-1.5">
-                  {intention.dependencies.map((dep: { id: string; title: string; status?: string }) => (
-                    <li key={dep.id} className="flex items-center gap-2 flex-wrap">
-                      <Link to={`/intentions/${dep.id}`} className="text-sm text-primary hover:underline">
-                        <span className="text-muted-foreground font-mono mr-1">{dep.id}</span>
-                        {dep.title}
-                      </Link>
-                      {dep.status && (
-                        <Badge variant="outline" className="text-xs">{INTENTION_STATUS_LABELS[dep.status] ?? dep.status}</Badge>
-                      )}
-                      {dep.status === 'Deferred' && (
-                        <span className="inline-flex items-center gap-1 text-xs text-amber-600">
-                          <AlertTriangle className="h-3 w-3" />
-                          Deferred
+                {expectations && expectations.length > 0 ? (
+                  <ul className="space-y-1.5">
+                    {expectations.map((exp) => (
+                      <li key={exp.id} className="flex items-center gap-2 flex-wrap">
+                        <Link
+                          to={`/expectations/${exp.id}`}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          <span className="text-muted-foreground font-mono mr-1">{exp.id}</span>
+                          {exp.title}
+                        </Link>
+                        <Badge variant="outline" className="text-xs">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
+                        <NewBadge createdAt={exp.created_at} />
+                        <span className="text-xs text-muted-foreground">
+                          {exp.edge_cases.length} edge case{exp.edge_cases.length !== 1 ? 's' : ''}
                         </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No expectations yet.</p>
+                )}
+                <CopyCommand
+                  label="Add new expectations in Claude Code:"
+                  command={`/idd-framework:define-expectations ${intention.id}`}
+                />
               </CardContent>
             </Card>
-          )}
+          </div>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Expectations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {expectations && expectations.length > 0 ? (
-                <ul className="space-y-1.5">
-                  {expectations.map((exp) => (
-                    <li key={exp.id} className="flex items-center gap-2 flex-wrap">
-                      <Link
-                        to={`/expectations/${exp.id}`}
-                        className="text-sm text-primary hover:underline"
-                      >
-                        <span className="text-muted-foreground font-mono mr-1">{exp.id}</span>
-                        {exp.title}
-                      </Link>
-                      <Badge variant="outline" className="text-xs">{EXPECTATION_STATUS_LABELS[exp.status] ?? exp.status}</Badge>
-                      <NewBadge createdAt={exp.created_at} />
-                      <span className="text-xs text-muted-foreground">
-                        {exp.edge_cases.length} edge case{exp.edge_cases.length !== 1 ? 's' : ''}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">No expectations yet.</p>
-              )}
-              <CopyCommand
-                label="Add new expectations in Claude Code:"
-                command={`/idd-framework:define-expectations ${intention.id}`}
-              />
-            </CardContent>
-          </Card>
+          {/* Footer timestamps spanning both columns */}
+          <div className="lg:col-span-2 text-xs text-muted-foreground">
+            Created {formattedCreated} · Updated {formattedUpdated}
+          </div>
+
         </div>
 
-        {/* Footer timestamps spanning both columns */}
-        <div className="lg:col-span-2 text-xs text-muted-foreground">
-          Created {formattedCreated} · Updated {formattedUpdated}
-        </div>
-
-      </div>
+        <StickyEditBar
+          editing={editing}
+          actionBarRef={actionBarRef}
+          onSave={form.handleSubmit(handleSave)}
+          onCancel={handleCancel}
+          isPending={updateIntention.isPending}
+        />
+      </FormProvider>
     </div>
   );
 }
