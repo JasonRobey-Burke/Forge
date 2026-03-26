@@ -15,10 +15,24 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const { headers: optHeaders, ...restOptions } = options ?? {};
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    ...options,
+    ...restOptions,
+    headers: { 'Content-Type': 'application/json', ...optHeaders },
   });
+
+  if (!res.ok) {
+    // Try to parse as JSON error; fall back to status text
+    try {
+      const json: ApiResponse<T> = await res.json();
+      if (json.error) {
+        throw new ApiError(json.error.code, json.error.message, json.error.details);
+      }
+    } catch (e) {
+      if (e instanceof ApiError) throw e;
+      throw new ApiError('HTTP_ERROR', `Request failed: ${res.status} ${res.statusText}`);
+    }
+  }
 
   const json: ApiResponse<T> = await res.json();
 

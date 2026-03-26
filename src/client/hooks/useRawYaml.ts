@@ -23,16 +23,9 @@ export function useSaveRawYaml() {
         method: 'PUT',
         body: JSON.stringify({ content }),
       }),
-    onSuccess: (_data, variables) => {
-      // Invalidate both the raw yaml cache and the entity cache
-      queryClient.invalidateQueries({ queryKey: ['raw-yaml', variables.type, variables.id] });
-      // Invalidate entity-specific queries so the detail page refreshes
-      const entityKey = variables.type === 'products' ? 'product'
-        : variables.type === 'intentions' ? 'intention'
-        : variables.type === 'expectations' ? 'expectation'
-        : 'spec';
-      queryClient.invalidateQueries({ queryKey: [entityKey, variables.id] });
-      queryClient.invalidateQueries({ queryKey: [variables.type] });
+    onSuccess: () => {
+      // Broad invalidation — refetch everything since raw YAML edit can change any field
+      queryClient.invalidateQueries();
     },
   });
 }
