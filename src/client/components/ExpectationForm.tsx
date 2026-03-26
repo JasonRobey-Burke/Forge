@@ -20,7 +20,7 @@ import type { CreateExpectationInput } from '@shared/types';
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required'),
-  status: z.enum(Object.values(ExpectationStatus) as [string, ...string[]]),
+  status: z.string(),
   edge_cases: z.array(z.object({ value: z.string() })).min(2, 'At least 2 edge cases required'),
 });
 

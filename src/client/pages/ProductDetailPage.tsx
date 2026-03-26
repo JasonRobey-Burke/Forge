@@ -35,7 +35,7 @@ const formSchema = z.object({
   problem_statement: z.string().min(1, 'Problem statement is required'),
   vision: z.string().min(1, 'Vision is required'),
   target_audience: z.string().min(1, 'Target audience is required'),
-  status: z.enum(Object.values(ProductStatus) as [string, ...string[]]),
+  status: z.string(),
   context: z.object({
     stack: z.array(z.object({ value: z.string() })),
     patterns: z.array(z.object({ value: z.string() })),

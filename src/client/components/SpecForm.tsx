@@ -29,8 +29,8 @@ import { compareContext } from '@/lib/contextDiff';
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required'),
-  phase: z.enum(Object.values(SpecPhase) as [string, ...string[]]),
-  complexity: z.enum(Object.values(Complexity) as [string, ...string[]]),
+  phase: z.string(),
+  complexity: z.string(),
   context: z.object({
     stack: z.array(z.object({ value: z.string() })),
     patterns: z.array(z.object({ value: z.string() })),

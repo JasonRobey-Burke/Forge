@@ -1,18 +1,17 @@
 import { z } from 'zod';
-import { ExpectationStatus } from '../types/enums.js';
 
 export const createExpectationSchema = z.object({
-  intention_id: z.string().uuid(),
+  intention_id: z.string().min(1),
   title: z.string().min(1).max(255),
   description: z.string().min(1),
-  status: z.enum(Object.values(ExpectationStatus) as [string, ...string[]]).optional(),
+  status: z.string().optional(),
   edge_cases: z.array(z.string()).min(2),
 });
 
 export const updateExpectationSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   description: z.string().min(1).optional(),
-  status: z.enum(Object.values(ExpectationStatus) as [string, ...string[]]).optional(),
+  status: z.string().optional(),
   edge_cases: z.array(z.string()).min(2).optional(),
 });
 

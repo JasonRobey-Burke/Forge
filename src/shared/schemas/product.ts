@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { ProductStatus } from '../types/enums.js';
 
 export const productContextSchema = z.object({
   stack: z.array(z.string()),
@@ -21,7 +20,7 @@ export const createProductSchema = z.object({
   problem_statement: z.string().min(1),
   vision: z.string().min(1),
   target_audience: z.string().min(1),
-  status: z.enum(Object.values(ProductStatus) as [string, ...string[]]).optional(),
+  status: z.string().optional(),
   context: productContextSchema.optional(),
   wip_limits: wipLimitsSchema.optional(),
 });
@@ -31,7 +30,7 @@ export const updateProductSchema = z.object({
   problem_statement: z.string().min(1).optional(),
   vision: z.string().min(1).optional(),
   target_audience: z.string().min(1).optional(),
-  status: z.enum(Object.values(ProductStatus) as [string, ...string[]]).optional(),
+  status: z.string().optional(),
   context: productContextSchema.optional(),
   wip_limits: wipLimitsSchema.optional(),
 });

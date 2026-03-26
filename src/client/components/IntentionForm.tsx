@@ -16,8 +16,8 @@ import { INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
   description: z.string().min(1, 'Description is required'),
-  priority: z.enum(Object.values(Priority) as [string, ...string[]]),
-  status: z.enum(Object.values(IntentionStatus) as [string, ...string[]]),
+  priority: z.string(),
+  status: z.string(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
