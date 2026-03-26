@@ -2,6 +2,7 @@
 
 import { existsSync, mkdirSync } from 'fs';
 import { resolve, dirname } from 'path';
+import { createServer } from 'net';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { createInterface } from 'readline';
 import { createRequire } from 'module';
@@ -49,13 +50,41 @@ if (getFlag('--version') || getFlag('-v')) {
   process.exit(0);
 }
 
-const port = parseInt(getOption('--port', process.env.PORT ?? '4000'));
+const requestedPort = parseInt(getOption('--port', process.env.PORT ?? '4000'));
 const docsDir = resolve(
   getOption('--docs', undefined) ?? process.env.FORGE_DOCS ?? './docs'
 );
 const noOpen = getFlag('--no-open');
 
-console.log(`\n  idd-forge v${pkg.version}\n`);
+// ── Port detection ─────────────────────────────────────────
+function isPortFree(port) {
+  return new Promise((resolve) => {
+    const server = createServer();
+    server.once('error', () => resolve(false));
+    server.once('listening', () => { server.close(); resolve(true); });
+    server.listen(port, '127.0.0.1');
+  });
+}
+
+async function findFreePort(startPort, maxAttempts = 10) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const candidate = startPort + i;
+    if (await isPortFree(candidate)) return candidate;
+  }
+  return null;
+}
+
+const port = await findFreePort(requestedPort);
+if (port === null) {
+  console.error(`\n  Error: Ports ${requestedPort}-${requestedPort + 9} are all in use.\n`);
+  process.exit(1);
+}
+if (port !== requestedPort) {
+  console.log(`\n  idd-forge v${pkg.version}`);
+  console.log(`  Port ${requestedPort} is in use, using ${port}\n`);
+} else {
+  console.log(`\n  idd-forge v${pkg.version}\n`);
+}
 
 // ── Init prompt ────────────────────────────────────────────
 async function promptInit() {
