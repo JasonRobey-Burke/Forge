@@ -105,6 +105,13 @@ export class YamlStore {
 
   // ── Helpers ─────────────────────────────────────────────────────────
 
+  /** Coerce a value to an ISO date string: handles Date objects, strings, and nulls */
+  private toISOString(value: unknown): string {
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value === 'string') return value;
+    return new Date().toISOString();
+  }
+
   /** Capitalize first letter to match Forge enum values (e.g. "critical" → "Critical") */
   private capitalizeFirst(value: string): string {
     if (!value) return value;
@@ -240,8 +247,8 @@ export class YamlStore {
         'audience', 'target_audience', 'status', 'technical_context', 'context',
         'wip_limits', 'created_at', 'updated_at', 'archived_at', 'owner', 'version', 'created',
       ]),
-      created_at: p.created_at ?? p.created ?? new Date().toISOString(),
-      updated_at: p.updated_at ?? new Date().toISOString(),
+      created_at: this.toISOString(p.created_at ?? p.created),
+      updated_at: this.toISOString(p.updated_at),
       archived_at: p.archived_at ?? null,
     };
 
@@ -267,8 +274,8 @@ export class YamlStore {
         'rationale', 'priority', 'status', 'dependencies', 'created_at', 'updated_at',
         'archived_at', 'owner', 'created',
       ]),
-      created_at: i.created_at ?? i.created ?? new Date().toISOString(),
-      updated_at: i.updated_at ?? new Date().toISOString(),
+      created_at: this.toISOString(i.created_at ?? i.created),
+      updated_at: this.toISOString(i.updated_at),
       archived_at: i.archived_at ?? null,
     };
 
@@ -296,8 +303,8 @@ export class YamlStore {
         'status', 'edge_cases', 'created_at', 'updated_at', 'archived_at', 'owner',
         'product_id', 'product', 'created',
       ]),
-      created_at: e.created_at ?? e.created ?? new Date().toISOString(),
-      updated_at: e.updated_at ?? new Date().toISOString(),
+      created_at: this.toISOString(e.created_at ?? e.created),
+      updated_at: this.toISOString(e.updated_at),
       archived_at: e.archived_at ?? null,
     };
 
@@ -344,9 +351,9 @@ export class YamlStore {
         'phase_history', 'created_at', 'updated_at', 'archived_at', 'owner',
         'depends_on', 'intentions', 'created', 'implemented',
       ]),
-      phase_changed_at: s.phase_changed_at ?? s.updated_at ?? new Date().toISOString(),
-      created_at: s.created_at ?? s.created ?? new Date().toISOString(),
-      updated_at: s.updated_at ?? new Date().toISOString(),
+      phase_changed_at: this.toISOString(s.phase_changed_at ?? s.updated_at),
+      created_at: this.toISOString(s.created_at ?? s.created),
+      updated_at: this.toISOString(s.updated_at),
       archived_at: s.archived_at ?? null,
     };
 
