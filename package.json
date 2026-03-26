@@ -4,7 +4,7 @@
   "description": "Repo-local web UI for Intent-Driven Development artifacts",
   "type": "module",
   "bin": {
-    "idd-forge": "./bin/idd-forge.js"
+    "idd-forge": "bin/idd-forge.js"
   },
   "files": [
     "dist/",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/JasonRobey-Burke/Forge.git"
+    "url": "git+https://github.com/JasonRobey-Burke/Forge.git"
   },
   "license": "MIT",
   "keywords": [
