@@ -80,21 +80,57 @@ export class YamlStore {
     return value.charAt(0).toUpperCase() + value.slice(1);
   }
 
-  /** Coerce a value to string[]: handles arrays, multiline strings, objects, and nulls */
+  /** Coerce a value to string[]: handles arrays, multiline strings, and nested objects */
   private toStringArray(value: unknown): string[] {
-    if (Array.isArray(value)) return value.map(String);
+    if (Array.isArray(value)) {
+      return value.map((v) => (typeof v === 'string' ? v : JSON.stringify(v)));
+    }
     if (typeof value === 'string') {
-      // Split multiline strings on newlines, then trim and filter empty/comment lines
       return value
         .split('\n')
         .map((line) => line.replace(/^[\s-]+/, '').trim())
         .filter((line) => line.length > 0 && !line.startsWith('#'));
     }
     if (typeof value === 'object' && value !== null) {
-      // Handle { backend: "...", frontend: "..." } style objects
-      return Object.values(value).map(String);
+      const result: string[] = [];
+      for (const [key, val] of Object.entries(value)) {
+        if (typeof val === 'string') {
+          result.push(`${key}: ${val}`);
+        } else if (Array.isArray(val)) {
+          result.push(...val.map((v) => (typeof v === 'string' ? `${key}: ${v}` : JSON.stringify(v))));
+        } else if (typeof val === 'object' && val !== null) {
+          const entries = Object.entries(val).map(([k, v]) => `${k}: ${v}`);
+          result.push(`${key}: ${entries.join(', ')}`);
+        }
+      }
+      return result;
     }
     return [];
+  }
+
+  /** Compute extras: all YAML keys not in the consumed list */
+  private computeExtras(entity: Record<string, unknown>, consumedKeys: string[]): Record<string, unknown> {
+    const extras: Record<string, unknown> = {};
+    for (const key of Object.keys(entity)) {
+      if (!consumedKeys.includes(key)) {
+        extras[key] = entity[key];
+      }
+    }
+    return extras;
+  }
+
+  /** Flatten validation.human_review: handles string[] or {area, checks}[] */
+  private flattenValidationHuman(value: unknown): string[] {
+    if (Array.isArray(value)) {
+      return value.flatMap((item) => {
+        if (typeof item === 'string') return [item];
+        if (typeof item === 'object' && item !== null && item.area && Array.isArray(item.checks)) {
+          return item.checks.map((c: string) => `[${item.area}] ${c}`);
+        }
+        return [String(item)];
+      });
+    }
+    return this.toStringArray(value);
   }
 
   /** Normalize edge_cases: handles string[], or array of objects with description/scenario fields */
@@ -166,7 +202,14 @@ export class YamlStore {
       status: this.capitalizeFirst(p.status ?? 'Active') as Product['status'],
       context,
       wip_limits: wipLimits,
-      created_at: p.created_at ?? new Date().toISOString(),
+      owner: p.owner ?? undefined,
+      version: p.version ?? undefined,
+      extras: this.computeExtras(p, [
+        'id', 'name', 'problem', 'problem_statement', 'value_proposition', 'vision',
+        'audience', 'target_audience', 'status', 'technical_context', 'context',
+        'wip_limits', 'created_at', 'updated_at', 'archived_at', 'owner', 'version', 'created',
+      ]),
+      created_at: p.created_at ?? p.created ?? new Date().toISOString(),
       updated_at: p.updated_at ?? new Date().toISOString(),
       archived_at: p.archived_at ?? null,
     };
@@ -187,7 +230,13 @@ export class YamlStore {
       description: i.description ?? i.rationale ?? i.statement ?? '',
       priority: this.capitalizeFirst(i.priority ?? 'Medium') as Intention['priority'],
       status: this.capitalizeFirst(i.status ?? 'Draft') as Intention['status'],
-      created_at: i.created_at ?? new Date().toISOString(),
+      owner: i.owner ?? undefined,
+      extras: this.computeExtras(i, [
+        'id', 'product_id', 'product', 'title', 'name', 'statement', 'description',
+        'rationale', 'priority', 'status', 'dependencies', 'created_at', 'updated_at',
+        'archived_at', 'owner', 'created',
+      ]),
+      created_at: i.created_at ?? i.created ?? new Date().toISOString(),
       updated_at: i.updated_at ?? new Date().toISOString(),
       archived_at: i.archived_at ?? null,
     };
@@ -209,7 +258,14 @@ export class YamlStore {
       description: e.description ?? e.statement ?? '',
       status: this.capitalizeFirst(e.status ?? 'Draft') as Expectation['status'],
       edge_cases: this.normalizeEdgeCases(e.edge_cases),
-      created_at: e.created_at ?? new Date().toISOString(),
+      owner: e.owner ?? undefined,
+      product_id: e.product_id ?? e.product ?? undefined,
+      extras: this.computeExtras(e, [
+        'id', 'intention_id', 'intention', 'title', 'name', 'description', 'statement',
+        'status', 'edge_cases', 'created_at', 'updated_at', 'archived_at', 'owner',
+        'product_id', 'product', 'created',
+      ]),
+      created_at: e.created_at ?? e.created ?? new Date().toISOString(),
       updated_at: e.updated_at ?? new Date().toISOString(),
       archived_at: e.archived_at ?? null,
     };
@@ -228,7 +284,8 @@ export class YamlStore {
       stack: this.toStringArray(ctx.stack),
       patterns: this.toStringArray(ctx.patterns),
       conventions: this.toStringArray(ctx.conventions),
-      auth: typeof ctx.auth === 'string' ? ctx.auth : '',
+      auth: typeof ctx.auth === 'string' ? ctx.auth
+        : (typeof ctx.auth === 'object' && ctx.auth !== null ? JSON.stringify(ctx.auth) : ''),
     };
 
     const validation = s.validation ?? {};
@@ -243,11 +300,21 @@ export class YamlStore {
       context,
       boundaries: this.flattenBoundaries(s.boundaries),
       deliverables: this.flattenDeliverables(s.deliverables),
-      validation_automated: validation.automated ?? s.validation_automated ?? [],
-      validation_human: validation.human ?? s.validation_human ?? [],
+      validation_automated: this.toStringArray(validation.automated ?? s.validation_automated ?? []),
+      validation_human: this.flattenValidationHuman(validation.human_review ?? validation.human ?? s.validation_human ?? []),
       peer_reviewed: validation.peer_reviewed ?? s.peer_reviewed ?? false,
+      owner: s.owner ?? undefined,
+      depends_on: s.depends_on ?? undefined,
+      intentions: s.intentions ?? undefined,
+      extras: this.computeExtras(s, [
+        'id', 'product_id', 'product', 'title', 'description', 'status', 'phase',
+        'complexity', 'context', 'boundaries', 'deliverables', 'validation',
+        'validation_automated', 'validation_human', 'peer_reviewed', 'expectations',
+        'phase_history', 'created_at', 'updated_at', 'archived_at', 'owner',
+        'depends_on', 'intentions', 'created', 'implemented',
+      ]),
       phase_changed_at: s.phase_changed_at ?? s.updated_at ?? new Date().toISOString(),
-      created_at: s.created_at ?? new Date().toISOString(),
+      created_at: s.created_at ?? s.created ?? new Date().toISOString(),
       updated_at: s.updated_at ?? new Date().toISOString(),
       archived_at: s.archived_at ?? null,
     };
@@ -257,26 +324,46 @@ export class YamlStore {
     this.specPhaseHistory.set(spec.id, s.phase_history ?? []);
   }
 
-  // Boundaries can be an array of strings or an object like { do_not_modify: [...], do_not_implement: [...] }
+  // Boundaries: array of strings, or object with categorized arrays — preserves category labels
   private flattenBoundaries(boundaries: unknown): string[] {
-    if (Array.isArray(boundaries)) return boundaries;
+    if (Array.isArray(boundaries)) return boundaries.map(String);
     if (typeof boundaries === 'object' && boundaries !== null) {
       const result: string[] = [];
-      for (const [, values] of Object.entries(boundaries)) {
-        if (Array.isArray(values)) result.push(...values);
+      for (const [key, values] of Object.entries(boundaries)) {
+        const label = key.replace(/_/g, ' ');
+        if (Array.isArray(values)) {
+          result.push(...values.map((v) => `[${label}] ${v}`));
+        } else if (typeof values === 'string') {
+          result.push(`[${label}] ${values}`);
+        }
       }
       return result;
     }
     return [];
   }
 
-  // Deliverables can be an array of strings or an object like { api_endpoints: [...], frontend_components: [...] }
+  // Deliverables: array of strings, or nested object — preserves category/subcategory labels
   private flattenDeliverables(deliverables: unknown): string[] {
-    if (Array.isArray(deliverables)) return deliverables;
+    if (Array.isArray(deliverables)) return deliverables.map(String);
     if (typeof deliverables === 'object' && deliverables !== null) {
       const result: string[] = [];
-      for (const [, values] of Object.entries(deliverables)) {
-        if (Array.isArray(values)) result.push(...values);
+      for (const [category, content] of Object.entries(deliverables)) {
+        const label = category.replace(/_/g, ' ');
+        if (typeof content === 'string') {
+          result.push(`[${label}] ${content}`);
+        } else if (Array.isArray(content)) {
+          result.push(...content.map((v) => `[${label}] ${typeof v === 'string' ? v : JSON.stringify(v)}`));
+        } else if (typeof content === 'object' && content !== null) {
+          // Nested: { description: "...", files: [...], tables: [...] }
+          const desc = (content as Record<string, unknown>).description;
+          if (typeof desc === 'string') result.push(`[${label}] ${desc}`);
+          for (const [subKey, subVal] of Object.entries(content as Record<string, unknown>)) {
+            if (subKey === 'description') continue;
+            if (Array.isArray(subVal)) {
+              result.push(...subVal.map((v) => `[${label}/${subKey}] ${typeof v === 'string' ? v : JSON.stringify(v)}`));
+            }
+          }
+        }
       }
       return result;
     }
@@ -377,6 +464,9 @@ export class YamlStore {
           auth: p.context.auth,
         },
         wip_limits: p.wip_limits,
+        ...(p.owner ? { owner: p.owner } : {}),
+        ...(p.version ? { version: p.version } : {}),
+        ...p.extras,
         created_at: p.created_at,
         updated_at: p.updated_at,
       },
@@ -432,6 +522,8 @@ export class YamlStore {
         priority: i.priority,
         status: i.status,
         dependencies: this.intentionDeps.get(i.id) ?? [],
+        ...(i.owner ? { owner: i.owner } : {}),
+        ...i.extras,
         created_at: i.created_at,
         updated_at: i.updated_at,
       },
@@ -519,6 +611,9 @@ export class YamlStore {
         description: e.description,
         status: e.status,
         edge_cases: e.edge_cases,
+        ...(e.owner ? { owner: e.owner } : {}),
+        ...(e.product_id ? { product_id: e.product_id } : {}),
+        ...e.extras,
         created_at: e.created_at,
         updated_at: e.updated_at,
       },
@@ -677,7 +772,9 @@ export class YamlStore {
         description: s.description,
         status: s.phase,
         complexity: s.complexity,
-        owner: (entry.raw?.spec as any)?.owner ?? undefined,
+        ...(s.owner ? { owner: s.owner } : {}),
+        ...(s.depends_on?.length ? { depends_on: s.depends_on } : {}),
+        ...(s.intentions?.length ? { intentions: s.intentions } : {}),
         expectations: expIds,
         context: {
           stack: s.context.stack,
@@ -694,6 +791,7 @@ export class YamlStore {
           peer_reviewed: s.peer_reviewed,
         },
         phase_history: history.length > 0 ? history : undefined,
+        ...s.extras,
         created_at: s.created_at,
         updated_at: s.updated_at,
       },

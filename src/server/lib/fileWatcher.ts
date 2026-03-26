@@ -9,7 +9,7 @@ export function startFileWatcher(
   store: YamlStore,
   onFileChange?: (event: string, filePath: string) => void
 ): void {
-  const watchPath = path.join(docsDir, '**/*.{yaml,yml}');
+  const watchPath = path.join(docsDir, '**/*.{yaml,yml,md}');
 
   watcher = watch(watchPath, {
     ignoreInitial: true,

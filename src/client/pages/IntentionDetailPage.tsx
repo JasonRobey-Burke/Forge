@@ -26,6 +26,7 @@ import InlineField from '@/components/InlineField';
 import StickyEditBar from '@/components/StickyEditBar';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
+import AdditionalFields from '@/components/AdditionalFields';
 import { Priority, IntentionStatus } from '@shared/types/enums';
 import { INTENTION_STATUS_LABELS, EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import type { Priority as PriorityType } from '@shared/types';
@@ -175,6 +176,7 @@ export default function IntentionDetailPage() {
                 {intention.priority}
               </Badge>
             )}
+            {intention.owner && <Badge variant="outline" className="text-xs">{intention.owner}</Badge>}
             <InlineStatusSelect
               value={intention.status}
               labels={INTENTION_STATUS_LABELS}
@@ -231,6 +233,8 @@ export default function IntentionDetailPage() {
                 </InlineField>
               </CardContent>
             </Card>
+
+            {!editing && <AdditionalFields extras={intention.extras} />}
           </div>
 
           {/* Right column: Dependencies + Expectations (always visible) */}

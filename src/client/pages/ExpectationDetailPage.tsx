@@ -17,12 +17,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
 import { ExpectationStatus } from '@shared/types/enums';
+import { Badge } from '@/components/ui/badge';
 import { EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import CopyCommand from '@/components/CopyCommand';
 import PrevNextNav from '@/components/PrevNextNav';
 import InlineStatusSelect from '@/components/InlineStatusSelect';
 import InlineField from '@/components/InlineField';
 import StickyEditBar from '@/components/StickyEditBar';
+import AdditionalFields from '@/components/AdditionalFields';
 
 const editSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
@@ -168,6 +170,7 @@ export default function ExpectationDetailPage() {
             ) : (
               <h1 className="text-xl font-semibold">{expectation.title}</h1>
             )}
+            {expectation.owner && <Badge variant="outline" className="text-xs">{expectation.owner}</Badge>}
             <InlineStatusSelect
               value={expectation.status}
               labels={EXPECTATION_STATUS_LABELS}
@@ -237,6 +240,8 @@ export default function ExpectationDetailPage() {
               </InlineField>
             </CardContent>
           </Card>
+
+          {!editing && <AdditionalFields extras={expectation.extras} />}
 
           <CopyCommand
             label="Write a spec for this expectation in Claude Code:"

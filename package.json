@@ -1,6 +1,6 @@
 {
   "name": "@jasonrobey-burke/idd-forge",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Repo-local web UI for Intent-Driven Development artifacts",
   "type": "module",
   "bin": {
@@ -58,7 +58,9 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-hook-form": "^7.71.2",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.1",
+    "remark-gfm": "^4.0.1",
     "sonner": "^2.0.7",
     "zod": "^4.3.6"
   },

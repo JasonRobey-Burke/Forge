@@ -24,6 +24,7 @@ import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import IntentionProgress from '@/components/IntentionProgress';
 import CopyCommand from '@/components/CopyCommand';
 import NewBadge from '@/components/NewBadge';
+import AdditionalFields from '@/components/AdditionalFields';
 import { productToFormValues, productToApiValues } from '@/components/ProductForm';
 import { ProductStatus } from '@shared/types/enums';
 import type { CreateProductInput } from '@shared/types';
@@ -135,6 +136,8 @@ export default function ProductDetailPage() {
             ) : (
               <h1 className="text-xl font-semibold">{product.name}</h1>
             )}
+            {product.owner && <Badge variant="outline" className="text-xs">{product.owner}</Badge>}
+            {product.version && <Badge variant="outline" className="text-xs">v{product.version}</Badge>}
             <InlineStatusSelect
               value={product.status}
               labels={PRODUCT_STATUS_LABELS}
@@ -287,6 +290,8 @@ export default function ProductDetailPage() {
                 )}
               </CardContent>
             </Card>
+
+            {!editing && <AdditionalFields extras={product.extras} />}
           </div>
 
           {/* Right column — always visible */}

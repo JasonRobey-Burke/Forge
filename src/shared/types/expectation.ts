@@ -7,6 +7,9 @@ export interface Expectation {
   description: string;
   status: ExpectationStatus;
   edge_cases: string[];
+  owner?: string;
+  product_id?: string;
+  extras: Record<string, unknown>;
   created_at: string;
   updated_at: string;
   archived_at: string | null;

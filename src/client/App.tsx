@@ -11,6 +11,8 @@ import SpecListPage from '@/pages/SpecListPage';
 import SpecDetailPage from '@/pages/SpecDetailPage';
 import SpecEditPage from '@/pages/SpecEditPage';
 import FlowBoardPage from '@/pages/FlowBoardPage';
+import PlansListPage from '@/pages/PlansListPage';
+import PlanDetailPage from '@/pages/PlanDetailPage';
 
 export default function App() {
   useFileWatcher();
@@ -29,6 +31,8 @@ export default function App() {
         <Route path="specs/:id" element={<SpecDetailPage />} />
         <Route path="specs/:id/edit" element={<SpecEditPage />} />
         <Route path="products/:productId/board" element={<FlowBoardPage />} />
+        <Route path="plans" element={<PlansListPage />} />
+        <Route path="plans/:name" element={<PlanDetailPage />} />
       </Route>
     </Routes>
   );

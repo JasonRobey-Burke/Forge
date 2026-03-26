@@ -7,6 +7,8 @@ export interface Intention {
   description: string;
   priority: Priority;
   status: IntentionStatus;
+  owner?: string;
+  extras: Record<string, unknown>;
   created_at: string;
   updated_at: string;
   archived_at: string | null;

@@ -24,6 +24,9 @@ export interface Product {
   status: ProductStatus;
   context: ProductContext;
   wip_limits: WipLimits;
+  owner?: string;
+  version?: string;
+  extras: Record<string, unknown>;
   created_at: string;
   updated_at: string;
   archived_at: string | null;

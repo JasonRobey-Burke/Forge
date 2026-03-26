@@ -14,6 +14,10 @@ export interface Spec {
   validation_automated: string[];
   validation_human: string[];
   peer_reviewed: boolean;
+  owner?: string;
+  depends_on?: string[];
+  intentions?: string[];
+  extras: Record<string, unknown>;
   phase_changed_at: string;
   created_at: string;
   updated_at: string;

@@ -38,6 +38,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
+import AdditionalFields from '@/components/AdditionalFields';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
+import CollapsibleSection from '@/components/CollapsibleSection';
+import { useSpecReview } from '@/hooks/useReviews';
 
 export default function SpecDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -46,6 +50,7 @@ export default function SpecDetailPage() {
   const { data: product } = useProduct(spec?.product_id ?? '');
   const { data: siblings } = useSpecs(spec?.product_id ?? '');
   const { data: staleness } = useSpecStaleness(id!, spec?.phase ?? 'Draft');
+  const { data: review } = useSpecReview(id!);
   useDocumentTitle(spec?.title ?? 'Spec');
   const transitionSpec = useTransitionSpec();
 
@@ -139,6 +144,7 @@ export default function SpecDetailPage() {
               </h1>
               <PhaseBadge phase={spec.phase} />
               <Badge variant="outline">{spec.complexity}</Badge>
+              {spec.owner && <Badge variant="outline">{spec.owner}</Badge>}
             </div>
             {/* Phase transition controls inline under title */}
             <div className="flex flex-wrap items-center gap-2">
@@ -364,6 +370,38 @@ export default function SpecDetailPage() {
             </Card>
           )}
 
+          {spec.depends_on && spec.depends_on.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base">Depends On</CardTitle></CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {spec.depends_on.map((depId) => (
+                    <Link key={depId} to={`/specs/${depId}`}>
+                      <Badge variant="secondary" className="cursor-pointer hover:bg-muted">{depId}</Badge>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {spec.intentions && spec.intentions.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base">Intentions</CardTitle></CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {spec.intentions.map((intId) => (
+                    <Link key={intId} to={`/intentions/${intId}`}>
+                      <Badge variant="secondary" className="cursor-pointer hover:bg-muted">{intId}</Badge>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <AdditionalFields extras={spec.extras} />
+
           {linkedExpectations && linkedExpectations.length > 0 && (
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-base">Linked Expectations</CardTitle></CardHeader>
@@ -396,6 +434,16 @@ export default function SpecDetailPage() {
               command={`/idd-framework:review-spec ${spec.id}`}
             />
           </div>
+
+          {review && (
+            <CollapsibleSection title="Tech Review" defaultOpen={false}>
+              <Card>
+                <CardContent className="pt-4">
+                  <MarkdownRenderer content={review.content} />
+                </CardContent>
+              </Card>
+            </CollapsibleSection>
+          )}
 
           <p className="text-xs text-muted-foreground">
             {spec.peer_reviewed && <Badge variant="secondary" className="mr-2">Peer Reviewed</Badge>}

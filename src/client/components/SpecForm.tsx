@@ -147,6 +147,7 @@ function ChecklistSidebar({ defaultSpec, expectations }: ChecklistSidebarProps) 
     created_at: defaultSpec.created_at ?? '',
     updated_at: defaultSpec.updated_at ?? '',
     archived_at: defaultSpec.archived_at ?? null,
+    extras: defaultSpec.extras ?? {},
   };
 
   return <CompletenessChecklist spec={liveSpec} expectations={expectations} />;
