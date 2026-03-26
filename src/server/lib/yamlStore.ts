@@ -97,12 +97,46 @@ export class YamlStore {
     return [];
   }
 
+  /** Normalize edge_cases: handles string[], or array of objects with description/scenario fields */
+  private normalizeEdgeCases(value: unknown): string[] {
+    if (!value || !Array.isArray(value)) return [];
+    return value.map((item) => {
+      if (typeof item === 'string') return item;
+      if (typeof item === 'object' && item !== null) {
+        // Format: { description, scenario, expected_behavior }
+        const parts = [item.description, item.scenario, item.expected_behavior].filter(Boolean);
+        return parts.join(': ');
+      }
+      return String(item);
+    });
+  }
+
+  // ── Format detection ───────────────────────────────────────────────
+
+  /**
+   * Extract entity data from YAML that may use either:
+   *   - Wrapped format:  `product: { id: PROD-001, ... }`
+   *   - Flat format:     `id: PROD-001\nname: ...` (fields at root)
+   */
+  private extractEntity(raw: Record<string, any>, key: string, idPrefix: string): Record<string, any> | null {
+    // Wrapped format: top-level key is an object containing the entity fields
+    if (raw[key] && typeof raw[key] === 'object' && !Array.isArray(raw[key])) {
+      return raw[key] as Record<string, any>;
+    }
+    // Flat format: entity fields are at the root, identified by ID prefix
+    if (typeof raw.id === 'string' && raw.id.startsWith(idPrefix)) {
+      return raw;
+    }
+    return null;
+  }
+
   // ── Parsers (YAML → Forge types) ───────────────────────────────────
 
   parseProduct(filePath: string): void {
     const raw = this.readYaml(filePath);
-    if (!raw?.product) return;
-    const p = raw.product as Record<string, any>;
+    if (!raw) return;
+    const p = this.extractEntity(raw, 'product', 'PROD-');
+    if (!p) return;
 
     const techCtx = p.technical_context ?? p.context ?? {};
     const context: ProductContext = {
@@ -127,7 +161,7 @@ export class YamlStore {
       problem_statement: p.problem ?? p.problem_statement ?? '',
       vision: p.value_proposition ?? p.vision ?? '',
       target_audience: typeof p.audience === 'object'
-        ? (p.audience.primary ?? '')
+        ? (p.audience.primary ?? p.audience.primary_users?.description ?? '')
         : (p.target_audience ?? p.audience ?? ''),
       status: this.capitalizeFirst(p.status ?? 'Active') as Product['status'],
       context,
@@ -142,13 +176,14 @@ export class YamlStore {
 
   parseIntention(filePath: string): void {
     const raw = this.readYaml(filePath);
-    if (!raw?.intention) return;
-    const i = raw.intention as Record<string, any>;
+    if (!raw) return;
+    const i = this.extractEntity(raw, 'intention', 'INT-');
+    if (!i) return;
 
     const intention: Intention = {
       id: i.id,
       product_id: i.product_id ?? i.product ?? '',
-      title: i.title ?? i.statement?.trim().split('\n')[0] ?? '',
+      title: i.title ?? i.name ?? i.statement?.trim().split('\n')[0] ?? '',
       description: i.description ?? i.rationale ?? i.statement ?? '',
       priority: this.capitalizeFirst(i.priority ?? 'Medium') as Intention['priority'],
       status: this.capitalizeFirst(i.status ?? 'Draft') as Intention['status'],
@@ -163,16 +198,17 @@ export class YamlStore {
 
   parseExpectation(filePath: string): void {
     const raw = this.readYaml(filePath);
-    if (!raw?.expectation) return;
-    const e = raw.expectation as Record<string, any>;
+    if (!raw) return;
+    const e = this.extractEntity(raw, 'expectation', 'EXP-');
+    if (!e) return;
 
     const expectation: Expectation = {
       id: e.id,
       intention_id: e.intention_id ?? e.intention ?? '',
-      title: e.title ?? e.description?.trim().split('\n')[0]?.slice(0, 100) ?? '',
-      description: e.description ?? '',
+      title: e.title ?? e.name ?? e.description?.trim().split('\n')[0]?.slice(0, 100) ?? e.statement?.trim().split('\n')[0]?.slice(0, 100) ?? '',
+      description: e.description ?? e.statement ?? '',
       status: this.capitalizeFirst(e.status ?? 'Draft') as Expectation['status'],
-      edge_cases: e.edge_cases ?? [],
+      edge_cases: this.normalizeEdgeCases(e.edge_cases),
       created_at: e.created_at ?? new Date().toISOString(),
       updated_at: e.updated_at ?? new Date().toISOString(),
       archived_at: e.archived_at ?? null,
@@ -183,8 +219,9 @@ export class YamlStore {
 
   parseSpec(filePath: string): void {
     const raw = this.readYaml(filePath);
-    if (!raw?.spec) return;
-    const s = raw.spec as Record<string, any>;
+    if (!raw) return;
+    const s = this.extractEntity(raw, 'spec', 'SPEC-');
+    if (!s) return;
 
     const ctx = s.context ?? {};
     const context: ProductContext = {

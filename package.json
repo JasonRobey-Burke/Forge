@@ -1,6 +1,6 @@
 {
   "name": "@jasonrobey-burke/idd-forge",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Repo-local web UI for Intent-Driven Development artifacts",
   "type": "module",
   "bin": {
