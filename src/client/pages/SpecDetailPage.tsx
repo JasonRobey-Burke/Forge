@@ -42,6 +42,7 @@ import AdditionalFields from '@/components/AdditionalFields';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import { useSpecReview } from '@/hooks/useReviews';
+import YamlEditor from '@/components/YamlEditor';
 
 export default function SpecDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -56,6 +57,7 @@ export default function SpecDetailPage() {
 
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideReason, setOverrideReason] = useState('');
+  const [editingYaml, setEditingYaml] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
 
   if (isLoading) return <DetailPageSkeleton />;
@@ -213,6 +215,7 @@ export default function SpecDetailPage() {
             <Button asChild variant="ghost" size="sm">
               <Link to={`/specs/${spec.id}/edit`}>Edit</Link>
             </Button>
+            <Button variant="ghost" size="sm" onClick={() => setEditingYaml(true)}>Edit YAML</Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">Export</Button>
@@ -276,7 +279,13 @@ export default function SpecDetailPage() {
           </div>
         )}
 
-        <div className="space-y-3">
+        {editingYaml && (
+          <div className="mb-6">
+            <YamlEditor type="specs" id={id!} onClose={() => setEditingYaml(false)} />
+          </div>
+        )}
+
+        {!editingYaml && <div className="space-y-3">
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-base">Description</CardTitle></CardHeader>
             <CardContent><p className="text-sm">{spec.description}</p></CardContent>
@@ -450,7 +459,7 @@ export default function SpecDetailPage() {
             Created {new Date(spec.created_at).toLocaleDateString()} · Updated {new Date(spec.updated_at).toLocaleDateString()}
           </p>
 
-        </div>
+        </div>}
       </div>
 
       {/* Checklist sidebar */}

@@ -27,6 +27,7 @@ import StickyEditBar from '@/components/StickyEditBar';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import AdditionalFields from '@/components/AdditionalFields';
+import YamlEditor from '@/components/YamlEditor';
 import { Priority, IntentionStatus } from '@shared/types/enums';
 import { INTENTION_STATUS_LABELS, EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import type { Priority as PriorityType } from '@shared/types';
@@ -56,6 +57,7 @@ export default function IntentionDetailPage() {
   useDocumentTitle(intention?.title ?? 'Intention');
   const updateIntention = useUpdateIntention();
   const [editing, setEditing] = useState(false);
+  const [editingYaml, setEditingYaml] = useState(false);
   const actionBarRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<EditFormValues>({
@@ -204,12 +206,21 @@ export default function IntentionDetailPage() {
                 </Button>
               </>
             ) : (
-              <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
+              <>
+                <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
+                <Button variant="ghost" size="sm" onClick={() => setEditingYaml(true)}>Edit YAML</Button>
+              </>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {editingYaml && (
+          <div className="mb-6">
+            <YamlEditor type="intentions" id={id!} onClose={() => setEditingYaml(false)} />
+          </div>
+        )}
+
+        {!editingYaml && <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left column: Description */}
           <div className="space-y-4">
             <Card>
@@ -308,7 +319,7 @@ export default function IntentionDetailPage() {
             Created {formattedCreated} · Updated {formattedUpdated}
           </div>
 
-        </div>
+        </div>}
 
         <StickyEditBar
           editing={editing}

@@ -25,6 +25,7 @@ import IntentionProgress from '@/components/IntentionProgress';
 import CopyCommand from '@/components/CopyCommand';
 import NewBadge from '@/components/NewBadge';
 import AdditionalFields from '@/components/AdditionalFields';
+import YamlEditor from '@/components/YamlEditor';
 import { productToFormValues, productToApiValues } from '@/components/ProductForm';
 import { ProductStatus } from '@shared/types/enums';
 import type { CreateProductInput } from '@shared/types';
@@ -59,6 +60,7 @@ export default function ProductDetailPage() {
   useDocumentTitle(product?.name ?? 'Product');
   const updateProduct = useUpdateProduct();
   const [editing, setEditing] = useState(false);
+  const [editingYaml, setEditingYaml] = useState(false);
   const { data: intentions } = useIntentions(id!);
   const { data: specs } = useSpecs(id!);
   const intentionCount = intentions?.length ?? 0;
@@ -203,12 +205,21 @@ export default function ProductDetailPage() {
               </Button>
             </>
           ) : (
-            <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
+            <>
+              <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
+              <Button variant="ghost" size="sm" onClick={() => setEditingYaml(true)}>Edit YAML</Button>
+            </>
           )}
         </div>
 
+        {editingYaml && (
+          <div className="mb-6">
+            <YamlEditor type="products" id={id!} onClose={() => setEditingYaml(false)} />
+          </div>
+        )}
+
         {/* 2-column content grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {!editingYaml && <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left column — always visible, inline editable */}
           <div className="space-y-4">
             <div>
@@ -386,7 +397,7 @@ export default function ProductDetailPage() {
               Created {new Date(product.created_at).toLocaleDateString()} · Updated {new Date(product.updated_at).toLocaleDateString()}
             </p>
           </div>
-        </div>
+        </div>}
 
         <StickyEditBar
           editing={editing}

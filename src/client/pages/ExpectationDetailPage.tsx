@@ -25,6 +25,7 @@ import InlineStatusSelect from '@/components/InlineStatusSelect';
 import InlineField from '@/components/InlineField';
 import StickyEditBar from '@/components/StickyEditBar';
 import AdditionalFields from '@/components/AdditionalFields';
+import YamlEditor from '@/components/YamlEditor';
 
 const editSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255),
@@ -68,6 +69,7 @@ export default function ExpectationDetailPage() {
   useDocumentTitle(expectation?.title ?? 'Expectation');
   const updateExpectation = useUpdateExpectation();
   const [editing, setEditing] = useState(false);
+  const [editingYaml, setEditingYaml] = useState(false);
   const actionBarRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<EditFormValues>({
@@ -198,12 +200,21 @@ export default function ExpectationDetailPage() {
                 </Button>
               </>
             ) : (
-              <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
+              <>
+                <Button variant="ghost" size="sm" onClick={handleEdit}>Edit</Button>
+                <Button variant="ghost" size="sm" onClick={() => setEditingYaml(true)}>Edit YAML</Button>
+              </>
             )}
           </div>
         </div>
 
-        <div className="space-y-4">
+        {editingYaml && (
+          <div className="mb-6">
+            <YamlEditor type="expectations" id={id!} onClose={() => setEditingYaml(false)} />
+          </div>
+        )}
+
+        {!editingYaml && <div className="space-y-4">
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-base">Description</CardTitle></CardHeader>
             <CardContent>
@@ -251,7 +262,7 @@ export default function ExpectationDetailPage() {
           <p className="text-xs text-muted-foreground">
             Created {formattedCreated} · Updated {formattedUpdated}
           </p>
-        </div>
+        </div>}
 
         <StickyEditBar
           editing={editing}

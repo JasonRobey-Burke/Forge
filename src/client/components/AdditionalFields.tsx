@@ -4,8 +4,6 @@ import { Badge } from '@/components/ui/badge';
 
 interface AdditionalFieldsProps {
   extras: Record<string, unknown>;
-  title?: string;
-  defaultOpen?: boolean;
 }
 
 function formatKey(key: string): string {
@@ -38,7 +36,7 @@ function renderValue(key: string, value: unknown): React.ReactNode {
   if (typeof value === 'boolean') {
     return (
       <div key={key} className="space-y-1">
-        <p className="text-sm text-muted-foreground">{formatKey(key)}</p>
+        <p className="text-sm font-medium text-muted-foreground">{formatKey(key)}</p>
         <div className="text-sm">
           {value ? (
             <Check className="h-4 w-4 text-green-500 inline" />
@@ -53,7 +51,7 @@ function renderValue(key: string, value: unknown): React.ReactNode {
   if (typeof value === 'string') {
     return (
       <div key={key} className="space-y-1">
-        <p className="text-sm text-muted-foreground">{formatKey(key)}</p>
+        <p className="text-sm font-medium text-muted-foreground">{formatKey(key)}</p>
         <p className="text-sm whitespace-pre-wrap">{value}</p>
       </div>
     );
@@ -62,7 +60,7 @@ function renderValue(key: string, value: unknown): React.ReactNode {
   if (typeof value === 'number') {
     return (
       <div key={key} className="space-y-1">
-        <p className="text-sm text-muted-foreground">{formatKey(key)}</p>
+        <p className="text-sm font-medium text-muted-foreground">{formatKey(key)}</p>
         <p className="text-sm">{String(value)}</p>
       </div>
     );
@@ -73,7 +71,7 @@ function renderValue(key: string, value: unknown): React.ReactNode {
     if (allShort) {
       return (
         <div key={key} className="space-y-1">
-          <p className="text-sm text-muted-foreground">{formatKey(key)}</p>
+          <p className="text-sm font-medium text-muted-foreground">{formatKey(key)}</p>
           <div className="flex flex-wrap gap-1">
             {value.map((item, i) => (
               <Badge key={i} variant="secondary">
@@ -86,7 +84,7 @@ function renderValue(key: string, value: unknown): React.ReactNode {
     }
     return (
       <div key={key} className="space-y-1">
-        <p className="text-sm text-muted-foreground">{formatKey(key)}</p>
+        <p className="text-sm font-medium text-muted-foreground">{formatKey(key)}</p>
         <ul className="list-disc pl-5 text-sm space-y-1">
           {value.map((item, i) => (
             <li key={i}>{item}</li>
@@ -99,7 +97,7 @@ function renderValue(key: string, value: unknown): React.ReactNode {
   if (isObjectArray(value)) {
     return (
       <div key={key} className="space-y-1">
-        <p className="text-sm text-muted-foreground">{formatKey(key)}</p>
+        <p className="text-sm font-medium text-muted-foreground">{formatKey(key)}</p>
         <div className="space-y-2">
           {value.map((obj, i) => (
             <div key={i} className="rounded-lg border p-3 bg-muted/30">
@@ -118,7 +116,7 @@ function renderValue(key: string, value: unknown): React.ReactNode {
 
   if (isRecord(value)) {
     return (
-      <CollapsibleSection key={key} title={formatKey(key)} defaultOpen={false}>
+      <CollapsibleSection key={key} title={formatKey(key)} defaultOpen={true}>
         <div className="space-y-3">
           {Object.entries(value).map(([k, v]) => {
             if (v === null || v === undefined) return null;
@@ -132,7 +130,7 @@ function renderValue(key: string, value: unknown): React.ReactNode {
   if (Array.isArray(value)) {
     return (
       <div key={key} className="space-y-1">
-        <p className="text-sm text-muted-foreground">{formatKey(key)}</p>
+        <p className="text-sm font-medium text-muted-foreground">{formatKey(key)}</p>
         <pre className="text-sm whitespace-pre-wrap">{JSON.stringify(value, null, 2)}</pre>
       </div>
     );
@@ -141,23 +139,17 @@ function renderValue(key: string, value: unknown): React.ReactNode {
   return null;
 }
 
-export default function AdditionalFields({
-  extras,
-  title = 'Additional Details',
-  defaultOpen = false,
-}: AdditionalFieldsProps) {
-  if (Object.keys(extras).length === 0) {
-    return null;
-  }
+export default function AdditionalFields({ extras }: AdditionalFieldsProps) {
+  const keys = Object.keys(extras);
+  if (keys.length === 0) return null;
 
   return (
-    <CollapsibleSection title={title} defaultOpen={defaultOpen}>
-      <div className="space-y-3">
-        {Object.entries(extras).map(([key, value]) => {
-          if (value === null || value === undefined) return null;
-          return renderValue(key, value);
-        })}
-      </div>
-    </CollapsibleSection>
+    <div className="space-y-4">
+      {keys.map((key) => {
+        const value = extras[key];
+        if (value === null || value === undefined) return null;
+        return renderValue(key, value);
+      })}
+    </div>
   );
 }

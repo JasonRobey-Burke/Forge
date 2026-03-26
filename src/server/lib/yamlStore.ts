@@ -72,6 +72,37 @@ export class YamlStore {
     };
   }
 
+  // ── Raw YAML access (for full-file editing) ────────────────────────
+
+  private getEntryByTypeAndId(type: string, id: string): YamlEntry<unknown> | null {
+    switch (type) {
+      case 'products': return this.products.get(id) ?? null;
+      case 'intentions': return this.intentions.get(id) ?? null;
+      case 'expectations': return this.expectations.get(id) ?? null;
+      case 'specs': return this.specs.get(id) ?? null;
+      default: return null;
+    }
+  }
+
+  getRawFileContent(type: string, id: string): string | null {
+    const entry = this.getEntryByTypeAndId(type, id);
+    if (!entry) return null;
+    try {
+      return fs.readFileSync(entry.filePath, 'utf-8');
+    } catch {
+      return null;
+    }
+  }
+
+  saveRawFileContent(type: string, id: string, content: string): boolean {
+    const entry = this.getEntryByTypeAndId(type, id);
+    if (!entry) return false;
+    fs.writeFileSync(entry.filePath, content, 'utf-8');
+    // Re-parse the file so in-memory state stays in sync
+    this.reloadFile(entry.filePath);
+    return true;
+  }
+
   // ── Helpers ─────────────────────────────────────────────────────────
 
   /** Capitalize first letter to match Forge enum values (e.g. "critical" → "Critical") */

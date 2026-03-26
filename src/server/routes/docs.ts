@@ -1,9 +1,62 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
+import { getStore } from '../lib/yamlStore.js';
+
+const VALID_TYPES = ['products', 'intentions', 'expectations', 'specs'];
 
 export default function docsRouter(docsDir: string): Router {
   const router = Router();
+
+  // GET /api/docs/raw/:type/:id — return raw YAML file content
+  router.get('/raw/:type/:id', async (req, res) => {
+    const { type, id } = req.params;
+    if (!VALID_TYPES.includes(type)) {
+      return res.status(400).json({
+        data: null,
+        error: { message: `Invalid type: ${type}`, code: 'INVALID_TYPE' },
+        meta: null,
+      });
+    }
+    const content = getStore().getRawFileContent(type, id);
+    if (content === null) {
+      return res.status(404).json({
+        data: null,
+        error: { message: 'Not found', code: 'NOT_FOUND' },
+        meta: null,
+      });
+    }
+    res.json({ data: { id, type, content }, error: null, meta: null });
+  });
+
+  // PUT /api/docs/raw/:type/:id — save raw YAML file content
+  router.put('/raw/:type/:id', async (req, res) => {
+    const { type, id } = req.params;
+    const { content } = req.body;
+    if (!VALID_TYPES.includes(type)) {
+      return res.status(400).json({
+        data: null,
+        error: { message: `Invalid type: ${type}`, code: 'INVALID_TYPE' },
+        meta: null,
+      });
+    }
+    if (typeof content !== 'string') {
+      return res.status(400).json({
+        data: null,
+        error: { message: 'content must be a string', code: 'INVALID_BODY' },
+        meta: null,
+      });
+    }
+    const saved = getStore().saveRawFileContent(type, id, content);
+    if (!saved) {
+      return res.status(404).json({
+        data: null,
+        error: { message: 'Not found', code: 'NOT_FOUND' },
+        meta: null,
+      });
+    }
+    res.json({ data: { id, type, saved: true }, error: null, meta: null });
+  });
 
   // GET /api/docs/plans — list plan markdown files
   router.get('/plans', async (_req, res) => {
