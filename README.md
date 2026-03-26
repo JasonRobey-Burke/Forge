@@ -5,7 +5,8 @@ Repo-local web UI for [Intent-Driven Development](https://github.com/JasonRobey-
 ## Quick Start
 
 ```bash
-npx @jasonrobey-burke/idd-forge
+npm install -D @jasonrobey-burke/idd-forge --legacy-peer-deps
+npx idd-forge
 ```
 
 Forge scans `docs/` for YAML artifacts (Products, Intentions, Expectations, Specs) and serves a local web UI at `http://localhost:4000`.
@@ -27,13 +28,16 @@ Create a `.npmrc` file in the root of the repo where you want to use Forge:
 
 Replace `YOUR_GITHUB_TOKEN` with the token from Step 1. Add `.npmrc` to your `.gitignore` to avoid committing the token.
 
-### Step 3: Run Forge
+### Step 3: Install and Run Forge
 
 ```bash
-npx @jasonrobey-burke/idd-forge
+npm install -D @jasonrobey-burke/idd-forge --legacy-peer-deps
+npx idd-forge
 ```
 
-That's it. Forge will scan `docs/` for IDD artifacts and open a browser to `http://localhost:4000`.
+The first command installs Forge as a dev dependency. The `--legacy-peer-deps` flag avoids conflicts with your project's existing dependencies. After that, `npx idd-forge` starts the server and opens a browser to `http://localhost:4000`.
+
+> **Why not `npx @jasonrobey-burke/idd-forge` directly?** There's a known issue with npx on Windows that prevents scoped packages from creating command shims. Installing locally first works reliably on all platforms.
 
 ### Alternative: Azure DevOps Artifacts
 
@@ -41,13 +45,14 @@ If your team uses Azure DevOps, configure `.npmrc` with your feed instead:
 
 ```ini
 @jasonrobey-burke:registry=https://pkgs.dev.azure.com/YOUR_ORG/_packaging/YOUR_FEED/npm/registry/
+//pkgs.dev.azure.com/YOUR_ORG/_packaging/YOUR_FEED/npm/:_authToken=YOUR_TOKEN
 ```
 
-### Alternative: Global Install
+Then:
 
 ```bash
-npm install -g @jasonrobey-burke/idd-forge
-idd-forge
+npm install -D @jasonrobey-burke/idd-forge --legacy-peer-deps
+npx idd-forge
 ```
 
 ## CLI Options
