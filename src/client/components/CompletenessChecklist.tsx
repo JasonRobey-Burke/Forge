@@ -23,7 +23,15 @@ export default function CompletenessChecklist({ spec, expectations, result: prec
             {result.passed}/{result.total}
           </Badge>
         </div>
-        <div className="bg-muted rounded-full h-2 mt-2">
+        <div
+          className="bg-muted rounded-full h-2 mt-2"
+          role="progressbar"
+          aria-label="Checklist completion"
+          aria-valuemin={0}
+          aria-valuemax={result.total}
+          aria-valuenow={result.passed}
+          aria-valuetext={`${result.passed} of ${result.total} checklist items complete`}
+        >
           <div
             className="bg-primary rounded-full h-2 transition-all"
             style={{ width: `${passRate}%` }}
@@ -47,9 +55,9 @@ export default function CompletenessChecklist({ spec, expectations, result: prec
 
         <div className="pt-2 border-t mt-3">
           {result.ready ? (
-            <p className="text-sm text-green-600 font-medium">Ready for transition</p>
+            <p className="text-sm text-green-600 font-medium" aria-live="polite">Ready for transition</p>
           ) : (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground" aria-live="polite">
               {result.total - result.passed} item{result.total - result.passed !== 1 ? 's' : ''} remaining
             </p>
           )}

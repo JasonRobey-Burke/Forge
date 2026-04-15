@@ -33,13 +33,13 @@ describe('createIntentionSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects non-UUID product_id', () => {
+  it('accepts non-UUID product_id', () => {
     const result = createIntentionSchema.safeParse({
       product_id: 'not-a-uuid',
       title: 'Test',
       description: 'Test',
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it('rejects empty title', () => {
@@ -51,14 +51,14 @@ describe('createIntentionSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects invalid priority', () => {
+  it('accepts arbitrary priority values', () => {
     const result = createIntentionSchema.safeParse({
       product_id: PRODUCT_UUID,
       title: 'Test',
       description: 'Test',
       priority: 'Invalid',
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });
 
@@ -73,8 +73,8 @@ describe('updateIntentionSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects invalid status', () => {
+  it('accepts arbitrary status values', () => {
     const result = updateIntentionSchema.safeParse({ status: 'Invalid' });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });

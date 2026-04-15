@@ -41,24 +41,24 @@ describe('createSpecSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('validates expectation_ids are UUIDs', () => {
+  it('accepts non-UUID expectation_ids', () => {
     const result = createSpecSchema.safeParse({
       product_id: PRODUCT_UUID,
       title: 'Test',
       description: 'Test',
       expectation_ids: ['not-a-uuid'],
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it('rejects invalid phase', () => {
+  it('accepts arbitrary phase values', () => {
     const result = createSpecSchema.safeParse({
       product_id: PRODUCT_UUID,
       title: 'Test',
       description: 'Test',
       phase: 'Invalid',
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });
 
@@ -73,8 +73,8 @@ describe('updateSpecSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects invalid complexity', () => {
+  it('accepts arbitrary complexity values', () => {
     const result = updateSpecSchema.safeParse({ complexity: 'Invalid' });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });

@@ -8,8 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import NewBadge from '@/components/NewBadge';
+import EmptyState from '@/components/EmptyState';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
+import { ClipboardCheck } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -75,9 +77,13 @@ export default function ExpectationListPage() {
       />
 
       {!expectations || expectations.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground">No expectations found. Add YAML files to the docs/expectations/ directory.</p>
-        </div>
+        <EmptyState
+          icon={<ClipboardCheck className="h-5 w-5" />}
+          title="No expectations found"
+          description="Add YAML files to docs/expectations/ to capture testable outcomes and edge cases."
+          actionLabel="Refresh"
+          onAction={() => window.location.reload()}
+        />
       ) : (
         <Table>
           <TableHeader>

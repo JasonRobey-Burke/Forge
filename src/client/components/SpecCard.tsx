@@ -1,7 +1,13 @@
 import { useDraggable } from '@dnd-kit/core';
-import { GripVertical, AlertTriangle } from 'lucide-react';
+import { GripVertical, AlertTriangle, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { PHASE_COLORS, PHASE_LABELS } from '@/lib/phaseColors';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { Spec } from '@shared/types';
 
 export function daysInPhase(phaseChangedAt: string): number {
@@ -20,9 +26,12 @@ interface SpecCardProps {
   spec: Spec;
   onClick?: () => void;
   stale?: boolean;
+  onMoveToPhase?: (spec: Spec, phase: string) => void;
 }
 
-export default function SpecCard({ spec, onClick, stale }: SpecCardProps) {
+const PHASES = ['Draft', 'Ready', 'InProgress', 'Review', 'Validating', 'Done'] as const;
+
+export default function SpecCard({ spec, onClick, stale, onMoveToPhase }: SpecCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: spec.id,
     data: { spec },
@@ -62,6 +71,33 @@ export default function SpecCard({ spec, onClick, stale }: SpecCardProps) {
             <span className="text-muted-foreground">{days}d</span>
           </div>
         </div>
+        {onMoveToPhase && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="shrink-0 mt-0.5 rounded p-1 text-muted-foreground hover:text-foreground hover:bg-muted"
+                aria-label={`Move ${spec.title} to another phase`}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {PHASES.filter((phase) => phase !== spec.phase).map((phase) => (
+                <DropdownMenuItem
+                  key={phase}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onMoveToPhase(spec, phase);
+                  }}
+                >
+                  Move to {PHASE_LABELS[phase] ?? phase}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </div>
   );

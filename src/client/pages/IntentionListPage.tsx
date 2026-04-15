@@ -8,9 +8,10 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 import type { Intention } from '@shared/types';
 import type { Priority } from '@shared/types';
 import { INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
+import EmptyState from '@/components/EmptyState';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Compass } from 'lucide-react';
 import NewBadge from '@/components/NewBadge';
 import {
   Table,
@@ -124,9 +125,13 @@ export default function IntentionListPage() {
       />
 
       {!intentions || intentions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground">No intentions found. Add YAML files to the docs/intentions/ directory.</p>
-        </div>
+        <EmptyState
+          icon={<Compass className="h-5 w-5" />}
+          title="No intentions found"
+          description="Add YAML files to docs/intentions/ to define what this product should accomplish."
+          actionLabel="Refresh"
+          onAction={() => window.location.reload()}
+        />
       ) : (
         <Table>
           <TableHeader>

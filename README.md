@@ -72,3 +72,7 @@ Changes to YAML files are detected in real time — edit files with the IDD Clau
 ## Requirements
 
 - Node.js 20 or later
+
+## Project Status
+
+- Current implementation review and remaining-work breakdown: `docs/implementation-status.md`

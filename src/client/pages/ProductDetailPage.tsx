@@ -8,13 +8,14 @@ import { useProduct, useUpdateProduct } from '@/hooks/useProducts';
 import { useIntentions } from '@/hooks/useIntentions';
 import { useSpecs } from '@/hooks/useSpecs';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useSessionState } from '@/hooks/useSessionState';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { FormField, FormItem, FormControl, FormMessage } from '@/components/ui/form';
-import { PRODUCT_STATUS_LABELS, INTENTION_STATUS_LABELS } from '@/lib/phaseColors';
+import { PRODUCT_STATUS_LABELS, INTENTION_STATUS_LABELS, PHASE_LABELS } from '@/lib/phaseColors';
 import InlineStatusSelect from '@/components/InlineStatusSelect';
 import InlineField from '@/components/InlineField';
 import StickyEditBar from '@/components/StickyEditBar';
@@ -26,9 +27,12 @@ import CopyCommand from '@/components/CopyCommand';
 import NewBadge from '@/components/NewBadge';
 import AdditionalFields from '@/components/AdditionalFields';
 import YamlEditor from '@/components/YamlEditor';
+import CollapsibleSection from '@/components/CollapsibleSection';
+import TermHint from '@/components/TermHint';
 import { productToFormValues, productToApiValues } from '@/components/ProductForm';
 import { ProductStatus } from '@shared/types/enums';
 import type { CreateProductInput } from '@shared/types';
+import { X } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),
@@ -65,6 +69,24 @@ export default function ProductDetailPage() {
   const { data: specs } = useSpecs(id!);
   const intentionCount = intentions?.length ?? 0;
   const specCount = specs?.length ?? 0;
+  const phaseCounts = {
+    Draft: (specs ?? []).filter((s) => s.phase === 'Draft').length,
+    Ready: (specs ?? []).filter((s) => s.phase === 'Ready').length,
+    InProgress: (specs ?? []).filter((s) => s.phase === 'InProgress').length,
+    Review: (specs ?? []).filter((s) => s.phase === 'Review').length,
+    Validating: (specs ?? []).filter((s) => s.phase === 'Validating').length,
+    Done: (specs ?? []).filter((s) => s.phase === 'Done').length,
+  };
+  const bottlenecks = [
+    { phase: 'Ready', count: phaseCounts.Ready, limit: product?.wip_limits.ready ?? 0 },
+    { phase: 'InProgress', count: phaseCounts.InProgress, limit: product?.wip_limits.in_progress ?? 0 },
+    { phase: 'Review', count: phaseCounts.Review, limit: product?.wip_limits.review ?? 0 },
+    { phase: 'Validating', count: phaseCounts.Validating, limit: product?.wip_limits.validating ?? 0 },
+  ].filter((item) => item.limit > 0 && item.count >= item.limit);
+  const sectionStatePrefix = `forge:product:${id ?? 'unknown'}:detail`;
+  const [contextOpen, setContextOpen] = useSessionState(`${sectionStatePrefix}:contextOpen`, true);
+  const [wipOpen, setWipOpen] = useSessionState(`${sectionStatePrefix}:wipOpen`, true);
+  const [showGettingStarted, setShowGettingStarted] = useSessionState('forge:getting-started:dismissed', true);
 
   const actionBarRef = useRef<HTMLDivElement>(null);
 
@@ -114,6 +136,27 @@ export default function ProductDetailPage() {
         { label: 'Products', href: '/products' },
         { label: product.name },
       ]} />
+
+      {showGettingStarted && intentionCount === 0 && specCount === 0 && (
+        <Card className="mb-4 border-blue-200 bg-blue-50/50">
+          <CardHeader className="pb-2">
+            <div className="flex items-start justify-between gap-2">
+              <CardTitle className="text-base">Getting Started with IDD</CardTitle>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowGettingStarted(false)} aria-label="Dismiss getting started guide">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>Start with Intentions (user outcomes), then define Expectations (testable checks), then author Specs (implementation artifacts).</p>
+            <div className="grid gap-1 text-xs sm:grid-cols-3">
+              <TermHint term="Intention" description="A user or team outcome the product should enable." />
+              <TermHint term="Expectation" description="A measurable, testable outcome with edge cases." />
+              <TermHint term="Spec" description="An AI-ready implementation document linked to expectations." />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <FormProvider {...form}>
         {/* Hero */}
@@ -170,6 +213,11 @@ export default function ProductDetailPage() {
           ) : (
             <p className="text-muted-foreground">{product.problem_statement}</p>
           )}
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <TermHint term="Intention" description="Outcome-oriented goal that can depend on other intentions." />
+            <TermHint term="Expectation" description="Testable behavior under an intention, including edge cases." />
+            <TermHint term="Spec" description="Structured implementation plan used by AI coding agents." />
+          </div>
         </div>
 
         {/* Action bar */}
@@ -254,59 +302,89 @@ export default function ProductDetailPage() {
               </InlineField>
             </div>
 
-            <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-base">Context</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                {editing ? (
-                  <ContextEditor />
-                ) : (
-                  <>
-                    {product.context.stack.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium mb-1">Stack</p>
-                        <div className="flex flex-wrap gap-1">
-                          {product.context.stack.map((item, i) => (
-                            <Badge key={i} variant="secondary">{item}</Badge>
-                          ))}
+            <CollapsibleSection title="Context" open={contextOpen} onOpenChange={setContextOpen}>
+              <Card className="border-0 shadow-none">
+                <CardContent className="space-y-3 px-0">
+                  {editing ? (
+                    <ContextEditor />
+                  ) : (
+                    <>
+                      {product.context.stack.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium mb-1">Stack</p>
+                          <div className="flex flex-wrap gap-1">
+                            {product.context.stack.map((item, i) => (
+                              <Badge key={i} variant="secondary">{item}</Badge>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {product.context.patterns.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium mb-1">Patterns</p>
-                        <div className="flex flex-wrap gap-1">
-                          {product.context.patterns.map((item, i) => (
-                            <Badge key={i} variant="secondary">{item}</Badge>
-                          ))}
+                      )}
+                      {product.context.patterns.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium mb-1">Patterns</p>
+                          <div className="flex flex-wrap gap-1">
+                            {product.context.patterns.map((item, i) => (
+                              <Badge key={i} variant="secondary">{item}</Badge>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {product.context.conventions.length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium mb-1">Conventions</p>
-                        <div className="flex flex-wrap gap-1">
-                          {product.context.conventions.map((item, i) => (
-                            <Badge key={i} variant="secondary">{item}</Badge>
-                          ))}
+                      )}
+                      {product.context.conventions.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium mb-1">Conventions</p>
+                          <div className="flex flex-wrap gap-1">
+                            {product.context.conventions.map((item, i) => (
+                              <Badge key={i} variant="secondary">{item}</Badge>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                    {product.context.auth && (
-                      <div>
-                        <p className="text-sm font-medium mb-1">Auth</p>
-                        <p className="text-sm text-muted-foreground">{product.context.auth}</p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                      )}
+                      {product.context.auth && (
+                        <div>
+                          <p className="text-sm font-medium mb-1">Auth</p>
+                          <p className="text-sm text-muted-foreground">{product.context.auth}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </CollapsibleSection>
 
             {!editing && <AdditionalFields extras={product.extras} />}
           </div>
 
           {/* Right column — always visible */}
           <div className="space-y-4">
+            <Card>
+              <CardHeader className="pb-2"><CardTitle className="text-base">Flow Metrics</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(phaseCounts).map(([phase, count]) => (
+                    <div key={phase} className="rounded-md border bg-background px-2 py-1.5">
+                      <p className="text-xs text-muted-foreground">{PHASE_LABELS[phase] ?? phase}</p>
+                      <p className="text-lg font-semibold">{count}</p>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Bottlenecks</p>
+                  {bottlenecks.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No phases currently at WIP limit.</p>
+                  ) : (
+                    <ul className="mt-1 space-y-1">
+                      {bottlenecks.map((item) => (
+                        <li key={item.phase} className="text-xs">
+                          <Badge variant="destructive" className="mr-1">{PHASE_LABELS[item.phase] ?? item.phase}</Badge>
+                          {item.count}/{item.limit}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader className="pb-2"><CardTitle className="text-base">Intention Progress</CardTitle></CardHeader>
               <CardContent>
@@ -367,31 +445,32 @@ export default function ProductDetailPage() {
               </Card>
             )}
 
-            <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-base">WIP Limits</CardTitle></CardHeader>
-              <CardContent>
-                <InlineField editing={editing}>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-                    {(['draft', 'ready', 'in_progress', 'review', 'validating'] as const).map((key) => (
-                      <div key={key} className="text-center p-2 rounded-md bg-muted">
-                        <p className="text-xs text-muted-foreground capitalize">{key.replace('_', ' ')}</p>
-                        {editing ? (
-                          <FormField control={form.control} name={`wip_limits.${key}`} render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input type="number" min={0} {...field} className="text-lg font-semibold text-center border-0 shadow-none bg-transparent p-0 h-auto focus-visible:ring-0" />
-                              </FormControl>
-                            </FormItem>
-                          )} />
-                        ) : (
-                          <p className="text-lg font-semibold">{product.wip_limits[key]}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </InlineField>
-              </CardContent>
-            </Card>
+            <CollapsibleSection title="WIP Limits" open={wipOpen} onOpenChange={setWipOpen}>
+              <Card className="border-0 shadow-none">
+                <CardContent className="px-0">
+                  <InlineField editing={editing}>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                      {(['draft', 'ready', 'in_progress', 'review', 'validating'] as const).map((key) => (
+                        <div key={key} className="text-center p-2 rounded-md bg-muted">
+                          <p className="text-xs text-muted-foreground capitalize">{key.replace('_', ' ')}</p>
+                          {editing ? (
+                            <FormField control={form.control} name={`wip_limits.${key}`} render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <Input type="number" min={0} {...field} className="text-lg font-semibold text-center border-0 shadow-none bg-transparent p-0 h-auto focus-visible:ring-0" />
+                                </FormControl>
+                              </FormItem>
+                            )} />
+                          ) : (
+                            <p className="text-lg font-semibold">{product.wip_limits[key]}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </InlineField>
+                </CardContent>
+              </Card>
+            </CollapsibleSection>
 
             <p className="text-xs text-muted-foreground">
               Created {new Date(product.created_at).toLocaleDateString()} · Updated {new Date(product.updated_at).toLocaleDateString()}

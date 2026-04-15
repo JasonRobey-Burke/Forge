@@ -1,11 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProducts } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useSessionState } from '@/hooks/useSessionState';
 import { StatusBadge } from '@/lib/phaseColors';
 import NewBadge from '@/components/NewBadge';
+import EmptyState from '@/components/EmptyState';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
+import { FolderOpen } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -19,8 +22,8 @@ export default function ProductListPage() {
   useDocumentTitle('Products');
   const navigate = useNavigate();
   const { data: products, isLoading, error } = useProducts();
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('__all__');
+  const [search, setSearch] = useSessionState('forge:products:search', '');
+  const [statusFilter, setStatusFilter] = useSessionState('forge:products:statusFilter', '__all__');
 
   const filtered = useMemo(() => {
     let items = products ?? [];
@@ -63,9 +66,13 @@ export default function ProductListPage() {
       />
 
       {!products || products.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground">No products found. Add YAML files to the docs/products/ directory.</p>
-        </div>
+        <EmptyState
+          icon={<FolderOpen className="h-5 w-5" />}
+          title="No products found"
+          description="Add YAML files to docs/products/. Forge will auto-detect them."
+          actionLabel="Refresh"
+          onAction={() => window.location.reload()}
+        />
       ) : (
         <Table>
           <TableHeader>

@@ -16,7 +16,7 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:4000',
         changeOrigin: true,
         // Disable buffering for SSE (Server-Sent Events) on /api/events
         configure: (proxy) => {

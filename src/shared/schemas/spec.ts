@@ -20,6 +20,7 @@ export const updateSpecSchema = z.object({
   description: z.string().min(1).optional(),
   phase: z.string().optional(),
   complexity: z.string().optional(),
+  owner: z.string().optional(),
   context: productContextSchema.optional(),
   boundaries: z.array(z.string()).optional(),
   deliverables: z.array(z.string()).optional(),

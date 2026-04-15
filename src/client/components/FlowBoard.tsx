@@ -11,9 +11,13 @@ import {
 } from '@dnd-kit/core';
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { PHASE_LABELS } from '@/lib/phaseColors';
+import { PhaseBadge } from '@/lib/phaseColors';
 import { useTransitionSpec } from '@/hooks/usePhaseTransition';
 import { useStaleSpecIds } from '@/hooks/useStaleness';
 import { checkWipLimit } from '@shared/lib/wipCheck';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PhaseColumn from '@/components/PhaseColumn';
 import SpecCard from '@/components/SpecCard';
 import WipOverrideDialog from '@/components/WipOverrideDialog';
@@ -60,6 +64,8 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
   const [wipDialogOpen, setWipDialogOpen] = useState(false);
   const [gateDialogOpen, setGateDialogOpen] = useState(false);
   const [gateName, setGateName] = useState('');
+  const [liveAnnouncement, setLiveAnnouncement] = useState('');
+  const [previewSpec, setPreviewSpec] = useState<Spec | null>(null);
 
   const specsByPhase = Object.fromEntries(
     PHASES.map((phase) => [phase, specs.filter((s) => s.phase === phase)])
@@ -70,7 +76,9 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
       { specId: spec.id, toPhase, overrideReason },
       {
         onSuccess: () => {
-          toast.success(`Moved to ${PHASE_LABELS[toPhase] ?? toPhase}`);
+          const message = `Moved to ${PHASE_LABELS[toPhase] ?? toPhase}`;
+          toast.success(message);
+          setLiveAnnouncement(`${spec.title} ${message.toLowerCase()}`);
         },
         onError: (error: Error) => {
           const apiError = error as ApiError;
@@ -81,9 +89,13 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
             setPendingMove({ spec, toPhase });
             setGateName(apiError.code);
             setGateDialogOpen(true);
+            setLiveAnnouncement(`Cannot move ${spec.title} to ${PHASE_LABELS[toPhase] ?? toPhase} until gate requirements are satisfied`);
           } else if (apiError.code === 'WIP_LIMIT_EXCEEDED') {
             setPendingMove({ spec, toPhase });
             setWipDialogOpen(true);
+            setLiveAnnouncement(`Cannot move ${spec.title}. WIP limit reached for ${PHASE_LABELS[toPhase] ?? toPhase}`);
+          } else {
+            setLiveAnnouncement(`Transition failed for ${spec.title}`);
           }
         },
       }
@@ -109,6 +121,22 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
     if (!wipResult.allowed) {
       setPendingMove({ spec, toPhase });
       setWipDialogOpen(true);
+      setLiveAnnouncement(`Cannot move ${spec.title}. WIP limit reached for ${PHASE_LABELS[toPhase] ?? toPhase}`);
+      return;
+    }
+
+    doTransition(spec, toPhase);
+  }
+
+  function handleMoveToPhase(spec: Spec, toPhase: string) {
+    if (spec.phase === toPhase) return;
+
+    const targetCount = specsByPhase[toPhase]?.length ?? 0;
+    const wipResult = checkWipLimit(toPhase, targetCount, wipLimits);
+    if (!wipResult.allowed) {
+      setPendingMove({ spec, toPhase });
+      setWipDialogOpen(true);
+      setLiveAnnouncement(`Cannot move ${spec.title}. WIP limit reached for ${PHASE_LABELS[toPhase] ?? toPhase}`);
       return;
     }
 
@@ -144,18 +172,89 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
           },
         }}
       >
-        <div className="grid grid-cols-6 gap-3">
+        <div className="hidden md:block overflow-x-auto pb-2">
+          <div className="grid min-w-[1200px] grid-cols-6 gap-3 xl:min-w-0">
+            {PHASES.map((phase) => (
+              <PhaseColumn
+                key={phase}
+                phase={phase}
+                specs={specsByPhase[phase] ?? []}
+                limit={getWipLimit(phase, wipLimits)}
+                onCardClick={(id) => {
+                  const selected = specs.find((s) => s.id === id) ?? null;
+                  setPreviewSpec(selected);
+                }}
+                staleSpecIds={staleSet}
+                onMoveToPhase={handleMoveToPhase}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-4 md:hidden">
           {PHASES.map((phase) => (
-            <PhaseColumn
-              key={phase}
-              phase={phase}
-              specs={specsByPhase[phase] ?? []}
-              limit={getWipLimit(phase, wipLimits)}
-              onCardClick={(id) => navigate(`/specs/${id}`)}
-              staleSpecIds={staleSet}
-            />
+            <section key={phase} className="rounded-lg border bg-muted/30">
+              <div className="flex items-center justify-between border-b px-3 py-2">
+                <span className="text-sm font-medium">{PHASE_LABELS[phase] ?? phase}</span>
+                <Badge variant="secondary" className="text-xs">
+                  {specsByPhase[phase]?.length ?? 0}
+                </Badge>
+              </div>
+              <div className="space-y-2 p-2">
+                {(specsByPhase[phase] ?? []).length === 0 ? (
+                  <p className="py-3 text-center text-xs text-muted-foreground">No specs in this phase</p>
+                ) : (
+                  (specsByPhase[phase] ?? []).map((spec) => (
+                    <SpecCard
+                      key={spec.id}
+                      spec={spec}
+                      onClick={() => setPreviewSpec(spec)}
+                      stale={staleSet.has(spec.id)}
+                      onMoveToPhase={handleMoveToPhase}
+                    />
+                  ))
+                )}
+              </div>
+            </section>
           ))}
         </div>
+
+        <p className="sr-only" aria-live="polite">{liveAnnouncement}</p>
+
+        {previewSpec && (
+          <div className="fixed inset-0 z-40">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setPreviewSpec(null)} />
+            <aside className="absolute right-0 top-0 h-full w-full max-w-md overflow-y-auto border-l bg-background p-4 shadow-lg">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Spec Preview</h2>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setPreviewSpec(null)}>
+                  Close
+                </Button>
+              </div>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">
+                    <span className="mr-1.5 font-mono text-xs text-muted-foreground">{previewSpec.id}</span>
+                    {previewSpec.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <PhaseBadge phase={previewSpec.phase} />
+                    <Badge variant="outline">{previewSpec.complexity}</Badge>
+                    {previewSpec.owner && <Badge variant="outline">{previewSpec.owner}</Badge>}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{previewSpec.description}</p>
+                  <Button type="button" onClick={() => navigate(`/specs/${previewSpec.id}`)}>
+                    Open Full Spec
+                  </Button>
+                </CardContent>
+              </Card>
+            </aside>
+          </div>
+        )}
+
         <DragOverlay>
           {activeSpec ? (
             <div className="opacity-80 w-[200px]">

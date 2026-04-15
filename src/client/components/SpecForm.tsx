@@ -1,5 +1,5 @@
 import { useForm, FormProvider, useWatch, useFormContext } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,7 @@ const formSchema = z.object({
   description: z.string().min(1, 'Description is required'),
   phase: z.string(),
   complexity: z.string(),
+  owner: z.string(),
   context: z.object({
     stack: z.array(z.object({ value: z.string() })),
     patterns: z.array(z.object({ value: z.string() })),
@@ -57,6 +58,7 @@ function toFormValues(input?: Partial<CreateSpecInput>): FormValues {
     description: input?.description ?? '',
     phase: (input?.phase ?? 'Draft') as string,
     complexity: (input?.complexity ?? 'Medium') as string,
+    owner: (input as Partial<Spec> | undefined)?.owner ?? '',
     context: {
       stack: toWrapped(ctx?.stack),
       patterns: toWrapped(ctx?.patterns),
@@ -78,6 +80,7 @@ function toApiValues(values: FormValues, productId: string): CreateSpecInput {
     description: values.description,
     phase: values.phase as CreateSpecInput['phase'],
     complexity: values.complexity as CreateSpecInput['complexity'],
+    ...(values.owner.trim() ? { owner: values.owner.trim() } : {}),
     context: {
       stack: values.context.stack.map((s) => s.value).filter(Boolean),
       patterns: values.context.patterns.map((p) => p.value).filter(Boolean),
@@ -125,6 +128,7 @@ function ChecklistSidebar({ defaultSpec, expectations }: ChecklistSidebarProps) 
     description: (values.description as string | undefined) ?? '',
     phase: (values.phase as Spec['phase'] | undefined) ?? 'Draft',
     complexity: (values.complexity as Spec['complexity'] | undefined) ?? 'Medium',
+    owner: (values.owner as string | undefined)?.trim() || undefined,
     context: {
       stack: ((values.context as FormValues['context'] | undefined)?.stack ?? [])
         .map((s: { value: string }) => s.value).filter(Boolean),
@@ -237,6 +241,20 @@ function MetadataSidebar({
         )}
       />
 
+      <FormField
+        control={form.control}
+        name="owner"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Owner</FormLabel>
+            <FormControl>
+              <Input {...field} placeholder="Who owns this spec?" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
@@ -270,6 +288,7 @@ interface SpecFormProps {
   onSubmit: (values: CreateSpecInput) => void;
   isSubmitting: boolean;
   submitLabel: string;
+  cancelHref?: string;
 }
 
 export default function SpecForm({
@@ -282,8 +301,8 @@ export default function SpecForm({
   onSubmit,
   isSubmitting,
   submitLabel,
+  cancelHref,
 }: SpecFormProps) {
-  const navigate = useNavigate();
   const form = useForm<FormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(formSchema) as any,
@@ -328,8 +347,8 @@ export default function SpecForm({
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : submitLabel}
         </Button>
-        <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-          Cancel
+        <Button type="button" variant="outline" asChild>
+          <Link to={cancelHref ?? `/products/${productId}/specs`}>Cancel</Link>
         </Button>
       </div>
 
@@ -375,6 +394,9 @@ export default function SpecForm({
         defaultOpen={false}
         badge={<BoundariesBadge />}
       >
+        <p className="mb-2 text-xs text-muted-foreground">
+          Boundaries define what this spec should explicitly avoid changing.
+        </p>
         <DynamicListEditor name="boundaries" label="Boundaries" />
       </CollapsibleSection>
 
@@ -383,6 +405,9 @@ export default function SpecForm({
         defaultOpen={false}
         badge={<DeliverablesBadge />}
       >
+        <p className="mb-2 text-xs text-muted-foreground">
+          Deliverables are concrete outputs expected when this spec is complete.
+        </p>
         <DynamicListEditor name="deliverables" label="Deliverables" />
       </CollapsibleSection>
 
@@ -391,6 +416,9 @@ export default function SpecForm({
         defaultOpen={false}
         badge={<ValidationBadge />}
       >
+        <p className="mb-2 text-xs text-muted-foreground">
+          Include both automated checks and human review criteria before marking done.
+        </p>
         <DynamicListEditor name="validation_automated" label="Automated Validation" />
         <DynamicListEditor name="validation_human" label="Human Validation" />
       </CollapsibleSection>

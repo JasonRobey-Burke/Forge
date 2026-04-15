@@ -5,6 +5,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 interface CollapsibleSectionProps {
   title: string;
   defaultOpen?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   badge?: React.ReactNode;
   children: React.ReactNode;
 }
@@ -12,20 +14,29 @@ interface CollapsibleSectionProps {
 export default function CollapsibleSection({
   title,
   defaultOpen = true,
+  open,
+  onOpenChange,
   badge,
   children,
 }: CollapsibleSectionProps) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isControlled = typeof open === 'boolean';
+  const resolvedOpen = isControlled ? open : internalOpen;
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!isControlled) setInternalOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  }
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
+    <Collapsible open={resolvedOpen} onOpenChange={handleOpenChange}>
       <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border bg-card px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors">
         <div className="flex items-center gap-2">
           {title}
           {badge}
         </div>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`}
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${resolvedOpen ? '' : '-rotate-90'}`}
         />
       </CollapsibleTrigger>
       <CollapsibleContent className="px-1 pt-3 pb-1">

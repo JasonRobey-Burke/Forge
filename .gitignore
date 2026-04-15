@@ -7,3 +7,7 @@ dist/
 
 # UX Review artifacts
 .ux-review/
+
+# Playwright artifacts
+test-results/
+playwright-report/

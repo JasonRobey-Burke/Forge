@@ -4,8 +4,9 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import EmptyState from '@/components/EmptyState';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
-import { FileText } from 'lucide-react';
+import { FileText, Sparkles } from 'lucide-react';
 
 export default function PlansListPage() {
   const { data: plans, isLoading, error } = usePlans();
@@ -20,9 +21,13 @@ export default function PlansListPage() {
       <h1 className="text-xl font-semibold mb-4">Plans</h1>
 
       {!plans || plans.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No plans found. Plans are markdown files in <code>docs/superpowers/plans/</code>.
-        </p>
+        <EmptyState
+          icon={<Sparkles className="h-5 w-5" />}
+          title="No plans found"
+          description="Create markdown plans in docs/superpowers/plans/ to manage implementation work in-app."
+          actionLabel="Refresh"
+          onAction={() => window.location.reload()}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {plans.map((plan) => (

@@ -212,7 +212,7 @@ export default function SpecDetailPage() {
           </div>
 
           <div className="flex gap-2 shrink-0">
-            <Button asChild variant="ghost" size="sm">
+            <Button asChild size="sm">
               <Link to={`/specs/${spec.id}/edit`}>Edit</Link>
             </Button>
             <Button variant="ghost" size="sm" onClick={() => setEditingYaml(true)}>Edit YAML</Button>

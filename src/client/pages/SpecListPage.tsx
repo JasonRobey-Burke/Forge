@@ -1,14 +1,17 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSpecs } from '@/hooks/useSpecs';
 import { useProduct } from '@/hooks/useProducts';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useSessionState } from '@/hooks/useSessionState';
 import { Badge } from '@/components/ui/badge';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import NewBadge from '@/components/NewBadge';
+import EmptyState from '@/components/EmptyState';
 import { PhaseBadge, PHASE_LABELS } from '@/lib/phaseColors';
 import ListToolbar from '@/components/ListToolbar';
 import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
+import { FileText } from 'lucide-react';
 import {
   Table,
   TableHeader,
@@ -24,9 +27,10 @@ export default function SpecListPage() {
   const navigate = useNavigate();
   const { data: product } = useProduct(productId!);
   const { data: specs, isLoading, error } = useSpecs(productId!);
-  const [search, setSearch] = useState('');
-  const [phaseFilter, setPhaseFilter] = useState('__all__');
-  const [complexityFilter, setComplexityFilter] = useState('__all__');
+  const storagePrefix = `forge:specs:${productId ?? 'unknown'}`;
+  const [search, setSearch] = useSessionState(`${storagePrefix}:search`, '');
+  const [phaseFilter, setPhaseFilter] = useSessionState(`${storagePrefix}:phaseFilter`, '__all__');
+  const [complexityFilter, setComplexityFilter] = useSessionState(`${storagePrefix}:complexityFilter`, '__all__');
 
   const filtered = useMemo(() => {
     let items = specs ?? [];
@@ -75,9 +79,13 @@ export default function SpecListPage() {
       />
 
       {!specs || specs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground">No specs found. Add YAML files to the docs/specs/ directory.</p>
-        </div>
+        <EmptyState
+          icon={<FileText className="h-5 w-5" />}
+          title="No specs found"
+          description="Add YAML files to docs/specs/. Specs will appear here and on the Flow Board."
+          actionLabel="Refresh"
+          onAction={() => window.location.reload()}
+        />
       ) : (
         <Table>
           <TableHeader>

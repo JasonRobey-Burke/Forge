@@ -43,6 +43,7 @@ export interface UpdateSpecInput {
   description?: string;
   phase?: SpecPhase;
   complexity?: Complexity;
+  owner?: string;
   context?: ProductContext;
   boundaries?: string[];
   deliverables?: string[];

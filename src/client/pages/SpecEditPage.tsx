@@ -42,6 +42,7 @@ export default function SpecEditPage() {
         }}
         isSubmitting={updateSpec.isPending}
         submitLabel="Save Changes"
+        cancelHref={`/specs/${id}`}
       />
     </div>
   );

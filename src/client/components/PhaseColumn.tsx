@@ -1,4 +1,5 @@
 import { useDroppable } from '@dnd-kit/core';
+import { Inbox } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import SpecCard from '@/components/SpecCard';
 import { PHASE_LABELS, PHASE_COLORS } from '@/lib/phaseColors';
@@ -10,9 +11,10 @@ interface PhaseColumnProps {
   limit: number;
   onCardClick?: (specId: string) => void;
   staleSpecIds?: Set<string>;
+  onMoveToPhase?: (spec: Spec, phase: string) => void;
 }
 
-export default function PhaseColumn({ phase, specs, limit, onCardClick, staleSpecIds }: PhaseColumnProps) {
+export default function PhaseColumn({ phase, specs, limit, onCardClick, staleSpecIds, onMoveToPhase }: PhaseColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: phase });
   const count = specs.length;
   const atLimit = limit > 0 && count >= limit;
@@ -32,10 +34,20 @@ export default function PhaseColumn({ phase, specs, limit, onCardClick, staleSpe
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-2 max-h-[calc(100vh-200px)]">
         {specs.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-4">No specs in this phase</p>
+          <div className="rounded-md border border-dashed border-muted-foreground/40 bg-background/50 px-3 py-5 text-center">
+            <Inbox className="mx-auto mb-2 h-4 w-4 text-muted-foreground" />
+            <p className="text-xs font-medium">No specs in this phase</p>
+            <p className="mt-1 text-xs text-muted-foreground">Drag specs here or use Move to...</p>
+          </div>
         ) : (
           specs.map((spec) => (
-            <SpecCard key={spec.id} spec={spec} onClick={() => onCardClick?.(spec.id)} stale={staleSpecIds?.has(spec.id)} />
+            <SpecCard
+              key={spec.id}
+              spec={spec}
+              onClick={() => onCardClick?.(spec.id)}
+              stale={staleSpecIds?.has(spec.id)}
+              onMoveToPhase={onMoveToPhase}
+            />
           ))
         )}
       </div>

@@ -683,6 +683,7 @@ export class YamlStore {
     if (input.description !== undefined) data.description = input.description;
     if (input.phase !== undefined) data.phase = input.phase;
     if (input.complexity !== undefined) data.complexity = input.complexity;
+    if (input.owner !== undefined) data.owner = input.owner.trim() || undefined;
     if (input.context !== undefined) data.context = input.context;
     if (input.boundaries !== undefined) data.boundaries = input.boundaries;
     if (input.deliverables !== undefined) data.deliverables = input.deliverables;

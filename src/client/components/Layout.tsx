@@ -20,6 +20,9 @@ export default function Layout() {
             <Link to="/products" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Products
             </Link>
+            <Link to="/my-work" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              My Work
+            </Link>
             <Link to="/plans" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Plans
             </Link>

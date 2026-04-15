@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3001/api';
+const BASE_URL = process.env.FORGE_E2E_API_URL ?? 'http://localhost:4000/api';
 
 async function apiCall<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
