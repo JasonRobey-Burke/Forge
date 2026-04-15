@@ -4,3 +4,6 @@ dist/
 *.tsbuildinfo
 .worktrees/
 .npmrc
+
+# UX Review artifacts
+.ux-review/
