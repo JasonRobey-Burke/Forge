@@ -9,11 +9,14 @@ export function startFileWatcher(
   store: YamlStore,
   onFileChange?: (event: string, filePath: string) => void
 ): void {
-  const watchPath = path.join(docsDir, '**/*.{yaml,yml,md}');
-
-  watcher = watch(watchPath, {
+  watcher = watch(docsDir, {
     ignoreInitial: true,
     awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
+    ignored: (filePath, stats) => {
+      if (!stats?.isFile()) return false;
+      const ext = path.extname(filePath).toLowerCase();
+      return ext !== '.yaml' && ext !== '.yml' && ext !== '.md';
+    },
   });
 
   watcher.on('add', (filePath: string) => {
