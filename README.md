@@ -13,31 +13,20 @@ Repo-local web UI for [Intent-Driven Development](https://github.com/JasonRobey-
 
 ## Quick Start
 
-### Step 1: Create a GitHub Personal Access Token
-
-Go to **GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)** and create a token with the `read:packages` scope.
-
-### Step 2: Configure `.npmrc` in your repo
-
-Create a `.npmrc` file in the root of the repo where you want to use Forge:
-
-```ini
-@jasonrobey-burke:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
-```
-
-Replace `YOUR_GITHUB_TOKEN` with the token from Step 1. Add `.npmrc` to your `.gitignore` to avoid committing the token.
-
-### Step 3: Install and Run
+Run it directly with `npx` from any repo that has (or will have) a `docs/` directory:
 
 ```bash
-npm install -D @jasonrobey-burke/idd-forge --legacy-peer-deps
+npx @jasonrobey/idd-forge
+```
+
+Or install it as a dev dependency and run via the short binary name:
+
+```bash
+npm install -D @jasonrobey/idd-forge
 npx idd-forge
 ```
 
 Forge scans `docs/` for IDD artifacts and opens a browser to `http://localhost:4000`. If `docs/` doesn't exist, it will offer to create the directory structure for you.
-
-> **Why not `npx @jasonrobey-burke/idd-forge` directly?** There's a known issue with npx on Windows that prevents scoped packages from creating command shims. Installing locally first works reliably on all platforms.
 
 ## CLI Options
 
@@ -64,7 +53,7 @@ your-repo/
 │   ├── expectations/   EXP-001.yaml
 │   ├── specs/          SPEC-001.yaml
 │   └── reviews/        SPEC-001-review.md
-└── .npmrc              (registry config, gitignored)
+└── package.json
 ```
 
 Changes to YAML files are detected in real time — edit files with the IDD Claude Code plugin or any editor, and the UI updates automatically.

@@ -1,6 +1,6 @@
 {
-  "name": "@jasonrobey-burke/idd-forge",
-  "version": "0.5.0",
+  "name": "@jasonrobey/idd-forge",
+  "version": "0.5.1",
   "description": "Repo-local web UI for Intent-Driven Development artifacts",
   "type": "module",
   "bin": {
@@ -10,6 +10,10 @@
     "dist/",
     "bin/"
   ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "engines": {
     "node": ">=20"
   },

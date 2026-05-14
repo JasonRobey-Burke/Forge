@@ -8,5 +8,6 @@
     "rootDir": "src",
     "paths": {}
   },
-  "include": ["src/server/**/*", "src/shared/**/*"]
+  "include": ["src/server/**/*", "src/shared/**/*"],
+  "exclude": ["**/*.test.ts"]
 }
