@@ -24,6 +24,11 @@ interface PhaseHistoryEntry {
   override_reason?: string;
 }
 
+export interface ParseError {
+  filePath: string;
+  message: string;
+}
+
 // ── Defaults ────────────────────────────────────────────────────────────
 
 const DEFAULT_CONTEXT: ProductContext = { stack: [], patterns: [], conventions: [], auth: '' };
@@ -43,6 +48,9 @@ export class YamlStore {
   private specPhaseHistory = new Map<string, PhaseHistoryEntry[]>();
   // intention_id → depends_on_ids (from YAML `dependencies` array)
   private intentionDeps = new Map<string, string[]>();
+
+  // Parse failures collected during scan + live re-parses, exposed via getStats() / /api/health
+  private parseErrors: ParseError[] = [];
 
   constructor(private docsDir: string) {}
 
@@ -69,7 +77,12 @@ export class YamlStore {
       intentions: this.intentions.size,
       expectations: this.expectations.size,
       specs: this.specs.size,
+      parseErrors: [...this.parseErrors],
     };
+  }
+
+  getParseErrors(): ParseError[] {
+    return [...this.parseErrors];
   }
 
   // ── Raw YAML access (for full-file editing) ────────────────────────
@@ -411,10 +424,26 @@ export class YamlStore {
   // ── File I/O helpers ───────────────────────────────────────────────
 
   private readYaml(filePath: string): Record<string, any> | null {
+    // Drop any prior error for this path so re-parses (file watcher) replace, not duplicate
+    this.parseErrors = this.parseErrors.filter((e) => e.filePath !== filePath);
+    let content: string;
     try {
-      const content = fs.readFileSync(filePath, 'utf-8');
-      return yaml.load(content) as Record<string, any>;
-    } catch {
+      content = fs.readFileSync(filePath, 'utf-8');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[idd-forge] Failed to read ${filePath}: ${message}`);
+      this.parseErrors.push({ filePath, message });
+      return null;
+    }
+    try {
+      // json: true → duplicate keys are last-write-wins (JSON semantics) instead of throwing.
+      // Forge is a viewer/editor for AI-generated YAML, not a validator; we accept slightly
+      // malformed input and still surface a warning so users can find and fix it.
+      return yaml.load(content, { json: true }) as Record<string, any>;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[idd-forge] Failed to parse ${filePath}: ${message}`);
+      this.parseErrors.push({ filePath, message });
       return null;
     }
   }
@@ -437,6 +466,8 @@ export class YamlStore {
   }
 
   removeFile(filePath: string): void {
+    // Drop any parse error associated with the removed file
+    this.parseErrors = this.parseErrors.filter((e) => e.filePath !== filePath);
     // Find and remove from the correct map
     for (const [id, entry] of this.products) {
       if (entry.filePath === filePath) { this.products.delete(id); return; }

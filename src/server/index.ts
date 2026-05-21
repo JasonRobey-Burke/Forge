@@ -30,6 +30,13 @@ export async function startServer(options: ServerOptions = {}) {
     console.log(`Forge reading artifacts from ${docsDir}`);
     console.log(`Found: ${stats.products} product(s), ${stats.intentions} intention(s), ${stats.expectations} expectation(s), ${stats.specs} spec(s)`);
   }
+  // Always surface parse failures, even in quiet mode — silent data loss is the bug we're fixing.
+  if (stats.parseErrors.length > 0) {
+    console.warn(`[idd-forge] ${stats.parseErrors.length} YAML file(s) failed to parse:`);
+    for (const e of stats.parseErrors) {
+      console.warn(`  - ${e.filePath}: ${e.message}`);
+    }
+  }
 
   const app = express();
   app.use(express.json({ limit: '5mb' }));

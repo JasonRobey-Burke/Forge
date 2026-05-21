@@ -156,7 +156,12 @@ if (existsSync(srcEntry)) {
           const json = await res.json();
           const s = json.data.store;
           console.log(`  Reading artifacts from ${docsDir}`);
-          console.log(`  Found: ${s.products} product(s), ${s.intentions} intention(s), ${s.expectations} expectation(s), ${s.specs} spec(s)\n`);
+          console.log(`  Found: ${s.products} product(s), ${s.intentions} intention(s), ${s.expectations} expectation(s), ${s.specs} spec(s)`);
+          if (s.parseErrors && s.parseErrors.length > 0) {
+            console.log(`  ⚠  ${s.parseErrors.length} file(s) failed to parse — see GET ${url}/api/health for details\n`);
+          } else {
+            console.log();
+          }
           console.log(`  ➜  ${url}\n`);
           console.log(`  Press Ctrl+C to stop\n`);
         } catch { /* ignore */ }
@@ -179,7 +184,12 @@ if (existsSync(srcEntry)) {
     const json = await res.json();
     const s = json.data.store;
     console.log(`  Reading artifacts from ${docsDir}`);
-    console.log(`  Found: ${s.products} product(s), ${s.intentions} intention(s), ${s.expectations} expectation(s), ${s.specs} spec(s)\n`);
+    console.log(`  Found: ${s.products} product(s), ${s.intentions} intention(s), ${s.expectations} expectation(s), ${s.specs} spec(s)`);
+    if (s.parseErrors && s.parseErrors.length > 0) {
+      console.log(`  ⚠  ${s.parseErrors.length} file(s) failed to parse — see GET ${url}/api/health for details\n`);
+    } else {
+      console.log();
+    }
   } catch { /* ignore */ }
   console.log(`  ➜  ${url}\n`);
   console.log(`  Press Ctrl+C to stop\n`);
