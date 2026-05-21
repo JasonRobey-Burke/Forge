@@ -1,6 +1,7 @@
 import { Outlet, Link } from 'react-router-dom';
 import { useCurrentProduct } from '@/hooks/useCurrentProduct';
 import ProductNav from '@/components/ProductNav';
+import ParseErrorsBanner from '@/components/ParseErrorsBanner';
 
 export default function Layout() {
   const { productId, productName, isProductRoute } = useCurrentProduct();
@@ -8,6 +9,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-background">
       <div className="h-[3px] bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500" />
+      <ParseErrorsBanner />
       <header className="border-b">
         <div className="container mx-auto flex h-14 items-center px-4">
           <Link to="/" className="flex items-center gap-2">
