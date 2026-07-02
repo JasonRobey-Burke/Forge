@@ -11,6 +11,7 @@ const tabs = [
   { label: 'Intentions', path: '/intentions' },
   { label: 'Specs', path: '/specs' },
   { label: 'Board', path: '/board' },
+  { label: 'Metrics', path: '/metrics' },
 ];
 
 export default function ProductNav({ productId }: ProductNavProps) {
