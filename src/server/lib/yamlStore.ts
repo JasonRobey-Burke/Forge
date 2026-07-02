@@ -7,6 +7,7 @@ import type {
   Expectation, UpdateExpectationInput,
   Spec, UpdateSpecInput,
 } from '../../shared/types/index.js';
+import { normalizeGapCheck } from '../../shared/lib/gapCheck.js';
 
 // ── Types for internal YAML document shapes ─────────────────────────────
 
@@ -344,7 +345,9 @@ export class YamlStore {
     const spec: Spec = {
       id: s.id,
       product_id: s.product_id ?? s.product ?? '',
-      title: s.title ?? '',
+      // Plugin-authored Specs often carry no title; fall back to the first
+      // description line so list pages and metrics rows stay readable.
+      title: s.title ?? s.description?.trim().split('\n')[0]?.slice(0, 100) ?? '',
       description: s.description ?? '',
       phase: this.capitalizeFirst(s.status ?? s.phase ?? 'Draft') as Spec['phase'],
       complexity: this.capitalizeFirst(s.complexity ?? 'Medium') as Spec['complexity'],
@@ -354,6 +357,10 @@ export class YamlStore {
       validation_automated: this.toStringArray(validation.automated ?? s.validation_automated ?? []),
       validation_human: this.flattenValidationHuman(validation.human_review ?? validation.human ?? s.validation_human ?? []),
       peer_reviewed: validation.peer_reviewed ?? s.peer_reviewed ?? false,
+      // Typed for display/gating; the raw gap_check object deliberately stays in
+      // extras (it is NOT in the consumed-keys list) so YAML write-back emits it
+      // verbatim — the annotation is owned by the IDD command layer, not Forge.
+      gap_check: normalizeGapCheck(s.gap_check) ?? undefined,
       owner: s.owner ?? undefined,
       depends_on: s.depends_on ?? undefined,
       intentions: s.intentions ?? undefined,
