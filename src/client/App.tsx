@@ -14,6 +14,9 @@ import FlowBoardPage from '@/pages/FlowBoardPage';
 import MyWorkPage from '@/pages/MyWorkPage';
 import PlansListPage from '@/pages/PlansListPage';
 import PlanDetailPage from '@/pages/PlanDetailPage';
+import ReviewsListPage from '@/pages/ReviewsListPage';
+import ReviewDetailPage from '@/pages/ReviewDetailPage';
+import MetricsPage from '@/pages/MetricsPage';
 
 export default function App() {
   useFileWatcher();
@@ -35,6 +38,9 @@ export default function App() {
         <Route path="my-work" element={<MyWorkPage />} />
         <Route path="plans" element={<PlansListPage />} />
         <Route path="plans/:name" element={<PlanDetailPage />} />
+        <Route path="reviews" element={<ReviewsListPage />} />
+        <Route path="reviews/:name" element={<ReviewDetailPage />} />
+        <Route path="products/:productId/metrics" element={<MetricsPage />} />
       </Route>
     </Routes>
   );

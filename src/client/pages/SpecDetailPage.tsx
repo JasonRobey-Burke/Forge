@@ -43,6 +43,8 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import { useSpecReview } from '@/hooks/useReviews';
 import YamlEditor from '@/components/YamlEditor';
+import GapCheckBadge from '@/components/GapCheckBadge';
+import GapCheckSection from '@/components/GapCheckSection';
 
 export default function SpecDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -146,6 +148,7 @@ export default function SpecDetailPage() {
               </h1>
               <PhaseBadge phase={spec.phase} />
               <Badge variant="outline">{spec.complexity}</Badge>
+              <GapCheckBadge gapCheck={spec.gap_check} />
               {spec.owner && <Badge variant="outline">{spec.owner}</Badge>}
             </div>
             {/* Phase transition controls inline under title */}
@@ -291,6 +294,8 @@ export default function SpecDetailPage() {
             <CardContent><p className="text-sm">{spec.description}</p></CardContent>
           </Card>
 
+          <GapCheckSection spec={spec} />
+
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-base">Context</CardTitle></CardHeader>
             <CardContent className="space-y-3">
@@ -409,7 +414,8 @@ export default function SpecDetailPage() {
             </Card>
           )}
 
-          <AdditionalFields extras={spec.extras} />
+          {/* gap_check stays in extras for YAML write-back fidelity but renders via GapCheckSection */}
+          <AdditionalFields extras={Object.fromEntries(Object.entries(spec.extras).filter(([k]) => k !== 'gap_check'))} />
 
           {linkedExpectations && linkedExpectations.length > 0 && (
             <Card>

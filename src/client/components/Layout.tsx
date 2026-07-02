@@ -28,6 +28,9 @@ export default function Layout() {
             <Link to="/plans" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Plans
             </Link>
+            <Link to="/reviews" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Reviews
+            </Link>
           </nav>
         </div>
       </header>
