@@ -96,6 +96,27 @@ router.get('/:id/staleness', async (req: Request<{ id: string }>, res) => {
   res.json({ data: result, error: null, meta: null });
 });
 
+// POST /api/specs/:id/acknowledge-warnings — record human acknowledgment of
+// gap-check warnings (the one gap_check write Forge performs; doctrine allows
+// it "only at explicit human direction", which this endpoint is).
+router.post('/:id/acknowledge-warnings', async (req: Request<{ id: string }>, res) => {
+  const result = await specService.acknowledgeGapCheckWarnings(req.params.id);
+  if (!result.ok) {
+    const status = result.error === 'NOT_FOUND' ? 404 : 422;
+    const messages: Record<string, string> = {
+      NOT_FOUND: 'Spec not found',
+      NO_GAP_CHECK: 'This Spec has no gap_check annotation to acknowledge',
+      NOT_WARNINGS: 'Acknowledgment applies only to a gap_check in "warnings" status',
+    };
+    return res.status(status).json({
+      data: null,
+      error: { message: messages[result.error] ?? result.error, code: result.error },
+      meta: null,
+    });
+  }
+  res.json({ data: result.spec, error: null, meta: null });
+});
+
 // POST /api/specs/:id/transition
 router.post('/:id/transition', validate(transitionSpecSchema), async (req: Request<{ id: string }>, res) => {
   const { to_phase, override_reason } = req.body;
@@ -107,7 +128,7 @@ router.post('/:id/transition', validate(transitionSpecSchema), async (req: Reque
     const status = result.error === 'not_found' ? 404 : 422;
     return res.status(status).json({
       data: null,
-      error: { message: result.error!, code: result.error!, checklist: result.checklist, wipCheck: result.wipCheck },
+      error: { message: result.gapCheckGate?.message ?? result.error!, code: result.error!, checklist: result.checklist, wipCheck: result.wipCheck, gapCheckGate: result.gapCheckGate },
       meta: null,
     });
   }

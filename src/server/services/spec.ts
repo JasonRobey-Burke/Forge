@@ -29,6 +29,10 @@ export async function checkSpecStaleness(specId: string) {
   return getStore().checkSpecStaleness(specId);
 }
 
+export async function acknowledgeGapCheckWarnings(specId: string) {
+  return getStore().acknowledgeGapCheckWarnings(specId);
+}
+
 export async function getStaleSpecIds(productId: string): Promise<string[]> {
   return getStore().getStaleSpecIds(productId);
 }

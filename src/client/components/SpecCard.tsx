@@ -1,6 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { GripVertical, AlertTriangle, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import GapCheckBadge from '@/components/GapCheckBadge';
 import { PHASE_COLORS, PHASE_LABELS } from '@/lib/phaseColors';
 import {
   DropdownMenu,
@@ -66,6 +67,9 @@ export default function SpecCard({ spec, onClick, stale, onMoveToPhase }: SpecCa
               <Badge variant={complexityVariant[spec.complexity] ?? 'outline'} className="text-xs">
                 {spec.complexity}
               </Badge>
+              {(spec.gap_check || ['Ready', 'InProgress', 'Review', 'Validating', 'Done'].includes(spec.phase)) && (
+                <GapCheckBadge gapCheck={spec.gap_check} />
+              )}
               {stale && <AlertTriangle className="h-3 w-3 text-amber-500" aria-label="Expectations changed since gate" />}
             </div>
             <span className="text-muted-foreground">{days}d</span>

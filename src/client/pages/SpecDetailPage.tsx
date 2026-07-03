@@ -43,6 +43,9 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import { useSpecReview } from '@/hooks/useReviews';
 import YamlEditor from '@/components/YamlEditor';
+import GapCheckBadge from '@/components/GapCheckBadge';
+import GapCheckSection from '@/components/GapCheckSection';
+import ManageLinksDialog from '@/components/ManageLinksDialog';
 
 export default function SpecDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -59,6 +62,7 @@ export default function SpecDetailPage() {
   const [overrideReason, setOverrideReason] = useState('');
   const [editingYaml, setEditingYaml] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const [linksOpen, setLinksOpen] = useState(false);
 
   if (isLoading) return <DetailPageSkeleton />;
   if (error || !spec) return <div className="text-destructive">Spec not found.</div>;
@@ -146,6 +150,7 @@ export default function SpecDetailPage() {
               </h1>
               <PhaseBadge phase={spec.phase} />
               <Badge variant="outline">{spec.complexity}</Badge>
+              <GapCheckBadge gapCheck={spec.gap_check} />
               {spec.owner && <Badge variant="outline">{spec.owner}</Badge>}
             </div>
             {/* Phase transition controls inline under title */}
@@ -291,6 +296,8 @@ export default function SpecDetailPage() {
             <CardContent><p className="text-sm">{spec.description}</p></CardContent>
           </Card>
 
+          <GapCheckSection spec={spec} />
+
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-base">Context</CardTitle></CardHeader>
             <CardContent className="space-y-3">
@@ -409,12 +416,20 @@ export default function SpecDetailPage() {
             </Card>
           )}
 
-          <AdditionalFields extras={spec.extras} />
+          {/* gap_check stays in extras for YAML write-back fidelity but renders via GapCheckSection */}
+          <AdditionalFields extras={Object.fromEntries(Object.entries(spec.extras).filter(([k]) => k !== 'gap_check'))} />
 
-          {linkedExpectations && linkedExpectations.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-base">Linked Expectations</CardTitle></CardHeader>
-              <CardContent>
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Linked Expectations</CardTitle>
+                <Button variant="outline" size="sm" onClick={() => setLinksOpen(true)}>
+                  Manage links
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {linkedExpectations && linkedExpectations.length > 0 ? (
                 <ul className="space-y-1">
                   {linkedExpectations.map((exp) => (
                     <li key={exp.id} className="flex items-center gap-1">
@@ -429,9 +444,21 @@ export default function SpecDetailPage() {
                     </li>
                   ))}
                 </ul>
-              </CardContent>
-            </Card>
-          )}
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  No Expectations linked — a Spec with no linked Expectation cannot reach Ready.
+                  Link the Expectations this Spec implements.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <ManageLinksDialog
+            open={linksOpen}
+            onOpenChange={setLinksOpen}
+            spec={spec}
+            linkedExpectationIds={(linkedExpectations ?? []).map((e) => e.id)}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CopyCommand

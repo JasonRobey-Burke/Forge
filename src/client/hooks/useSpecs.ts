@@ -44,6 +44,18 @@ export function useSpecExpectations(specId: string) {
   });
 }
 
+export function useAcknowledgeWarnings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ specId }: { specId: string }) =>
+      apiFetch<Spec>(`/specs/${specId}/acknowledge-warnings`, { method: 'POST' }),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: specKeys.detail(vars.specId) });
+      qc.invalidateQueries({ queryKey: ['specs'] });
+    },
+  });
+}
+
 export function useLinkExpectations() {
   const qc = useQueryClient();
   return useMutation({

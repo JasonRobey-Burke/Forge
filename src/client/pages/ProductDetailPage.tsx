@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -95,6 +95,19 @@ export default function ProductDetailPage() {
     resolver: zodResolver(formSchema) as any,
     defaultValues: productToFormValues(product as Partial<CreateProductInput> | undefined),
   });
+
+  // Deep-link support: /products/:id/edit (e.g. the Flow Board's "WIP Settings"
+  // button) opens the page with editing active once the product has loaded.
+  const location = useLocation();
+  const autoEditDone = useRef(false);
+  useEffect(() => {
+    if (!autoEditDone.current && location.pathname.endsWith('/edit') && product) {
+      autoEditDone.current = true;
+      form.reset(productToFormValues(product as Partial<CreateProductInput>));
+      setEditing(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, product]);
 
   if (isLoading) {
     return <DetailPageSkeleton />;

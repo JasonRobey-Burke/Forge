@@ -84,7 +84,10 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
           const apiError = error as ApiError;
           if (
             apiError.code === 'CHECKLIST_INCOMPLETE' ||
-            apiError.code === 'PEER_REVIEW_REQUIRED'
+            apiError.code === 'PEER_REVIEW_REQUIRED' ||
+            apiError.code === 'GAP_CHECK_REQUIRED' ||
+            apiError.code === 'GAP_CHECK_BLOCKED' ||
+            apiError.code === 'GAP_CHECK_WARNINGS_UNACKNOWLEDGED'
           ) {
             setPendingMove({ spec, toPhase });
             setGateName(apiError.code);

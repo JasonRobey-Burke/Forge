@@ -3,6 +3,7 @@ import { evaluateChecklist } from '../../shared/checklist/evaluator.js';
 import { getSpec, getSpecExpectations, countSpecsByPhase } from './spec.js';
 import { getProduct } from './product.js';
 import { checkWipLimit, type WipCheckResult } from '../../shared/lib/wipCheck.js';
+import { checkGapCheckGate, type GapCheckGateResult } from '../../shared/lib/gapCheck.js';
 import type { ChecklistResult } from '../../shared/checklist/types.js';
 
 export async function transitionSpec(
@@ -10,7 +11,7 @@ export async function transitionSpec(
   toPhase: string,
   userId: string,
   overrideReason?: string
-): Promise<{ success: boolean; error?: string; checklist?: ChecklistResult; wipCheck?: WipCheckResult }> {
+): Promise<{ success: boolean; error?: string; checklist?: ChecklistResult; wipCheck?: WipCheckResult; gapCheckGate?: GapCheckGateResult }> {
   const spec = await getSpec(specId);
   if (!spec) return { success: false, error: 'not_found' };
 
@@ -33,6 +34,15 @@ export async function transitionSpec(
       const checklist = evaluateChecklist(spec, expectations);
       if (!checklist.ready) {
         return { success: false, error: 'CHECKLIST_INCOMPLETE', checklist };
+      }
+    }
+
+    // Gate: Ready → In Progress requires a clean gap-check
+    // (passed, or warnings with recorded human acknowledgment)
+    if (spec.phase === 'Ready' && toPhase === 'InProgress') {
+      const gateResult = checkGapCheckGate(spec.gap_check);
+      if (!gateResult.allowed) {
+        return { success: false, error: gateResult.code, gapCheckGate: gateResult };
       }
     }
 

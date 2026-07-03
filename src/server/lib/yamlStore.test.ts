@@ -126,3 +126,93 @@ describe('YamlStore — parse error handling', () => {
     expect(store.getStats().parseErrors).toEqual([]);
   });
 });
+
+describe('YamlStore — edit-experience operations', () => {
+  let docsDir: string;
+
+  function write(sub: string, name: string, lines: string[]) {
+    fs.writeFileSync(path.join(docsDir, sub, name), lines.join('\n') + '\n', 'utf-8');
+  }
+
+  beforeEach(() => {
+    docsDir = tmpDocsDir();
+    write('intentions', 'INT-1.yaml', [
+      'intention:', '  id: "INT-1"', '  product_id: "PROD-1"', '  title: "One"', '  status: "defined"',
+    ]);
+    write('intentions', 'INT-2.yaml', [
+      'intention:', '  id: "INT-2"', '  product_id: "PROD-2"', '  title: "Other product"', '  status: "defined"',
+    ]);
+    write('expectations', 'EXP-a.yaml', [
+      'expectation:', '  id: "EXP-a"', '  intention_id: "INT-1"', '  title: "A"', '  status: "draft"',
+      '  edge_cases: ["x", "y"]',
+    ]);
+    write('expectations', 'EXP-b.yaml', [
+      'expectation:', '  id: "EXP-b"', '  intention_id: "INT-2"', '  title: "B"', '  status: "draft"',
+      '  edge_cases: ["x", "y"]',
+    ]);
+    write('specs', 'SPEC-w.yaml', [
+      'spec:', '  id: "SPEC-w"', '  product_id: "PROD-1"', '  title: "Warned"', '  status: "ready"',
+      '  context: { stack: [], patterns: [], conventions: [], auth: "" }',
+      '  gap_check:',
+      '    status: "warnings"', '    blockers: 0', '    warnings: 2', '    rounds: 1',
+    ]);
+  });
+
+  afterEach(() => {
+    fs.rmSync(docsDir, { recursive: true, force: true });
+  });
+
+  it('lists expectations by product through the intention join', async () => {
+    const store = new YamlStore(docsDir);
+    await store.init();
+    const exps = store.listExpectationsByProduct('PROD-1');
+    expect(exps.map((e) => e.id)).toEqual(['EXP-a']);
+  });
+
+  it('updates depends_on and intentions and round-trips them through YAML', async () => {
+    const store = new YamlStore(docsDir);
+    await store.init();
+    const updated = store.updateSpec('SPEC-w', { depends_on: ['SPEC-z'], intentions: ['INT-1'] });
+    expect(updated?.depends_on).toEqual(['SPEC-z']);
+    expect(updated?.intentions).toEqual(['INT-1']);
+
+    const reread = new YamlStore(docsDir);
+    await reread.init();
+    expect(reread.getSpec('SPEC-w')?.depends_on).toEqual(['SPEC-z']);
+    expect(reread.getSpec('SPEC-w')?.intentions).toEqual(['INT-1']);
+
+    // clearing writes them away entirely
+    store.updateSpec('SPEC-w', { depends_on: [] });
+    const cleared = new YamlStore(docsDir);
+    await cleared.init();
+    expect(cleared.getSpec('SPEC-w')?.depends_on).toBeUndefined();
+  });
+
+  it('acknowledges gap-check warnings and persists through YAML write-back', async () => {
+    const store = new YamlStore(docsDir);
+    await store.init();
+    const result = store.acknowledgeGapCheckWarnings('SPEC-w');
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.spec.gap_check?.warnings_acknowledged).toBe(true);
+
+    const reread = new YamlStore(docsDir);
+    await reread.init();
+    const gc = reread.getSpec('SPEC-w')?.gap_check;
+    expect(gc?.status).toBe('warnings');
+    expect(gc?.warnings_acknowledged).toBe(true);
+    expect(gc?.warnings).toBe(2);
+  });
+
+  it('refuses acknowledgment when the gate is not in warnings status', async () => {
+    write('specs', 'SPEC-p.yaml', [
+      'spec:', '  id: "SPEC-p"', '  product_id: "PROD-1"', '  title: "Passed"', '  status: "ready"',
+      '  gap_check: { status: "passed", blockers: 0, warnings: 0, rounds: 2 }',
+    ]);
+    const store = new YamlStore(docsDir);
+    await store.init();
+    const result = store.acknowledgeGapCheckWarnings('SPEC-p');
+    expect(result).toEqual({ ok: false, error: 'NOT_WARNINGS' });
+    const missing = store.acknowledgeGapCheckWarnings('SPEC-nope');
+    expect(missing).toEqual({ ok: false, error: 'NOT_FOUND' });
+  });
+});

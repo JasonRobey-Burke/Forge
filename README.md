@@ -5,6 +5,9 @@ Repo-local web UI for [Intent-Driven Development](https://github.com/JasonRobey-
 ## What It Does
 
 - **Flow Board** — Kanban view of all Specs across six phases (Draft → Ready → In Progress → Review → Validating → Done) with drag-and-drop and WIP limits
+- **Gap-check awareness** — Reads each Spec's `gap_check` annotation (the IDD adversarial pre-execution gate) and shows gate badges on board cards and detail pages; Ready → In Progress is gated on a clean gap-check (passed, or warnings with recorded human acknowledgment), with override + audit trail
+- **Pipeline reports** — Gap-check reports, execution reports, and validation reviews from `docs/reviews/` are browsable and linked from each Spec
+- **Pipeline metrics** — A per-product Metrics view computed read-only from artifacts already on disk: Gap-Check First-Round Pass Rate, average rounds-to-pass, execution-report gap counts, review-stage First-Pass Rate, cycle time, and review queue depth
 - **Artifact hierarchy** — Browse Products, Intentions, Expectations, and Specs with full detail and inline editing
 - **Completeness checklist** — Gates Draft → Ready transitions with 11 criteria; supports override with audit trail
 - **YAML editing** — Edit any artifact's raw YAML directly in the browser

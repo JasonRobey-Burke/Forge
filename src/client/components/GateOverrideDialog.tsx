@@ -34,6 +34,23 @@ export default function GateOverrideDialog({
   const { data: linkedExpectations } = useSpecExpectations(spec?.id ?? '');
 
   const isPeerReviewGate = gateName === 'PEER_REVIEW_REQUIRED';
+  const isGapCheckGate = gateName.startsWith('GAP_CHECK_');
+
+  const gapCheckCopy: Record<string, { title: string; description: string }> = {
+    GAP_CHECK_REQUIRED: {
+      title: 'Gap-Check Required',
+      description:
+        'This Spec has not passed the adversarial gap-check gate. Doctrine: every Spec is gap-checked before execution so the implementing agent never has to guess. Run /idd-framework:gap-check, or provide a reason to override.',
+    },
+    GAP_CHECK_BLOCKED: {
+      title: 'Gap-Check Blocked',
+      description: `The gap-check gate reported ${spec?.gap_check?.blockers ?? '?'} unresolved Blocker(s). Doctrine: Blockers are fixed in the Spec by its author, never worked around at execution time. Overriding here is recorded in the audit trail.`,
+    },
+    GAP_CHECK_WARNINGS_UNACKNOWLEDGED: {
+      title: 'Gap-Check Warnings Not Acknowledged',
+      description: `The gap-check gate reported ${spec?.gap_check?.warnings ?? '?'} Warning(s) with no recorded human acknowledgment. Review the report and set gap_check.warnings_acknowledged: true, or provide a reason to override.`,
+    },
+  };
 
   const checklistExpectations = (linkedExpectations ?? []).map((e) => ({
     id: e.id,
@@ -47,15 +64,19 @@ export default function GateOverrideDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isPeerReviewGate ? 'Peer Review Required' : 'Checklist Incomplete'}
+            {isGapCheckGate
+              ? gapCheckCopy[gateName]?.title ?? 'Gap-Check Gate'
+              : isPeerReviewGate ? 'Peer Review Required' : 'Checklist Incomplete'}
           </DialogTitle>
           <DialogDescription>
-            {isPeerReviewGate
-              ? 'This spec has not been peer-reviewed. Provide a reason to override.'
-              : `${result ? result.total - result.passed : 0} item(s) not yet met. Provide a reason to override.`}
+            {isGapCheckGate
+              ? gapCheckCopy[gateName]?.description ?? 'The gap-check gate blocked this transition. Provide a reason to override.'
+              : isPeerReviewGate
+                ? 'This spec has not been peer-reviewed. Provide a reason to override.'
+                : `${result ? result.total - result.passed : 0} item(s) not yet met. Provide a reason to override.`}
           </DialogDescription>
         </DialogHeader>
-        {!isPeerReviewGate && result && (
+        {!isPeerReviewGate && !isGapCheckGate && result && (
           <ul className="text-sm space-y-1">
             {result.items
               .filter((i) => !i.passed)

@@ -9,6 +9,7 @@ import intentionRouter from './routes/intentions.js';
 import expectationRouter from './routes/expectations.js';
 import specRouter from './routes/specs.js';
 import docsRouter from './routes/docs.js';
+import metricsRouter from './routes/metrics.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -84,6 +85,7 @@ export async function startServer(options: ServerOptions = {}) {
   app.use('/api/expectations', expectationRouter);
   app.use('/api/specs', specRouter);
   app.use('/api/docs', docsRouter(docsDir));
+  app.use('/api/metrics', metricsRouter(docsDir));
 
   app.use(errorHandler);
 

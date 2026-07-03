@@ -1,6 +1,23 @@
 import { SpecPhase, Complexity } from './enums.js';
 import { ProductContext } from './product.js';
 
+/**
+ * The gap_check annotation written by the IDD gap-check gate
+ * (docs/artifacts.md is the canonical schema home in the framework repo).
+ * Counts are normalized to integers even when legacy annotations carry
+ * finding-ID lists; `rounds` may be absent on legacy annotations, in which
+ * case round-derived metrics treat the value as unconfirmed ("assumed 1").
+ */
+export interface GapCheck {
+  status: 'passed' | 'blocked' | 'warnings';
+  blockers: number;
+  warnings: number;
+  rounds?: number;
+  report?: string;
+  date?: string;
+  warnings_acknowledged?: boolean;
+}
+
 export interface Spec {
   id: string;
   product_id: string;
@@ -14,6 +31,7 @@ export interface Spec {
   validation_automated: string[];
   validation_human: string[];
   peer_reviewed: boolean;
+  gap_check?: GapCheck;
   owner?: string;
   depends_on?: string[];
   intentions?: string[];
@@ -50,4 +68,6 @@ export interface UpdateSpecInput {
   validation_automated?: string[];
   validation_human?: string[];
   peer_reviewed?: boolean;
+  depends_on?: string[];
+  intentions?: string[];
 }
