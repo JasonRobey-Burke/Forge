@@ -68,4 +68,6 @@ export interface UpdateSpecInput {
   validation_automated?: string[];
   validation_human?: string[];
   peer_reviewed?: boolean;
+  depends_on?: string[];
+  intentions?: string[];
 }

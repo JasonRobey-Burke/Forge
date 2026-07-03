@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { FileSearch, FileCog, FileCheck, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import GapCheckBadge from '@/components/GapCheckBadge';
 import CopyCommand from '@/components/CopyCommand';
 import { useSpecReviewFiles, type ReviewKind } from '@/hooks/useReviews';
+import { useAcknowledgeWarnings } from '@/hooks/useSpecs';
 import type { Spec } from '@shared/types';
 
 const KIND_LABELS: Record<ReviewKind, string> = {
@@ -35,6 +38,17 @@ interface GapCheckSectionProps {
 export default function GapCheckSection({ spec }: GapCheckSectionProps) {
   const gc = spec.gap_check;
   const { data: reviewFiles } = useSpecReviewFiles(spec.id);
+  const acknowledge = useAcknowledgeWarnings();
+
+  function handleAcknowledge() {
+    acknowledge.mutate(
+      { specId: spec.id },
+      {
+        onSuccess: () => toast.success('Warnings acknowledged — recorded on the gap_check annotation'),
+        onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to acknowledge warnings'),
+      },
+    );
+  }
 
   return (
     <Card>
@@ -55,6 +69,16 @@ export default function GapCheckSection({ spec }: GapCheckSectionProps) {
               <Badge variant={gc.warnings_acknowledged ? 'secondary' : 'destructive'} className="text-xs">
                 {gc.warnings_acknowledged ? 'Warnings acknowledged' : 'Acknowledgment pending'}
               </Badge>
+            )}
+            {gc.status === 'warnings' && !gc.warnings_acknowledged && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAcknowledge}
+                disabled={acknowledge.isPending}
+              >
+                {acknowledge.isPending ? 'Recording...' : 'Acknowledge warnings'}
+              </Button>
             )}
           </div>
         ) : (

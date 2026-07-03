@@ -27,6 +27,8 @@ export const updateSpecSchema = z.object({
   validation_automated: z.array(z.string()).optional(),
   validation_human: z.array(z.string()).optional(),
   peer_reviewed: z.boolean().optional(),
+  depends_on: z.array(z.string()).optional(),
+  intentions: z.array(z.string()).optional(),
 });
 
 export type CreateSpecInput = z.infer<typeof createSpecSchema>;

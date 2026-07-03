@@ -656,6 +656,20 @@ export class YamlStore {
       .sort((a, b) => b.created_at.localeCompare(a.created_at));
   }
 
+  /** All live expectations under a product, resolved through their parent
+   *  intention (or a direct product_id field when the YAML carries one). */
+  listExpectationsByProduct(productId: string): Expectation[] {
+    return Array.from(this.expectations.values())
+      .map((e) => e.data)
+      .filter((e) => {
+        if (e.archived_at) return false;
+        if (e.product_id === productId) return true;
+        const intention = this.intentions.get(e.intention_id);
+        return !!intention && intention.data.product_id === productId && !intention.data.archived_at;
+      })
+      .sort((a, b) => a.id.localeCompare(b.id));
+  }
+
   getExpectation(id: string): Expectation | null {
     const entry = this.expectations.get(id);
     if (!entry || entry.data.archived_at) return null;
@@ -728,10 +742,41 @@ export class YamlStore {
     if (input.validation_automated !== undefined) data.validation_automated = input.validation_automated;
     if (input.validation_human !== undefined) data.validation_human = input.validation_human;
     if (input.peer_reviewed !== undefined) data.peer_reviewed = input.peer_reviewed;
+    if (input.depends_on !== undefined) data.depends_on = input.depends_on.length > 0 ? input.depends_on : undefined;
+    if (input.intentions !== undefined) data.intentions = input.intentions.length > 0 ? input.intentions : undefined;
     data.updated_at = new Date().toISOString();
 
     this.writeSpecYaml(entry);
     return data;
+  }
+
+  /**
+   * Record human acknowledgment of gap-check warnings on a Spec. This is the
+   * one gap_check write Forge performs — the framework's doctrine is that the
+   * field is written "only at explicit human direction", and a human clicking
+   * an acknowledge control in the UI is exactly that. All other annotation
+   * fields remain owned by the IDD command layer.
+   */
+  acknowledgeGapCheckWarnings(specId: string): { ok: true; spec: Spec } | { ok: false; error: string } {
+    const entry = this.specs.get(specId);
+    if (!entry || entry.data.archived_at) return { ok: false, error: 'NOT_FOUND' };
+    const gc = entry.data.gap_check;
+    if (!gc) return { ok: false, error: 'NO_GAP_CHECK' };
+    if (gc.status !== 'warnings') return { ok: false, error: 'NOT_WARNINGS' };
+    if (gc.warnings_acknowledged === true) return { ok: true, spec: entry.data };
+
+    // Update both the raw annotation (extras — the write-back source) and the typed view
+    const rawGc = entry.data.extras.gap_check;
+    if (rawGc && typeof rawGc === 'object' && !Array.isArray(rawGc)) {
+      (rawGc as Record<string, unknown>).warnings_acknowledged = true;
+    } else {
+      entry.data.extras.gap_check = { ...gc, warnings_acknowledged: true };
+    }
+    entry.data.gap_check = { ...gc, warnings_acknowledged: true };
+    entry.data.updated_at = new Date().toISOString();
+
+    this.writeSpecYaml(entry);
+    return { ok: true, spec: entry.data };
   }
 
   linkExpectations(specId: string, expectationIds: string[]): boolean {

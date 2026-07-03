@@ -15,6 +15,14 @@ export function useExpectations(intentionId: string) {
   });
 }
 
+export function useProductExpectations(productId: string) {
+  return useQuery({
+    queryKey: ['expectations', 'by-product', productId] as const,
+    queryFn: () => apiFetch<Expectation[]>(`/expectations?product_id=${productId}`),
+    enabled: !!productId,
+  });
+}
+
 export function useExpectation(id: string) {
   return useQuery({
     queryKey: expectationKeys.detail(id),

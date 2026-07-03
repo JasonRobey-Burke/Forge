@@ -5,6 +5,10 @@ export async function listExpectations(intentionId: string): Promise<Expectation
   return getStore().listExpectations(intentionId);
 }
 
+export async function listExpectationsByProduct(productId: string): Promise<Expectation[]> {
+  return getStore().listExpectationsByProduct(productId);
+}
+
 export async function getExpectation(id: string): Promise<Expectation | null> {
   return getStore().getExpectation(id);
 }

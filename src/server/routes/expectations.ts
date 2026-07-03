@@ -5,17 +5,20 @@ import * as expectationService from '../services/expectation.js';
 
 const router = Router();
 
-// GET /api/expectations?intention_id=xxx
+// GET /api/expectations?intention_id=xxx  |  GET /api/expectations?product_id=xxx
 router.get('/', async (req, res) => {
   const intentionId = req.query.intention_id as string;
-  if (!intentionId) {
+  const productId = req.query.product_id as string;
+  if (!intentionId && !productId) {
     return res.status(400).json({
       data: null,
-      error: { message: 'intention_id query parameter is required', code: 'VALIDATION_ERROR' },
+      error: { message: 'intention_id or product_id query parameter is required', code: 'VALIDATION_ERROR' },
       meta: null,
     });
   }
-  const expectations = await expectationService.listExpectations(intentionId);
+  const expectations = intentionId
+    ? await expectationService.listExpectations(intentionId)
+    : await expectationService.listExpectationsByProduct(productId);
   res.json({ data: expectations, error: null, meta: { count: expectations.length } });
 });
 

@@ -124,7 +124,13 @@ export default function MetricsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {rows.length === 0 && (
+            <p className="text-sm text-muted-foreground py-4">
+              No Specs yet — metrics appear as soon as the first Spec exists.
+              Create one with <code className="font-mono text-xs">/idd-framework:write-spec</code> or the Specs tab.
+            </p>
+          )}
+          {rows.length > 0 && <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -158,7 +164,7 @@ export default function MetricsPage() {
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </div>}
         </CardContent>
       </Card>
     </div>
