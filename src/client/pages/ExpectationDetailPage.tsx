@@ -25,6 +25,7 @@ import InlineStatusSelect from '@/components/InlineStatusSelect';
 import InlineField from '@/components/InlineField';
 import StickyEditBar from '@/components/StickyEditBar';
 import AdditionalFields from '@/components/AdditionalFields';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 import YamlEditor from '@/components/YamlEditor';
 
 const editSchema = z.object({
@@ -229,7 +230,7 @@ export default function ExpectationDetailPage() {
                     </FormItem>
                   )} />
                 ) : (
-                  <p className="text-sm">{expectation.description}</p>
+                  <div className="text-sm"><MarkdownRenderer variant="inline" content={expectation.description} /></div>
                 )}
               </InlineField>
             </CardContent>

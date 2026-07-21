@@ -27,6 +27,7 @@ import StickyEditBar from '@/components/StickyEditBar';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import DetailPageSkeleton from '@/components/skeletons/DetailPageSkeleton';
 import AdditionalFields from '@/components/AdditionalFields';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 import YamlEditor from '@/components/YamlEditor';
 import { Priority, IntentionStatus } from '@shared/types/enums';
 import { INTENTION_STATUS_LABELS, EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
@@ -239,7 +240,7 @@ export default function IntentionDetailPage() {
                       </FormItem>
                     )} />
                   ) : (
-                    <p className="text-sm">{intention.description}</p>
+                    <div className="text-sm"><MarkdownRenderer variant="inline" content={intention.description} /></div>
                   )}
                 </InlineField>
               </CardContent>

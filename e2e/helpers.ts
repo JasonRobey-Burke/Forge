@@ -10,6 +10,14 @@ async function apiCall<T>(path: string, options?: RequestInit): Promise<T> {
   return json.data;
 }
 
+export async function getProducts() {
+  return apiCall<any[]>('/products');
+}
+
+export async function getSpecs(productId: string) {
+  return apiCall<any[]>(`/specs?product_id=${productId}`);
+}
+
 export async function createProduct(overrides: Record<string, unknown> = {}) {
   return apiCall<any>('/products', {
     method: 'POST',

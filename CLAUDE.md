@@ -120,6 +120,7 @@ The central data layer. Key concepts:
 - **Validation:** Zod schemas in `src/shared/schemas/` are the single source of truth for validation on both client and server
 - **Data types:** TypeScript interfaces in `src/shared/types/` define all data models
 - **UI components:** Use shadcn/ui exclusively — do not introduce additional component libraries
+- **Prose rendering:** Artifact prose fields (descriptions, problem statement, vision, boundaries, deliverables, validation, `context.auth`, etc.) render as formatted markdown via `MarkdownRenderer` (`src/client/components/MarkdownRenderer.tsx`) rather than raw text. It supports two variants: `block` (default; full typography for long-form review/plan content) and `inline` (compact; no block spacing or heading scaling, for short fields and list items). Typography styling depends on the `@tailwindcss/typography` plugin registered in `tailwind.config.ts`.
 - **Server state:** React Query (TanStack Query) for all data fetching/mutations
 - **Form state:** React Hook Form with Zod resolvers
 - **View + Edit only:** Forge does not create or delete artifacts — creation is done by the IDD plugin, deletion by removing YAML files
