@@ -1,6 +1,7 @@
 import { Check, X } from 'lucide-react';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import { Badge } from '@/components/ui/badge';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 
 interface AdditionalFieldsProps {
   extras: Record<string, unknown>;
@@ -52,7 +53,7 @@ function renderValue(key: string, value: unknown): React.ReactNode {
     return (
       <div key={key} className="space-y-1">
         <p className="text-sm font-medium text-muted-foreground">{formatKey(key)}</p>
-        <p className="text-sm whitespace-pre-wrap">{value}</p>
+        <div className="text-sm whitespace-pre-wrap"><MarkdownRenderer variant="inline" content={value} /></div>
       </div>
     );
   }

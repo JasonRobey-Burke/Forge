@@ -293,7 +293,7 @@ export default function SpecDetailPage() {
         {!editingYaml && <div className="space-y-3">
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-base">Description</CardTitle></CardHeader>
-            <CardContent><p className="text-sm">{spec.description}</p></CardContent>
+            <CardContent><div className="text-sm"><MarkdownRenderer variant="inline" content={spec.description} /></div></CardContent>
           </Card>
 
           <GapCheckSection spec={spec} />
@@ -306,7 +306,7 @@ export default function SpecDetailPage() {
                   <p className="text-sm font-medium mb-1">Stack</p>
                   <div className="flex flex-wrap gap-1">
                     {spec.context.stack.map((item, i) => (
-                      <Badge key={i} variant="secondary">{item}</Badge>
+                      <Badge key={i} variant="secondary"><MarkdownRenderer variant="inline" content={item} /></Badge>
                     ))}
                   </div>
                 </div>
@@ -316,7 +316,7 @@ export default function SpecDetailPage() {
                   <p className="text-sm font-medium mb-1">Patterns</p>
                   <div className="flex flex-wrap gap-1">
                     {spec.context.patterns.map((item, i) => (
-                      <Badge key={i} variant="secondary">{item}</Badge>
+                      <Badge key={i} variant="secondary"><MarkdownRenderer variant="inline" content={item} /></Badge>
                     ))}
                   </div>
                 </div>
@@ -326,7 +326,7 @@ export default function SpecDetailPage() {
                   <p className="text-sm font-medium mb-1">Conventions</p>
                   <div className="flex flex-wrap gap-1">
                     {spec.context.conventions.map((item, i) => (
-                      <Badge key={i} variant="secondary">{item}</Badge>
+                      <Badge key={i} variant="secondary"><MarkdownRenderer variant="inline" content={item} /></Badge>
                     ))}
                   </div>
                 </div>
@@ -334,7 +334,7 @@ export default function SpecDetailPage() {
               {spec.context.auth && (
                 <div>
                   <p className="text-sm font-medium mb-1">Auth</p>
-                  <p className="text-sm text-muted-foreground">{spec.context.auth}</p>
+                  <div className="text-sm text-muted-foreground"><MarkdownRenderer variant="inline" content={spec.context.auth} /></div>
                 </div>
               )}
             </CardContent>
@@ -345,7 +345,7 @@ export default function SpecDetailPage() {
               <CardHeader className="pb-2"><CardTitle className="text-base">Boundaries</CardTitle></CardHeader>
               <CardContent>
                 <ul className="list-disc list-inside space-y-1">
-                  {spec.boundaries.map((b, i) => <li key={i} className="text-sm">{b}</li>)}
+                  {spec.boundaries.map((b, i) => <li key={i} className="text-sm"><MarkdownRenderer variant="inline" content={b} /></li>)}
                 </ul>
               </CardContent>
             </Card>
@@ -356,7 +356,7 @@ export default function SpecDetailPage() {
               <CardHeader className="pb-2"><CardTitle className="text-base">Deliverables</CardTitle></CardHeader>
               <CardContent>
                 <ul className="list-disc list-inside space-y-1">
-                  {spec.deliverables.map((d, i) => <li key={i} className="text-sm">{d}</li>)}
+                  {spec.deliverables.map((d, i) => <li key={i} className="text-sm"><MarkdownRenderer variant="inline" content={d} /></li>)}
                 </ul>
               </CardContent>
             </Card>
@@ -370,7 +370,7 @@ export default function SpecDetailPage() {
                   <div>
                     <p className="text-sm font-medium mb-1">Automated</p>
                     <ul className="list-disc list-inside space-y-1">
-                      {spec.validation_automated.map((v, i) => <li key={i} className="text-sm">{v}</li>)}
+                      {spec.validation_automated.map((v, i) => <li key={i} className="text-sm"><MarkdownRenderer variant="inline" content={v} /></li>)}
                     </ul>
                   </div>
                 )}
@@ -378,7 +378,7 @@ export default function SpecDetailPage() {
                   <div>
                     <p className="text-sm font-medium mb-1">Human</p>
                     <ul className="list-disc list-inside space-y-1">
-                      {spec.validation_human.map((v, i) => <li key={i} className="text-sm">{v}</li>)}
+                      {spec.validation_human.map((v, i) => <li key={i} className="text-sm"><MarkdownRenderer variant="inline" content={v} /></li>)}
                     </ul>
                   </div>
                 )}

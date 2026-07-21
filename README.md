@@ -9,6 +9,7 @@ Repo-local web UI for [Intent-Driven Development](https://github.com/JasonRobey-
 - **Pipeline reports** — Gap-check reports, execution reports, and validation reviews from `docs/reviews/` are browsable and linked from each Spec
 - **Pipeline metrics** — A per-product Metrics view computed read-only from artifacts already on disk: Gap-Check First-Round Pass Rate, average rounds-to-pass, execution-report gap counts, review-stage First-Pass Rate, cycle time, and review queue depth
 - **Artifact hierarchy** — Browse Products, Intentions, Expectations, and Specs with full detail and inline editing
+- **Markdown rendering** — Descriptions, problem statement, vision, boundaries, deliverables, and other prose fields render as formatted markdown (bold, lists, headings, code, tables) instead of raw text
 - **Completeness checklist** — Gates Draft → Ready transitions with 11 criteria; supports override with audit trail
 - **YAML editing** — Edit any artifact's raw YAML directly in the browser
 - **Spec export** — Export Specs as AI-ready Markdown prompts or structured YAML

@@ -26,6 +26,7 @@ import IntentionProgress from '@/components/IntentionProgress';
 import CopyCommand from '@/components/CopyCommand';
 import NewBadge from '@/components/NewBadge';
 import AdditionalFields from '@/components/AdditionalFields';
+import MarkdownRenderer from '@/components/MarkdownRenderer';
 import YamlEditor from '@/components/YamlEditor';
 import CollapsibleSection from '@/components/CollapsibleSection';
 import TermHint from '@/components/TermHint';
@@ -224,7 +225,7 @@ export default function ProductDetailPage() {
               />
             </InlineField>
           ) : (
-            <p className="text-muted-foreground">{product.problem_statement}</p>
+            <div className="text-muted-foreground"><MarkdownRenderer variant="inline" content={product.problem_statement} /></div>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <TermHint term="Intention" description="Outcome-oriented goal that can depend on other intentions." />
@@ -294,7 +295,7 @@ export default function ProductDetailPage() {
                     </FormItem>
                   )} />
                 ) : (
-                  <p className="text-sm">{product.vision}</p>
+                  <div className="text-sm"><MarkdownRenderer variant="inline" content={product.vision} /></div>
                 )}
               </InlineField>
             </div>
