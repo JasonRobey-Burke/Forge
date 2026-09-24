@@ -1,7 +1,9 @@
 # Forge product-owner workspace
 
 Date: 2026-09-24
-Status: Written design for review; product implementation has not started.
+Status: Approved 2026-09-24; product implementation has not started.
+Written-design approval: user reviewed the design and mockup and replied “Looks good to me!” through the originating task. This includes the Draft-only intention/expectation creation policy.
+Implementation plan: [Product workspace implementation plan](../plans/2026-09-24-product-workspace.md).
 Scope approval: originating task 01a0d3b6-1851-7ea3-8781-1a8155141dd9 approved the product workspace proposal and its five-stage delivery sequence.
 
 ## Purpose and success
@@ -107,7 +109,7 @@ Intention steps: choose product, enter purpose/title, description and rationale,
 
 Canonical creation shapes and status casing must be verified against the installed IDD framework before implementing this stage. IDs are allocated from a fresh directory scan and files created exclusively (`wx`); collisions retry with the next ID and never replace existing files. Parent existence and product scope are checked again at commit. Return the newly parsed entity/revision. Partial/failed creation never navigates away from the draft.
 
-**Review decision:** confirm this narrow Draft-only creation policy, replacing the current view/edit-only policy for these two artifact types. If the user wants IDD-owned creation retained, ship a guided handoff instead. This decision does not block the safe editing/Overview slice.
+**Approved decision (2026-09-24):** user-confirmed Draft-only creation replaces the current view/edit-only policy for intentions and expectations. No further creation-policy approval is required. The safe editing/Overview slice remains the first implementation checkpoint.
 
 ## Delivery boundaries
 
@@ -131,4 +133,4 @@ Do not widen scope to orchestration, server deployment, external service changes
 
 ## Design self-review
 
-The design preserves all five approved delivery stages. No aggregate percentage, automatic validation, inferred planning dates or destructive migration is introduced. Creation policy is the sole product-semantics decision called out for confirmation; source-preserving write behavior and implementation checks are concrete requirements. The mockup is intentionally illustrative and must not be mistaken for the current repository's delivery state.
+The design preserves all five approved delivery stages. No aggregate percentage, automatic validation, inferred planning dates or destructive migration is introduced. Creation policy was the sole product-semantics decision called out for confirmation and is now approved; source-preserving write behavior and implementation checks are concrete requirements. The mockup is intentionally illustrative and must not be mistaken for the current repository's delivery state.
