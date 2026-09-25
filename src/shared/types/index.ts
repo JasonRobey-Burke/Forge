@@ -1,3 +1,5 @@
+export * from './workspace.js';
+export * from './source.js';
 export * from './enums.js';
 export * from './product.js';
 export * from './intention.js';

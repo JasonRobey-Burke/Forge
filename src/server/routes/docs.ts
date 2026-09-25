@@ -1,3 +1,6 @@
+import { readEvidence } from '../lib/evidenceFiles.js';
+import { requireRevision, sourceMeta } from '../middleware/precondition.js';
+import type { ArtifactType } from '../../shared/types/source.js';
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
@@ -26,11 +29,12 @@ export default function docsRouter(docsDir: string): Router {
         meta: null,
       });
     }
-    res.json({ data: { id, type, content }, error: null, meta: null });
+    res.json({ data: { id, type, content }, error: null, meta: sourceMeta(res,type as ArtifactType,id) });
   });
 
   // PUT /api/docs/raw/:type/:id — save raw YAML file content
   router.put('/raw/:type/:id', async (req, res) => {
+    const revision = requireRevision(req);
     const { type, id } = req.params;
     const { content } = req.body;
     if (!VALID_TYPES.includes(type)) {
@@ -47,7 +51,7 @@ export default function docsRouter(docsDir: string): Router {
         meta: null,
       });
     }
-    const saved = getStore().saveRawFileContent(type, id, content);
+    const saved = await getStore().saveRawFileContent(type, id, content, revision);
     if (!saved) {
       return res.status(404).json({
         data: null,
@@ -55,7 +59,7 @@ export default function docsRouter(docsDir: string): Router {
         meta: null,
       });
     }
-    res.json({ data: { id, type, saved: true }, error: null, meta: null });
+    res.json({ data: { id, type, saved: true }, error: null, meta: sourceMeta(res,type as ArtifactType,id) });
   });
 
   // GET /api/docs/plans — list plan markdown files
@@ -78,10 +82,11 @@ export default function docsRouter(docsDir: string): Router {
 
   // GET /api/docs/plans/:name — return a single plan's markdown content
   router.get('/plans/:name', async (req, res) => {
-    const name = decodeURIComponent(req.params.name);
-    const filePath = path.join(docsDir, 'superpowers', 'plans', `${name}.md`);
+    const name = req.params.name;
+    const relativePath = `superpowers/plans/${name}.md`;
+    if (name.includes('/') || name.includes('\\')) return res.status(400).json({data:null,error:{code:'INVALID_PATH',message:'Select a plan by its filename.'},meta:null});
     try {
-      const content = await fs.promises.readFile(filePath, 'utf-8');
+      const content = await readEvidence(docsDir, relativePath);
       res.json({ data: { name, content }, error: null, meta: null });
     } catch {
       res.status(404).json({
@@ -112,10 +117,11 @@ export default function docsRouter(docsDir: string): Router {
 
   // GET /api/docs/reviews/:name — return a single review's markdown content
   router.get('/reviews/:name', async (req, res) => {
-    const name = decodeURIComponent(req.params.name);
-    const filePath = path.join(docsDir, 'reviews', `${name}.md`);
+    const name = req.params.name;
+    const relativePath = `reviews/${name}.md`;
+    if (name.includes('/') || name.includes('\\')) return res.status(400).json({data:null,error:{code:'INVALID_PATH',message:'Select a review by its filename.'},meta:null});
     try {
-      const content = await fs.promises.readFile(filePath, 'utf-8');
+      const content = await readEvidence(docsDir, relativePath);
       res.json({ data: { name, content }, error: null, meta: null });
     } catch {
       res.status(404).json({

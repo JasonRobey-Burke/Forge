@@ -72,7 +72,7 @@ export async function startServer(options: ServerOptions = {}) {
   };
 
   // Start file watcher for live refresh
-  startFileWatcher(docsDir, store, (event, filePath) => {
+  await startFileWatcher(docsDir, store, (event, filePath) => {
     const message = `event: file-change\ndata: ${JSON.stringify({ event, file: filePath })}\n\n`;
     for (const client of sseClients) {
       client.write(message);

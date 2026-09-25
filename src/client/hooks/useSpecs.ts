@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, apiFetchSourced, apiFetchSourcedList } from '@/lib/api';
 import type { Spec, UpdateSpecInput } from '@shared/types';
 
 export const specKeys = {
@@ -11,7 +11,7 @@ export const specKeys = {
 export function useSpecs(productId: string) {
   return useQuery({
     queryKey: specKeys.all(productId),
-    queryFn: () => apiFetch<Spec[]>(`/specs?product_id=${productId}`),
+    queryFn: () => apiFetchSourcedList<Spec>(`/specs?product_id=${productId}`),
     enabled: !!productId,
   });
 }
@@ -19,7 +19,7 @@ export function useSpecs(productId: string) {
 export function useSpec(id: string) {
   return useQuery({
     queryKey: specKeys.detail(id),
-    queryFn: () => apiFetch<Spec>(`/specs/${id}`),
+    queryFn: () => apiFetchSourced<Spec>(`/specs/${id}`),
     enabled: !!id,
   });
 }
@@ -27,9 +27,13 @@ export function useSpec(id: string) {
 export function useUpdateSpec() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...input }: UpdateSpecInput & { id: string; product_id: string }) =>
-      apiFetch<Spec>(`/specs/${id}`, { method: 'PUT', body: JSON.stringify(input) }),
+    mutationFn: ({ id, revision, product_id, ...input }: UpdateSpecInput & { id: string; product_id: string; revision: string }) =>
+      apiFetchSourced<Spec>(`/specs/${id}`, { method: 'PUT', headers: {'If-Match':revision}, body: JSON.stringify(input) }),
     onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['workspace'] });
+      qc.invalidateQueries({ queryKey: ['raw-yaml'] });
+      qc.invalidateQueries({ queryKey: ['specs'] });
+      qc.invalidateQueries({ queryKey: ['expectations'] });
       qc.invalidateQueries({ queryKey: specKeys.all(vars.product_id) });
       qc.invalidateQueries({ queryKey: specKeys.detail(vars.id) });
     },
@@ -47,9 +51,13 @@ export function useSpecExpectations(specId: string) {
 export function useAcknowledgeWarnings() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ specId }: { specId: string }) =>
-      apiFetch<Spec>(`/specs/${specId}/acknowledge-warnings`, { method: 'POST' }),
+    mutationFn: ({ specId, revision }: { specId: string; revision: string }) =>
+      apiFetchSourced<Spec>(`/specs/${specId}/acknowledge-warnings`, { method: 'POST', headers: {'If-Match':revision} }),
     onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['workspace'] });
+      qc.invalidateQueries({ queryKey: ['raw-yaml'] });
+      qc.invalidateQueries({ queryKey: ['specs'] });
+      qc.invalidateQueries({ queryKey: ['expectations'] });
       qc.invalidateQueries({ queryKey: specKeys.detail(vars.specId) });
       qc.invalidateQueries({ queryKey: ['specs'] });
     },
@@ -59,12 +67,17 @@ export function useAcknowledgeWarnings() {
 export function useLinkExpectations() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ specId, expectationIds }: { specId: string; expectationIds: string[] }) =>
-      apiFetch<{ linked: true }>(`/specs/${specId}/expectations`, {
+    mutationFn: ({ specId, expectationIds, revision }: { specId: string; expectationIds: string[]; revision: string }) =>
+      apiFetchSourced<{ linked: true }>(`/specs/${specId}/expectations`, {
         method: 'PUT',
+        headers: {'If-Match':revision},
         body: JSON.stringify({ expectation_ids: expectationIds }),
       }),
     onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['workspace'] });
+      qc.invalidateQueries({ queryKey: ['raw-yaml'] });
+      qc.invalidateQueries({ queryKey: ['specs'] });
+      qc.invalidateQueries({ queryKey: ['expectations'] });
       qc.invalidateQueries({ queryKey: specKeys.expectations(vars.specId) });
     },
   });

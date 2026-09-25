@@ -136,6 +136,9 @@ describe('YamlStore — edit-experience operations', () => {
 
   beforeEach(() => {
     docsDir = tmpDocsDir();
+    write('products', 'PROD-1.yaml', ['product:', '  id: PROD-1', '  name: One']);
+    write('products', 'PROD-2.yaml', ['product:', '  id: PROD-2', '  name: Two']);
+    write('specs', 'SPEC-z.yaml', ['spec:', '  id: SPEC-z', '  product: PROD-1', '  title: Dependency', '  status: draft']);
     write('intentions', 'INT-1.yaml', [
       'intention:', '  id: "INT-1"', '  product_id: "PROD-1"', '  title: "One"', '  status: "defined"',
     ]);
@@ -172,7 +175,7 @@ describe('YamlStore — edit-experience operations', () => {
   it('updates depends_on and intentions and round-trips them through YAML', async () => {
     const store = new YamlStore(docsDir);
     await store.init();
-    const updated = store.updateSpec('SPEC-w', { depends_on: ['SPEC-z'], intentions: ['INT-1'] });
+    const updated = await store.updateSpec('SPEC-w', { depends_on: ['SPEC-z'], intentions: ['INT-1'] }, store.getSource({ type: 'specs', id: 'SPEC-w' })!.revision);
     expect(updated?.depends_on).toEqual(['SPEC-z']);
     expect(updated?.intentions).toEqual(['INT-1']);
 
@@ -182,7 +185,7 @@ describe('YamlStore — edit-experience operations', () => {
     expect(reread.getSpec('SPEC-w')?.intentions).toEqual(['INT-1']);
 
     // clearing writes them away entirely
-    store.updateSpec('SPEC-w', { depends_on: [] });
+    await store.updateSpec('SPEC-w', { depends_on: [] }, store.getSource({ type: 'specs', id: 'SPEC-w' })!.revision);
     const cleared = new YamlStore(docsDir);
     await cleared.init();
     expect(cleared.getSpec('SPEC-w')?.depends_on).toBeUndefined();
@@ -191,7 +194,7 @@ describe('YamlStore — edit-experience operations', () => {
   it('acknowledges gap-check warnings and persists through YAML write-back', async () => {
     const store = new YamlStore(docsDir);
     await store.init();
-    const result = store.acknowledgeGapCheckWarnings('SPEC-w');
+    const result = await store.acknowledgeGapCheckWarnings('SPEC-w', store.getSource({ type: 'specs', id: 'SPEC-w' })!.revision);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.spec.gap_check?.warnings_acknowledged).toBe(true);
 
@@ -210,9 +213,9 @@ describe('YamlStore — edit-experience operations', () => {
     ]);
     const store = new YamlStore(docsDir);
     await store.init();
-    const result = store.acknowledgeGapCheckWarnings('SPEC-p');
+    const result = await store.acknowledgeGapCheckWarnings('SPEC-p', store.getSource({ type: 'specs', id: 'SPEC-p' })!.revision);
     expect(result).toEqual({ ok: false, error: 'NOT_WARNINGS' });
-    const missing = store.acknowledgeGapCheckWarnings('SPEC-nope');
+    const missing = await store.acknowledgeGapCheckWarnings('SPEC-nope', '"' + '0'.repeat(64) + '"');
     expect(missing).toEqual({ ok: false, error: 'NOT_FOUND' });
   });
 });

@@ -16,12 +16,13 @@ export const createSpecSchema = z.object({
 });
 
 export const updateSpecSchema = z.object({
+  expectation_ids: z.array(z.string()).optional(),
   title: z.string().min(1).max(255).optional(),
   description: z.string().min(1).optional(),
   phase: z.string().optional(),
   complexity: z.string().optional(),
   owner: z.string().optional(),
-  context: productContextSchema.optional(),
+  context: productContextSchema.partial().optional(),
   boundaries: z.array(z.string()).optional(),
   deliverables: z.array(z.string()).optional(),
   validation_automated: z.array(z.string()).optional(),
@@ -29,7 +30,7 @@ export const updateSpecSchema = z.object({
   peer_reviewed: z.boolean().optional(),
   depends_on: z.array(z.string()).optional(),
   intentions: z.array(z.string()).optional(),
-});
+}).strict();
 
 export type CreateSpecInput = z.infer<typeof createSpecSchema>;
 export type UpdateSpecInput = z.infer<typeof updateSpecSchema>;

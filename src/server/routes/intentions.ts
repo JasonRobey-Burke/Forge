@@ -1,3 +1,6 @@
+import { createIntentionDraft } from '../services/artifactCreation.js';
+import { createIntentionDraftSchema } from '../../shared/schemas/creation.js';
+import { precondition, requireRevision, sourceMeta, listSources } from '../middleware/precondition.js';
 import { Router, type Request } from 'express';
 import { validate } from '../middleware/validate.js';
 import { updateIntentionSchema } from '../../shared/schemas/intention.js';
@@ -5,6 +8,12 @@ import * as intentionService from '../services/intention.js';
 import * as depService from '../services/intentionDependencies.js';
 
 const router = Router();
+router.use(precondition);
+router.post('/',validate(createIntentionDraftSchema),async(req,res)=>{
+  const result=await createIntentionDraft(req.body,requireRevision(req));
+  res.status(201).json({data:result.data,error:null,meta:{source:result.source}});
+});
+
 
 // GET /api/intentions?product_id=xxx
 router.get('/', async (req, res) => {
@@ -17,7 +26,7 @@ router.get('/', async (req, res) => {
     });
   }
   const intentions = await intentionService.listIntentions(productId);
-  res.json({ data: intentions, error: null, meta: { count: intentions.length } });
+  res.json({ data: intentions, error: null, meta: { count: intentions.length, sources: listSources('intentions', intentions) } });
 });
 
 // GET /api/intentions/:id
@@ -30,12 +39,12 @@ router.get('/:id', async (req: Request<{ id: string }>, res) => {
       meta: null,
     });
   }
-  res.json({ data: intention, error: null, meta: null });
+  res.json({ data: intention, error: null, meta: sourceMeta(res,'intentions',req.params.id) });
 });
 
 // PUT /api/intentions/:id
 router.put('/:id', validate(updateIntentionSchema), async (req: Request<{ id: string }>, res) => {
-  const intention = await intentionService.updateIntention(req.params.id, req.body);
+  const intention = await intentionService.updateIntention(req.params.id, req.body, requireRevision(req));
   if (!intention) {
     return res.status(404).json({
       data: null,
@@ -43,7 +52,7 @@ router.put('/:id', validate(updateIntentionSchema), async (req: Request<{ id: st
       meta: null,
     });
   }
-  res.json({ data: intention, error: null, meta: null });
+  res.json({ data: intention, error: null, meta: sourceMeta(res,'intentions',req.params.id) });
 });
 
 // POST /api/intentions/:id/dependencies
@@ -57,7 +66,7 @@ router.post('/:id/dependencies', async (req: Request<{ id: string }>, res) => {
     });
   }
 
-  const result = await depService.addDependency(req.params.id, depends_on_id);
+  const result = await depService.addDependency(req.params.id, depends_on_id, requireRevision(req));
   if (!result.success) {
     return res.status(400).json({
       data: null,
@@ -65,12 +74,12 @@ router.post('/:id/dependencies', async (req: Request<{ id: string }>, res) => {
       meta: null,
     });
   }
-  res.status(201).json({ data: { created: true }, error: null, meta: null });
+  res.status(201).json({ data: { created: true }, error: null, meta: sourceMeta(res,'intentions',req.params.id) });
 });
 
 // DELETE /api/intentions/:id/dependencies/:depId
 router.delete('/:id/dependencies/:depId', async (req: Request<{ id: string; depId: string }>, res) => {
-  const removed = await depService.removeDependency(req.params.id, req.params.depId);
+  const removed = await depService.removeDependency(req.params.id, req.params.depId, requireRevision(req));
   if (!removed) {
     return res.status(404).json({
       data: null,
@@ -78,7 +87,7 @@ router.delete('/:id/dependencies/:depId', async (req: Request<{ id: string; depI
       meta: null,
     });
   }
-  res.json({ data: { removed: true }, error: null, meta: null });
+  res.json({ data: { removed: true }, error: null, meta: sourceMeta(res,'intentions',req.params.id) });
 });
 
 export default router;

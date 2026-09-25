@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+import type { SourceMeta } from '@shared/types/source';
 import { useForm, FormProvider, useWatch, useFormContext } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,8 +29,8 @@ import CompletenessChecklist from '@/components/CompletenessChecklist';
 import { compareContext } from '@/lib/contextDiff';
 
 const formSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(255),
-  description: z.string().min(1, 'Description is required'),
+  title: z.string().max(255),
+  description: z.string(),
   phase: z.string(),
   complexity: z.string(),
   owner: z.string(),
@@ -80,7 +82,7 @@ function toApiValues(values: FormValues, productId: string): CreateSpecInput {
     description: values.description,
     phase: values.phase as CreateSpecInput['phase'],
     complexity: values.complexity as CreateSpecInput['complexity'],
-    ...(values.owner.trim() ? { owner: values.owner.trim() } : {}),
+    owner: values.owner.trim(),
     context: {
       stack: values.context.stack.map((s) => s.value).filter(Boolean),
       patterns: values.context.patterns.map((p) => p.value).filter(Boolean),
@@ -184,9 +186,11 @@ function ValidationBadge() {
 
 // Sidebar metadata fields (Phase, Complexity, Peer Reviewed) that live inside FormProvider
 function MetadataSidebar({
+  source,
   defaultSpec,
   checklistExpectations,
 }: {
+  source?: SourceMeta;
   defaultSpec?: Partial<Spec>;
   checklistExpectations?: ChecklistExpectation[];
 }) {
@@ -200,8 +204,8 @@ function MetadataSidebar({
         name="phase"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Phase</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <FormLabel>Phase (use the transition actions on the Spec page)</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Select phase" />
@@ -224,7 +228,7 @@ function MetadataSidebar({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Complexity</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select onValueChange={field.onChange} value={field.value} disabled={!!(source?.read_only_fields.complexity??source?.read_only_fields["*"])}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Select complexity" />
@@ -248,7 +252,7 @@ function MetadataSidebar({
           <FormItem>
             <FormLabel>Owner</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="Who owns this spec?" />
+              <Input readOnly={!!(source?.read_only_fields.owner??source?.read_only_fields["*"])} {...field} placeholder="Who owns this spec?" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -259,6 +263,7 @@ function MetadataSidebar({
         <input
           type="checkbox"
           id="peer_reviewed"
+          disabled={!!(source?.read_only_fields.peer_reviewed??source?.read_only_fields["*"])}
           {...form.register('peer_reviewed')}
           className="h-4 w-4 rounded border-input"
         />
@@ -279,6 +284,10 @@ function MetadataSidebar({
 }
 
 interface SpecFormProps {
+  pending?:boolean;
+  onDraftChange?: (values: CreateSpecInput) => void;
+  resetVersion?: number;
+  source?: SourceMeta;
   productId: string;
   productContext?: ProductContext;
   defaultValues?: Partial<CreateSpecInput>;
@@ -292,7 +301,8 @@ interface SpecFormProps {
 }
 
 export default function SpecForm({
-  productId,
+  productId, pending=false,
+  onDraftChange, resetVersion, source,
   productContext,
   defaultValues,
   defaultSpec,
@@ -309,6 +319,11 @@ export default function SpecForm({
     defaultValues: toFormValues(defaultValues),
   });
 
+  const change=useRef(onDraftChange);change.current=onDraftChange;
+  useEffect(()=>{const subscription=form.watch(values=>{change.current?.(toApiValues(values as FormValues,productId));});return()=>subscription.unsubscribe();},[form.watch,productId]);
+  const reset = useRef(resetVersion);
+  useEffect(()=>{if(reset.current!==resetVersion){reset.current=resetVersion;form.reset(toFormValues(defaultValues));}},[resetVersion]);
+  const readonly=(field:string)=>source?.read_only_fields[field]??source?.read_only_fields['*']??(field==='context'?Object.entries(source?.read_only_fields??{}).find(([key])=>key.startsWith('context.'))?.[1]:undefined);
   function handleSubmit(values: FormValues) {
     onSubmit(toApiValues(values, productId));
   }
@@ -322,7 +337,7 @@ export default function SpecForm({
           <FormItem>
             <FormLabel>Title</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="Spec title" />
+              <Input disabled={pending} readOnly={!!readonly("title")} {...field} placeholder="Spec title" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -336,19 +351,19 @@ export default function SpecForm({
           <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
-              <Textarea {...field} placeholder="Describe what this spec covers" rows={4} />
+              <Textarea disabled={pending} readOnly={!!readonly("description")} {...field} placeholder="Describe what this spec covers" rows={4} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
 
-      <div className="flex gap-3">
+      <div className="sticky top-0 z-10 flex gap-3 border-y bg-white py-3">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Saving...' : submitLabel}
         </Button>
         <Button type="button" variant="outline" asChild>
-          <Link to={cancelHref ?? `/products/${productId}/specs`}>Cancel</Link>
+          <Link aria-disabled={pending} onClick={event=>{if(pending)event.preventDefault();}} to={cancelHref ?? `/products/${productId}/specs`}>Cancel</Link>
         </Button>
       </div>
 
@@ -357,7 +372,7 @@ export default function SpecForm({
         defaultOpen={true}
         badge={productContext ? <ContextDiffBadge productContext={productContext} /> : undefined}
       >
-        <ContextEditor productContext={productContext} />
+        <fieldset disabled={pending||!!readonly("context")}><ContextEditor productContext={productContext} /></fieldset>{readonly("context")&&<p className="text-sm text-amber-800">{readonly("context")}</p>}
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -397,7 +412,7 @@ export default function SpecForm({
         <p className="mb-2 text-xs text-muted-foreground">
           Boundaries define what this spec should explicitly avoid changing.
         </p>
-        <DynamicListEditor name="boundaries" label="Boundaries" />
+        <fieldset disabled={pending||!!readonly("boundaries")}><DynamicListEditor name="boundaries" label="Boundaries" /></fieldset>{readonly("boundaries")&&<p className="text-sm text-amber-800">{readonly("boundaries")}</p>}
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -408,7 +423,7 @@ export default function SpecForm({
         <p className="mb-2 text-xs text-muted-foreground">
           Deliverables are concrete outputs expected when this spec is complete.
         </p>
-        <DynamicListEditor name="deliverables" label="Deliverables" />
+        <fieldset disabled={pending||!!readonly("deliverables")}><DynamicListEditor name="deliverables" label="Deliverables" /></fieldset>{readonly("deliverables")&&<p className="text-sm text-amber-800">{readonly("deliverables")}</p>}
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -419,8 +434,8 @@ export default function SpecForm({
         <p className="mb-2 text-xs text-muted-foreground">
           Include both automated checks and human review criteria before marking done.
         </p>
-        <DynamicListEditor name="validation_automated" label="Automated Validation" />
-        <DynamicListEditor name="validation_human" label="Human Validation" />
+        <fieldset disabled={pending||!!readonly("validation_automated")}><DynamicListEditor name="validation_automated" label="Automated Validation" /></fieldset>{readonly("validation_automated")&&<p className="text-sm text-amber-800">{readonly("validation_automated")}</p>}
+        <fieldset disabled={pending||!!readonly("validation_human")}><DynamicListEditor name="validation_human" label="Human Validation" /></fieldset>{readonly("validation_human")&&<p className="text-sm text-amber-800">{readonly("validation_human")}</p>}
       </CollapsibleSection>
 
     </form>
@@ -429,24 +444,24 @@ export default function SpecForm({
   return (
     <FormProvider {...form}>
       {/* Mobile: sidebar content above form; lg+: two-column grid */}
-      <div className="lg:hidden space-y-6 mb-6">
-        <MetadataSidebar
+      <fieldset disabled={pending} className="lg:hidden space-y-6 mb-6">
+        <MetadataSidebar source={source}
           defaultSpec={defaultSpec}
           checklistExpectations={checklistExpectations}
         />
-      </div>
+      </fieldset>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           {leftColumn}
         </div>
-        <div className="hidden lg:block lg:col-span-1">
+        <fieldset disabled={pending} className="hidden lg:block lg:col-span-1">
           <div className="lg:sticky lg:top-4 self-start">
-            <MetadataSidebar
+            <MetadataSidebar source={source}
               defaultSpec={defaultSpec}
               checklistExpectations={checklistExpectations}
             />
           </div>
-        </div>
+        </fieldset>
       </div>
     </FormProvider>
   );

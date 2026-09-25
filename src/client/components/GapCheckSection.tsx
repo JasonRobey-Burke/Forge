@@ -27,7 +27,7 @@ const KIND_ICONS: Record<ReviewKind, typeof FileText> = {
 };
 
 interface GapCheckSectionProps {
-  spec: Spec;
+  spec: Spec & {source: import('@shared/types/source').SourceMeta};
 }
 
 /**
@@ -42,7 +42,7 @@ export default function GapCheckSection({ spec }: GapCheckSectionProps) {
 
   function handleAcknowledge() {
     acknowledge.mutate(
-      { specId: spec.id },
+      { specId: spec.id, revision: spec.source.revision },
       {
         onSuccess: () => toast.success('Warnings acknowledged — recorded on the gap_check annotation'),
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to acknowledge warnings'),

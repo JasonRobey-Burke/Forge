@@ -52,17 +52,17 @@ export function useFileWatcher() {
 
       if (data.event === 'add') {
         toast.info(`New ${entityType} detected`, {
-          description: 'The list has been updated.',
+          description: 'Checking for the latest source.',
           duration: 4000,
         });
       } else if (data.event === 'change') {
-        toast.info(`${capitalize(entityType)} updated externally`, {
-          description: 'Changes have been refreshed.',
+        toast.info('File change detected', {
+          description: 'Checking for the latest source.',
           duration: 3000,
         });
       } else if (data.event === 'unlink') {
         toast.info(`${capitalize(entityType)} removed`, {
-          description: 'The list has been updated.',
+          description: 'Checking for the latest source.',
           duration: 3000,
         });
       }

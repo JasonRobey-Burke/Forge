@@ -17,7 +17,7 @@ import CardGridSkeleton from '@/components/skeletons/CardGridSkeleton';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useProducts } from '@/hooks/useProducts';
 import { useSessionState } from '@/hooks/useSessionState';
-import { apiFetch } from '@/lib/api';
+import { apiFetchSourcedList } from '@/lib/api';
 import { PhaseBadge } from '@/lib/phaseColors';
 import type { Product, Spec } from '@shared/types';
 import { UserCheck } from 'lucide-react';
@@ -33,7 +33,7 @@ export default function MyWorkPage() {
   const specQueries = useQueries({
     queries: (products ?? []).map((product: Product) => ({
       queryKey: ['specs', product.id],
-      queryFn: () => apiFetch<Spec[]>(`/specs?product_id=${product.id}`),
+      queryFn: () => apiFetchSourcedList<Spec>(`/specs?product_id=${product.id}`),
       enabled: !!product.id,
     })),
   });

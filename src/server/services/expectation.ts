@@ -13,6 +13,6 @@ export async function getExpectation(id: string): Promise<Expectation | null> {
   return getStore().getExpectation(id);
 }
 
-export async function updateExpectation(id: string, input: UpdateExpectationInput): Promise<Expectation | null> {
-  return getStore().updateExpectation(id, input);
+export async function updateExpectation(id: string, input: UpdateExpectationInput, expectedRevision: string): Promise<Expectation | null> {
+  return getStore().updateExpectation(id, input, expectedRevision);
 }

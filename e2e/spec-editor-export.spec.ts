@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { resetLegacyDocs } from './helpers';
+test.beforeEach(async () => resetLegacyDocs());
 import {
   createProduct,
   createIntention,
@@ -57,7 +59,7 @@ async function createSetup() {
 test('edit page shows five collapsible sections', async ({ page }) => {
   const { spec } = await createSetup();
 
-  await page.goto(`http://localhost:5173/specs/${spec.id}/edit`);
+  await page.goto(`/specs/${spec.id}/edit`);
   await page.waitForSelector('form');
 
   // All five section triggers should be visible
@@ -72,14 +74,16 @@ test('edit page shows five collapsible sections', async ({ page }) => {
 test('collapsible section toggles content visibility', async ({ page }) => {
   const { spec } = await createSetup();
 
-  await page.goto(`http://localhost:5173/specs/${spec.id}/edit`);
+  await page.goto(`/specs/${spec.id}/edit`);
   await page.waitForSelector('form');
 
-  // Click the Boundaries trigger to collapse it
-  const boundariesTrigger = page.locator('button', { hasText: 'Boundaries' }).first();
+  const boundariesTrigger = page.getByRole('button', { name: /^Boundaries/ }).first();
+  if (await boundariesTrigger.getAttribute('aria-expanded') !== 'true') await boundariesTrigger.click();
+  await expect(page.getByRole('button', { name: '+ Add Boundaries', exact: true })).toBeVisible();
   await boundariesTrigger.click();
 
-  // The DynamicListEditor inside should be hidden
+  await expect(page.locator('button', { hasText: '+ Add Boundaries' })).not.toBeVisible();
+  // The section content should be hidden
   // Click again to expand
   await boundariesTrigger.click();
 
@@ -93,10 +97,12 @@ test('collapsible section toggles content visibility', async ({ page }) => {
 test('edit page shows linked expectations in read-only section', async ({ page }) => {
   const { spec, expectation } = await createSetup();
 
-  await page.goto(`http://localhost:5173/specs/${spec.id}/edit`);
+  await page.goto(`/specs/${spec.id}/edit`);
   await page.waitForSelector('form');
 
-  // Expectations section should show the linked expectation title
+  const expectationsTrigger = page.getByRole('button', { name: /^Expectations/ }).first();
+  if (await expectationsTrigger.getAttribute('aria-expanded') !== 'true') await expectationsTrigger.click();
+  // Expanded expectations expose their description and edge cases.
   await expect(page.locator('text=Test expectation description')).toBeVisible();
 
   // Edge cases should be visible
@@ -110,12 +116,13 @@ test('edit page shows linked expectations in read-only section', async ({ page }
 test('detail page exports YAML file', async ({ page }) => {
   const { spec } = await createSetup();
 
-  await page.goto(`http://localhost:5173/specs/${spec.id}`);
+  await page.goto(`/specs/${spec.id}`);
   await page.waitForSelector('h1');
 
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.locator('button', { hasText: 'Export YAML' }).click(),
+    page.getByRole('menuitem', { name: /YAML/i }).or(page.getByRole('button', { name: /^Export YAML$/i })).click(),
   ]);
 
   expect(download.suggestedFilename()).toContain('.yaml');
@@ -127,12 +134,13 @@ test('detail page exports YAML file', async ({ page }) => {
 test('detail page exports Markdown file', async ({ page }) => {
   const { spec } = await createSetup();
 
-  await page.goto(`http://localhost:5173/specs/${spec.id}`);
+  await page.goto(`/specs/${spec.id}`);
   await page.waitForSelector('h1');
 
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.locator('button', { hasText: 'Export Markdown' }).click(),
+    page.getByRole('menuitem', { name: /Markdown/i }).or(page.getByRole('button', { name: /^Export Markdown$/i })).click(),
   ]);
 
   expect(download.suggestedFilename()).toContain('.md');

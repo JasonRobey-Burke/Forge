@@ -1,10 +1,12 @@
 # Forge Implementation Status
 
-Last updated: 2026-07-20
+Last updated: 2026-09-25
 
 ## Current state
 
-All three delivery specs are complete. Forge v0.6.0 is published as `@jasonrobey/idd-forge` on public npm and runs as a repo-local tool (`npx forge`) — no database, no Docker, no auth.
+The product workspace is implemented and verified in the local worktree through cycles A–J and supplemental UI checks. Selected specialist reviews are complete; closing technical review and PR-draft outcomes are recorded in the [quest record](guildhall/plans/2026-09-24-product-workspace.md). This change has not been committed, published, merged or deployed. The existing package version remains 0.6.0; the published package must not be assumed to contain this workspace.
+
+The three earlier delivery specs were recorded complete in the July status below. Those lifecycle records are distinct from verification of this local change.
 
 ## Plan inventory
 
@@ -16,6 +18,19 @@ All three delivery specs are complete. Forge v0.6.0 is published as `@jasonrobey
 3. UX backlog in `.ux-review/backlog.md`: all 22 items (P0–P3) complete as of the April execution pass.
 
 ## What is built
+
+### Product workspace (local implementation, 2026-09-24)
+
+- Product Overview, Roadmap, expandable Product map, Delivery and source-linked Evidence, with existing deep links and secondary tools retained.
+- Separate coverage, delivery and reported-validation counts; incomplete snapshots and missing/unknown evidence remain explicit. Done never implies validation.
+- Source-preserving, revision-checked editing with protected drafts, conflict comparison and explicit session recovery; no force overwrite.
+- Optional roadmap metadata, keyboard movement/reordering and user-entered target windows independent of lifecycle state; no artifact migration or write-on-read.
+- Confirmed user-authored Draft intention/expectation creation and same-product expectation reparenting with reciprocal links and recoverable multi-file persistence.
+- Legacy CRUD E2E migrated to disposable filesystem fixtures; full default Playwright selection exercises shipped capabilities without modifying real product YAML.
+
+Review corrections cover contained startup/mutation-refresh reads, protected pending edits, bounded requests, visible refresh failures, phase-filtered drilldowns, focus restoration and literal missing-child diagnostics in the Product map.
+
+See the [verification report](superpowers/reports/2026-09-24-product-workspace-verification.md) for acceptance evidence, filesystem limits and remaining follow-ups.
 
 ### Core (SPEC-001 … SPEC-003)
 
@@ -39,9 +54,18 @@ All UXRV-001 through UXRV-022 backlog items implemented — semantic phase color
 
 ## What is left to work on
 
-1. Refresh legacy E2E CRUD specs to align with the current view/edit-only API model.
-2. Add dedicated test coverage for owner assignment and My Work filtering behavior.
-3. Next feature work should start from a new spec — the current spec set is fully closed out.
+1. Forge maintainer: measure and address retained performance findings (two medium, two low), broader uncertain-creation reconciliation, missed Markdown refresh events and misleading external-edit copy after a failed GET. See the report for reviewer attribution and dependency maintenance.
+2. Validate the one-minute orientation and two-interaction editing usability targets with representative people; browser checks are not a human study.
+3. Retain the unexplained one-off stale-parent test failure as a follow-up observation; successful repeats do not establish a fix.
+4. Dedicated owner-assignment/My Work test coverage remains a previously identified follow-up outside this workspace verification claim.
+
+## Workspace verification status (2026-09-25)
+
+- `npm test`: 437/437 passing across 40 suites, 46.07 seconds; one earlier pre-delivery run had 424 pass and one stale-parent POST return 404 instead of expected 409, without an identified cause or source fix.
+- `npm run typecheck` and `npm run build`: passed; existing chunk-size/Browserslist warnings remain.
+- Default Playwright selection: 90 passed, zero failed/skipped/flaky, 213.321439 seconds. A separate coordinator run passed all four supplemental Vera cases in 7.321095 seconds: 94 unique cases across two runs, not one 94-case full run.
+- Exact 100-intention/1,000-expectation/1,000-spec fixture: first content 500.491500 ms, expansion 52.647792 ms, zero per-row GETs. These are local measurements, not an SLA.
+- Security containment correction and focused reviews completed; supplemental UI checks passed. Closing review and PR-draft outcomes belong to the quest record; no actual PR or release is claimed here.
 
 ## Verification status (2026-07-20)
 

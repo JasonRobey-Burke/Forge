@@ -1,5 +1,6 @@
+type Spec = BaseSpec & {source: import('@shared/types/source').SourceMeta};
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   DndContext,
@@ -22,7 +23,7 @@ import PhaseColumn from '@/components/PhaseColumn';
 import SpecCard from '@/components/SpecCard';
 import WipOverrideDialog from '@/components/WipOverrideDialog';
 import GateOverrideDialog from '@/components/GateOverrideDialog';
-import type { Spec } from '@shared/types';
+import type { Spec as BaseSpec } from '@shared/types';
 import type { WipLimits } from '@shared/types/product';
 import type { ApiError } from '@/lib/api';
 
@@ -44,10 +45,12 @@ interface FlowBoardProps {
   specs: Spec[];
   wipLimits: WipLimits;
   productId: string;
+  wholeProductCounts?:Record<string,number>;
+  outcomes?:Record<string,{id:string;title:string}[]>;
+  gateReasons?:Record<string,{message:string;href:string;label:string}>;
 }
 
-export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProps) {
-  const navigate = useNavigate();
+export default function FlowBoard({ specs, wipLimits, productId, wholeProductCounts, outcomes, gateReasons }: FlowBoardProps) {
   const transitionSpec = useTransitionSpec();
   const { data: staleIds } = useStaleSpecIds(productId);
   const staleSet = new Set(staleIds ?? []);
@@ -71,9 +74,11 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
     PHASES.map((phase) => [phase, specs.filter((s) => s.phase === phase)])
   );
 
+  const phaseCount=(phase:string)=>wholeProductCounts?.[phase]??specsByPhase[phase]?.length??0;
+
   function doTransition(spec: Spec, toPhase: string, overrideReason?: string) {
     transitionSpec.mutate(
-      { specId: spec.id, toPhase, overrideReason },
+      { specId: spec.id, toPhase, overrideReason, revision: spec.source.revision },
       {
         onSuccess: () => {
           const message = `Moved to ${PHASE_LABELS[toPhase] ?? toPhase}`;
@@ -98,7 +103,8 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
             setWipDialogOpen(true);
             setLiveAnnouncement(`Cannot move ${spec.title}. WIP limit reached for ${PHASE_LABELS[toPhase] ?? toPhase}`);
           } else {
-            setLiveAnnouncement(`Transition failed for ${spec.title}`);
+            toast.error(apiError.message);
+            setLiveAnnouncement(`Transition failed for ${spec.title}: ${apiError.message}`);
           }
         },
       }
@@ -114,12 +120,12 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
     const { active, over } = event;
     if (!over) return;
 
-    const spec = active.data.current?.spec as Spec;
+    const spec = activeSpec ?? active.data.current?.spec as Spec;
     const toPhase = over.id as string;
     if (spec.phase === toPhase) return;
 
     // Client-side WIP limit check for instant UX
-    const targetCount = specsByPhase[toPhase]?.length ?? 0;
+    const targetCount = phaseCount(toPhase);
     const wipResult = checkWipLimit(toPhase, targetCount, wipLimits);
     if (!wipResult.allowed) {
       setPendingMove({ spec, toPhase });
@@ -134,7 +140,7 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
   function handleMoveToPhase(spec: Spec, toPhase: string) {
     if (spec.phase === toPhase) return;
 
-    const targetCount = specsByPhase[toPhase]?.length ?? 0;
+    const targetCount = phaseCount(toPhase);
     const wipResult = checkWipLimit(toPhase, targetCount, wipLimits);
     if (!wipResult.allowed) {
       setPendingMove({ spec, toPhase });
@@ -175,12 +181,15 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
           },
         }}
       >
-        <div className="hidden md:block overflow-x-auto pb-2">
-          <div className="grid min-w-[1200px] grid-cols-6 gap-3 xl:min-w-0">
+        <div className="hidden md:block pb-2">
+          <div className="grid min-w-0 grid-cols-3 gap-3 xl:grid-cols-6">
             {PHASES.map((phase) => (
               <PhaseColumn
                 key={phase}
                 phase={phase}
+                totalCount={phaseCount(phase)}
+                outcomes={outcomes}
+                gateReasons={gateReasons}
                 specs={specsByPhase[phase] ?? []}
                 limit={getWipLimit(phase, wipLimits)}
                 onCardClick={(id) => {
@@ -200,7 +209,7 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
               <div className="flex items-center justify-between border-b px-3 py-2">
                 <span className="text-sm font-medium">{PHASE_LABELS[phase] ?? phase}</span>
                 <Badge variant="secondary" className="text-xs">
-                  {specsByPhase[phase]?.length ?? 0}
+                  {getWipLimit(phase,wipLimits)>0?`${phaseCount(phase)}/${getWipLimit(phase,wipLimits)}`:phaseCount(phase)}
                 </Badge>
               </div>
               <div className="space-y-2 p-2">
@@ -211,6 +220,8 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
                     <SpecCard
                       key={spec.id}
                       spec={spec}
+                      outcomes={outcomes?.[spec.id]}
+                      gate={gateReasons?.[spec.id]}
                       onClick={() => setPreviewSpec(spec)}
                       stale={staleSet.has(spec.id)}
                       onMoveToPhase={handleMoveToPhase}
@@ -249,9 +260,7 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
                     {previewSpec.owner && <Badge variant="outline">{previewSpec.owner}</Badge>}
                   </div>
                   <p className="text-sm text-muted-foreground">{previewSpec.description}</p>
-                  <Button type="button" onClick={() => navigate(`/specs/${previewSpec.id}`)}>
-                    Open Full Spec
-                  </Button>
+                  <Button asChild><Link to={`/specs/${previewSpec.id}`}>Open Full Spec</Link></Button>
                 </CardContent>
               </Card>
             </aside>
@@ -271,15 +280,16 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
         open={wipDialogOpen}
         onOpenChange={setWipDialogOpen}
         phase={pendingMove?.toPhase ?? ''}
-        currentCount={specsByPhase[pendingMove?.toPhase ?? '']?.length ?? 0}
+        currentCount={phaseCount(pendingMove?.toPhase??'')}
         limit={getWipLimit(pendingMove?.toPhase ?? '', wipLimits)}
         isPending={transitionSpec.isPending}
         onConfirm={(reason) => {
+          if(!reason.trim()){toast.error('Enter a reason before overriding this gate.');return;}
           if (pendingMove) {
             doTransition(
               pendingMove.spec,
               pendingMove.toPhase,
-              reason || 'WIP limit override'
+              reason.trim()
             );
           }
           setWipDialogOpen(false);
@@ -294,11 +304,12 @@ export default function FlowBoard({ specs, wipLimits, productId }: FlowBoardProp
         gateName={gateName}
         isPending={transitionSpec.isPending}
         onConfirm={(reason) => {
+          if(!reason.trim()){toast.error('Enter a reason before overriding this gate.');return;}
           if (pendingMove) {
             doTransition(
               pendingMove.spec,
               pendingMove.toPhase,
-              reason || undefined
+              reason.trim()
             );
           }
           setGateDialogOpen(false);
