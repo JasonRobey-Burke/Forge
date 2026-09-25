@@ -66,7 +66,7 @@ Changes to YAML files are detected in real time — edit files with the IDD Clau
 
 ## Product Workspace
 
-The workspace is implemented in this local checkout; this work has not been published to npm. The Quick Start commands above use the published package. To run the checkout, use `npm ci`, `npm run build`, then `npm start`.
+The product workspace is included starting with version 0.7.0. To run a source checkout, use `npm ci`, `npm run build`, then `npm start`.
 
 Overview separates expectation coverage, spec delivery and reported validation, with links to supporting records. There is no overall percent complete. Done is delivery status, not proof of validation; a reported Validated expectation still has unknown evidence unless a supported source establishes a result. Missing or unsupported reports remain visibly missing or unknown. Parse errors mark the snapshot incomplete.
 
