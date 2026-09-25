@@ -1,29 +1,33 @@
+type Spec = BaseSpec & {source: import('@shared/types/source').SourceMeta};
 import { useDroppable } from '@dnd-kit/core';
 import { Inbox } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import SpecCard from '@/components/SpecCard';
 import { PHASE_LABELS, PHASE_COLORS } from '@/lib/phaseColors';
-import type { Spec } from '@shared/types';
+import type { Spec as BaseSpec } from '@shared/types';
 
 interface PhaseColumnProps {
   phase: string;
   specs: Spec[];
   limit: number;
+  totalCount?:number;
+  outcomes?:Record<string,{id:string;title:string}[]>;
+  gateReasons?:Record<string,{message:string;href:string;label:string}>;
   onCardClick?: (specId: string) => void;
   staleSpecIds?: Set<string>;
   onMoveToPhase?: (spec: Spec, phase: string) => void;
 }
 
-export default function PhaseColumn({ phase, specs, limit, onCardClick, staleSpecIds, onMoveToPhase }: PhaseColumnProps) {
+export default function PhaseColumn({ phase, specs, limit, onCardClick, staleSpecIds, onMoveToPhase, totalCount, outcomes, gateReasons }: PhaseColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: phase });
-  const count = specs.length;
+  const count = totalCount ?? specs.length;
   const atLimit = limit > 0 && count >= limit;
 
   return (
     <div
       ref={setNodeRef}
       data-phase={phase}
-      className={`flex flex-col rounded-lg border bg-muted/30 min-w-[200px] ${isOver ? 'ring-2 ring-primary' : ''}`}
+      className={`flex flex-col rounded-lg border bg-muted/30 min-w-0 ${isOver ? 'ring-2 ring-primary' : ''}`}
     >
       <div className={`h-1 rounded-t-lg ${PHASE_COLORS[phase]?.dot ?? 'bg-slate-400'}`} />
       <div className="flex items-center justify-between px-3 py-2 border-b">
@@ -44,6 +48,8 @@ export default function PhaseColumn({ phase, specs, limit, onCardClick, staleSpe
             <SpecCard
               key={spec.id}
               spec={spec}
+              outcomes={outcomes?.[spec.id]}
+              gate={gateReasons?.[spec.id]}
               onClick={() => onCardClick?.(spec.id)}
               stale={staleSpecIds?.has(spec.id)}
               onMoveToPhase={onMoveToPhase}

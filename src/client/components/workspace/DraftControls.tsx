@@ -1,0 +1,13 @@
+import { useState } from 'react';
+import type { Versioned } from '@shared/types/source';
+import type { useArtifactDraft } from '@/hooks/useArtifactDraft';
+import { Button } from '@/components/ui/button';
+/** Shared recovery and conflict controls for long document and advanced source drafts. */
+export default function DraftControls<T>({controller,record,conflict=false,unavailable=false,onReload,onRestore,request}:{controller:ReturnType<typeof useArtifactDraft<T>>;record:Versioned<T>;conflict?:boolean;unavailable?:boolean;onReload:()=>void;onRestore:(values:T)=>void;request:(action:()=>void)=>void}) {
+  const [compare,setCompare]=useState(false),[copy,setCopy]=useState(false);const {draft}=controller;
+  return <div className="space-y-3 text-sm">{draft.recovery_unavailable&&<p role="status">Session recovery is unavailable. Your draft remains protected while this editor is open.</p>}
+    {controller.recovery&&<div className="rounded border p-3"><p>A saved draft is available. Review before restoring.</p><Button type="button" variant="outline" disabled={controller.pending} onClick={()=>{const recovered=controller.recovery!;controller.restore(recovered);onRestore(recovered.values);}}>Restore draft</Button><Button type="button" variant="ghost" disabled={controller.pending} onClick={()=>{controller.discard();onRestore(record.data);}}>Discard recovered draft</Button></div>}
+    {(draft.external_revision||conflict||unavailable)&&<div role="status" className="space-y-3 rounded border border-amber-200 bg-amber-50 p-3"><strong>File changed outside Forge</strong><p>{unavailable?'The source is unavailable. Your draft is retained.':'Your draft is protected. Compare the current source before continuing.'}</p><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={()=>setCompare(!compare)}>Compare</Button><Button type="button" variant="outline" disabled={unavailable||controller.pending} onClick={()=>request(onReload)}>Reload source</Button><Button type="button" variant="outline" onClick={async()=>{try{await navigator.clipboard.writeText(JSON.stringify(draft.values,null,2));}catch{setCopy(true);}}}>Copy draft</Button></div></div>}
+    {compare&&<section><h3 className="font-semibold">{unavailable?'Last loaded source':'Current source'}</h3><pre className="whitespace-pre-wrap break-words rounded bg-stone-100 p-3">{JSON.stringify(record.data,null,2)}</pre><h3 className="font-semibold">Your draft</h3><pre className="whitespace-pre-wrap break-words rounded bg-stone-100 p-3">{JSON.stringify(draft.values,null,2)}</pre></section>}{copy&&<label>Select and copy your draft<textarea readOnly className="w-full rounded border p-3" value={JSON.stringify(draft.values,null,2)}/></label>}
+  </div>;
+}

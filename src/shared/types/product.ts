@@ -43,11 +43,12 @@ export interface CreateProductInput {
 }
 
 export interface UpdateProductInput {
+  owner?: string;
   name?: string;
   problem_statement?: string;
   vision?: string;
   target_audience?: string;
   status?: ProductStatus;
-  context?: ProductContext;
-  wip_limits?: WipLimits;
+  context?: Partial<ProductContext>;
+  wip_limits?: Partial<WipLimits>;
 }

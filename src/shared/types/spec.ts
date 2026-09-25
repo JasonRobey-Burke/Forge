@@ -57,12 +57,13 @@ export interface CreateSpecInput {
 }
 
 export interface UpdateSpecInput {
+  expectation_ids?: string[];
   title?: string;
   description?: string;
   phase?: SpecPhase;
   complexity?: Complexity;
   owner?: string;
-  context?: ProductContext;
+  context?: Partial<ProductContext>;
   boundaries?: string[];
   deliverables?: string[];
   validation_automated?: string[];

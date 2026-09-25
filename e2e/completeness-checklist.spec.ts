@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { resetLegacyDocs } from './helpers';
+test.beforeEach(async () => resetLegacyDocs());
 import {
   createProduct,
   createIntention,
@@ -47,6 +49,7 @@ async function createCompleteSetup() {
     deliverables: ['Component'],
     validation_automated: ['Unit tests pass'],
     validation_human: ['Code review done'],
+    gap_check: { status: 'passed', blockers: 0, warnings: 0, rounds: 1, report: 'reviews/SPEC-1-gap-check.md', date: '2026-09-24T00:00:00Z' },
   });
 
   // peer_reviewed is not on createSpecSchema, so set it via update
@@ -64,20 +67,20 @@ test.describe('Completeness Checklist — bare spec shows failures', () => {
   let productId: string;
   let specId: string;
 
-  test.beforeAll(async () => {
+  test.beforeEach(async () => {
     const product = await createProduct({ name: `E2E Bare Spec Product ${Date.now()}` });
     productId = product.id;
     const spec = await createSpec(productId, { title: `E2E Bare Spec ${Date.now()}` });
     specId = spec.id;
   });
 
-  test.afterAll(async () => {
+  test.afterEach(async () => {
     await deleteEntity('products', productId);
   });
 
   test('checklist panel is visible with failure marks', async ({ page }) => {
     await page.goto(`/specs/${specId}`);
-    await expect(page.getByText('Completeness Checklist')).toBeVisible();
+    await expect(page.getByText('Completeness Checklist', { exact: true }).filter({ visible: true })).toBeVisible();
     // At least one ✗ should appear for a bare spec
     await expect(page.locator('text=✗').first()).toBeVisible();
   });
@@ -90,13 +93,13 @@ test.describe('Completeness Checklist — fully complete spec shows all passing'
   let productId: string;
   let specId: string;
 
-  test.beforeAll(async () => {
+  test.beforeEach(async () => {
     const setup = await createCompleteSetup();
     productId = setup.product.id;
     specId = setup.spec.id;
   });
 
-  test.afterAll(async () => {
+  test.afterEach(async () => {
     await deleteEntity('products', productId);
   });
 
@@ -114,14 +117,14 @@ test.describe('Completeness Checklist — Draft→Ready blocked when incomplete'
   let productId: string;
   let specId: string;
 
-  test.beforeAll(async () => {
+  test.beforeEach(async () => {
     const product = await createProduct({ name: `E2E Blocked Product ${Date.now()}` });
     productId = product.id;
     const spec = await createSpec(productId, { title: `E2E Blocked Spec ${Date.now()}` });
     specId = spec.id;
   });
 
-  test.afterAll(async () => {
+  test.afterEach(async () => {
     await deleteEntity('products', productId);
   });
 
@@ -140,13 +143,13 @@ test.describe('Completeness Checklist — Draft→Ready succeeds when complete',
   let productId: string;
   let specId: string;
 
-  test.beforeAll(async () => {
+  test.beforeEach(async () => {
     const setup = await createCompleteSetup();
     productId = setup.product.id;
     specId = setup.spec.id;
   });
 
-  test.afterAll(async () => {
+  test.afterEach(async () => {
     await deleteEntity('products', productId);
   });
 
@@ -165,14 +168,14 @@ test.describe('Completeness Checklist — Draft→Ready with override', () => {
   let productId: string;
   let specId: string;
 
-  test.beforeAll(async () => {
+  test.beforeEach(async () => {
     const product = await createProduct({ name: `E2E Override Product ${Date.now()}` });
     productId = product.id;
     const spec = await createSpec(productId, { title: `E2E Override Spec ${Date.now()}` });
     specId = spec.id;
   });
 
-  test.afterAll(async () => {
+  test.afterEach(async () => {
     await deleteEntity('products', productId);
   });
 
@@ -196,7 +199,7 @@ test.describe('Completeness Checklist — non-gated transitions are free', () =>
   let productId: string;
   let specId: string;
 
-  test.beforeAll(async () => {
+  test.beforeEach(async () => {
     const setup = await createCompleteSetup();
     productId = setup.product.id;
     specId = setup.spec.id;
@@ -204,7 +207,7 @@ test.describe('Completeness Checklist — non-gated transitions are free', () =>
     await transitionSpec(specId, 'Ready');
   });
 
-  test.afterAll(async () => {
+  test.afterEach(async () => {
     await deleteEntity('products', productId);
   });
 
@@ -212,7 +215,7 @@ test.describe('Completeness Checklist — non-gated transitions are free', () =>
     await page.goto(`/specs/${specId}`);
     // Phase transition buttons should be visible (non-Draft UI)
     await page.getByRole('button', { name: /Move to In Progress/i }).click();
-    await expect(page.getByText('InProgress')).toBeVisible();
+    await expect(page.getByText('In Progress', { exact: true }).filter({ visible: true })).toBeVisible();
   });
 });
 
@@ -223,7 +226,7 @@ test.describe('Completeness Checklist — real-time updates on edit page', () =>
   let productId: string;
   let specId: string;
 
-  test.beforeAll(async () => {
+  test.beforeEach(async () => {
     const product = await createProduct({ name: `E2E Edit Checklist Product ${Date.now()}` });
     productId = product.id;
     // Create spec with empty context so the stack criterion fails
@@ -234,7 +237,7 @@ test.describe('Completeness Checklist — real-time updates on edit page', () =>
     specId = spec.id;
   });
 
-  test.afterAll(async () => {
+  test.afterEach(async () => {
     await deleteEntity('products', productId);
   });
 
@@ -242,8 +245,9 @@ test.describe('Completeness Checklist — real-time updates on edit page', () =>
     await page.goto(`/specs/${specId}/edit`);
 
     // The checklist should be visible and show the stack criterion as failing
-    await expect(page.getByText('Completeness Checklist')).toBeVisible();
-    await expect(page.getByText('✗').first()).toBeVisible();
+    await expect(page.getByText('Completeness Checklist', { exact: true }).filter({ visible: true })).toBeVisible();
+    const stackCriterion = page.getByText('Context: stack is non-empty', { exact: true }).filter({ visible: true }).locator('..');
+    await expect(stackCriterion).toContainText('✗');
 
     // Click "+ Add Stack" to add a stack input field
     await page.getByRole('button', { name: '+ Add Stack' }).click();
@@ -253,6 +257,6 @@ test.describe('Completeness Checklist — real-time updates on edit page', () =>
     await stackInput.fill('React');
 
     // The checklist should now show a green ✓ for "Context: stack is non-empty"
-    await expect(page.getByText('✓').first()).toBeVisible();
+    await expect(stackCriterion).toContainText('✓');
   });
 });

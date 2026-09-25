@@ -9,6 +9,6 @@ export async function getProduct(id: string): Promise<Product | null> {
   return getStore().getProduct(id);
 }
 
-export async function updateProduct(id: string, input: UpdateProductInput): Promise<Product | null> {
-  return getStore().updateProduct(id, input);
+export async function updateProduct(id: string, input: UpdateProductInput, expectedRevision: string): Promise<Product | null> {
+  return getStore().updateProduct(id, input, expectedRevision);
 }

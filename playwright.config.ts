@@ -1,19 +1,4 @@
 import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  testDir: './e2e',
-  timeout: 30000,
-  use: {
-    baseURL: 'http://localhost:5173',
-    trace: 'on-first-retry',
-  },
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: true,
-    timeout: 120000,
-  },
-  projects: [
-    { name: 'chromium', use: { browserName: 'chromium' } },
-  ],
-});
+import workspace from './playwright.workspace.config';
+// All suites share the generated temporary docs root and one isolated server.
+export default defineConfig({ ...workspace, testMatch: '**/*.spec.ts' });

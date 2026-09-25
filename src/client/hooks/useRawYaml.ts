@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api';
+import { apiFetchSourced } from '@/lib/api';
 
 interface RawYaml {
   id: string;
@@ -8,9 +8,9 @@ interface RawYaml {
 }
 
 export function useRawYaml(type: string, id: string) {
-  return useQuery<RawYaml>({
+  return useQuery({
     queryKey: ['raw-yaml', type, id],
-    queryFn: () => apiFetch<RawYaml>(`/docs/raw/${type}/${id}`),
+    queryFn: () => apiFetchSourced<RawYaml>(`/docs/raw/${type}/${id}`),
     enabled: !!type && !!id,
   });
 }
@@ -18,9 +18,9 @@ export function useRawYaml(type: string, id: string) {
 export function useSaveRawYaml() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ type, id, content }: { type: string; id: string; content: string }) =>
-      apiFetch(`/docs/raw/${type}/${id}`, {
-        method: 'PUT',
+    mutationFn: ({ type, id, content, revision }: { type: string; id: string; content: string; revision: string }) =>
+      apiFetchSourced(`/docs/raw/${type}/${id}`, {
+        method: 'PUT', headers: {'If-Match':revision},
         body: JSON.stringify({ content }),
       }),
     onSuccess: () => {

@@ -41,31 +41,10 @@ export function detectCircularDependency(
   return false;
 }
 
-export async function addDependency(
-  intentionId: string,
-  dependsOnId: string,
-): Promise<{ success: boolean; error?: string }> {
-  if (intentionId === dependsOnId) {
-    return { success: false, error: 'Self-reference is not allowed' };
-  }
-
-  const store = getStore();
-  const intention = store.getIntention(intentionId);
-  if (!intention) return { success: false, error: 'Intention not found' };
-
-  const existingEdges = store.getAllDependencyEdges(intention.product_id);
-
-  if (detectCircularDependency(intentionId, dependsOnId, existingEdges)) {
-    return { success: false, error: 'Adding this dependency would create a circular reference' };
-  }
-
-  store.addIntentionDep(intentionId, dependsOnId);
-  return { success: true };
+export async function addDependency(intentionId: string, dependsOnId: string, expectedRevision: string): Promise<{success:boolean;error?:string}> {
+  await getStore().addIntentionDep(intentionId,dependsOnId,expectedRevision);
+  return {success:true};
 }
-
-export async function removeDependency(
-  intentionId: string,
-  dependsOnId: string,
-): Promise<boolean> {
-  return getStore().removeIntentionDep(intentionId, dependsOnId);
+export async function removeDependency(intentionId: string, dependsOnId: string, expectedRevision: string): Promise<boolean> {
+  return getStore().removeIntentionDep(intentionId,dependsOnId,expectedRevision);
 }

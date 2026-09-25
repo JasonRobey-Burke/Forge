@@ -1,3 +1,4 @@
+import { precondition, requireRevision, sourceMeta, listSources } from '../middleware/precondition.js';
 import { Router, type Request } from 'express';
 import { validate } from '../middleware/validate.js';
 import { updateSpecSchema } from '../../shared/schemas/spec.js';
@@ -6,6 +7,7 @@ import * as specService from '../services/spec.js';
 import * as transitionService from '../services/phaseTransition.js';
 
 const router = Router();
+router.use(precondition);
 
 // GET /api/specs?product_id=xxx
 router.get('/', async (req, res) => {
@@ -18,7 +20,7 @@ router.get('/', async (req, res) => {
     });
   }
   const specs = await specService.listSpecs(productId);
-  res.json({ data: specs, error: null, meta: { count: specs.length } });
+  res.json({ data: specs, error: null, meta: { count: specs.length, sources: listSources('specs', specs) } });
 });
 
 // GET /api/specs/staleness?product_id=xxx
@@ -46,12 +48,12 @@ router.get('/:id', async (req: Request<{ id: string }>, res) => {
       meta: null,
     });
   }
-  res.json({ data: spec, error: null, meta: null });
+  res.json({ data: spec, error: null, meta: sourceMeta(res,'specs',req.params.id) });
 });
 
 // PUT /api/specs/:id
 router.put('/:id', validate(updateSpecSchema), async (req: Request<{ id: string }>, res) => {
-  const spec = await specService.updateSpec(req.params.id, req.body);
+  const spec = await specService.updateSpec(req.params.id, req.body, requireRevision(req));
   if (!spec) {
     return res.status(404).json({
       data: null,
@@ -59,7 +61,7 @@ router.put('/:id', validate(updateSpecSchema), async (req: Request<{ id: string 
       meta: null,
     });
   }
-  res.json({ data: spec, error: null, meta: null });
+  res.json({ data: spec, error: null, meta: sourceMeta(res,'specs',req.params.id) });
 });
 
 // PUT /api/specs/:id/expectations
@@ -73,7 +75,7 @@ router.put('/:id/expectations', async (req: Request<{ id: string }>, res) => {
     });
   }
 
-  const linked = await specService.linkExpectations(req.params.id, expectation_ids);
+  const linked = await specService.linkExpectations(req.params.id, expectation_ids, requireRevision(req));
   if (!linked) {
     return res.status(404).json({
       data: null,
@@ -81,7 +83,7 @@ router.put('/:id/expectations', async (req: Request<{ id: string }>, res) => {
       meta: null,
     });
   }
-  res.json({ data: { linked: true }, error: null, meta: null });
+  res.json({ data: { linked: true }, error: null, meta: sourceMeta(res,'specs',req.params.id) });
 });
 
 // GET /api/specs/:id/expectations
@@ -100,7 +102,7 @@ router.get('/:id/staleness', async (req: Request<{ id: string }>, res) => {
 // gap-check warnings (the one gap_check write Forge performs; doctrine allows
 // it "only at explicit human direction", which this endpoint is).
 router.post('/:id/acknowledge-warnings', async (req: Request<{ id: string }>, res) => {
-  const result = await specService.acknowledgeGapCheckWarnings(req.params.id);
+  const result = await specService.acknowledgeGapCheckWarnings(req.params.id, requireRevision(req));
   if (!result.ok) {
     const status = result.error === 'NOT_FOUND' ? 404 : 422;
     const messages: Record<string, string> = {
@@ -114,7 +116,7 @@ router.post('/:id/acknowledge-warnings', async (req: Request<{ id: string }>, re
       meta: null,
     });
   }
-  res.json({ data: result.spec, error: null, meta: null });
+  res.json({ data: result.spec, error: null, meta: sourceMeta(res,'specs',req.params.id) });
 });
 
 // POST /api/specs/:id/transition
@@ -122,7 +124,7 @@ router.post('/:id/transition', validate(transitionSpecSchema), async (req: Reque
   const { to_phase, override_reason } = req.body;
   const userId = 'local-user';
   const result = await transitionService.transitionSpec(
-    req.params.id, to_phase, userId, override_reason
+    req.params.id, to_phase, userId, override_reason, requireRevision(req)
   );
   if (!result.success) {
     const status = result.error === 'not_found' ? 404 : 422;
@@ -132,7 +134,7 @@ router.post('/:id/transition', validate(transitionSpecSchema), async (req: Reque
       meta: null,
     });
   }
-  res.json({ data: { transitioned: true }, error: null, meta: null });
+  res.json({ data: { transitioned: true }, error: null, meta: sourceMeta(res,'specs',req.params.id) });
 });
 
 export default router;

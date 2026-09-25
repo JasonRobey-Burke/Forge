@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,14 +12,14 @@ import {
 } from '@/components/ui/dialog';
 import { useProductExpectations } from '@/hooks/useExpectations';
 import { useIntentions } from '@/hooks/useIntentions';
-import { useSpecs, useLinkExpectations, useUpdateSpec } from '@/hooks/useSpecs';
+import { useSpecs, useUpdateSpec } from '@/hooks/useSpecs';
 import { EXPECTATION_STATUS_LABELS } from '@/lib/phaseColors';
 import type { Spec } from '@shared/types';
 
 interface ManageLinksDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  spec: Spec;
+  spec: Spec & {source: import('@shared/types/source').SourceMeta};
   linkedExpectationIds: string[];
 }
 
@@ -53,9 +53,10 @@ export default function ManageLinksDialog({ open, onOpenChange, spec, linkedExpe
   const { data: expectations } = useProductExpectations(spec.product_id);
   const { data: intentions } = useIntentions(spec.product_id);
   const { data: siblings } = useSpecs(spec.product_id);
-  const linkExpectations = useLinkExpectations();
   const updateSpec = useUpdateSpec();
+  const busy=useRef(false);
 
+  const [revision, setRevision] = useState('');
   const [expIds, setExpIds] = useState<Set<string>>(new Set());
   const [intentionIds, setIntentionIds] = useState<Set<string>>(new Set());
   const [dependsOn, setDependsOn] = useState<Set<string>>(new Set());
@@ -63,6 +64,7 @@ export default function ManageLinksDialog({ open, onOpenChange, spec, linkedExpe
   // Reset selections from the spec each time the dialog opens
   useEffect(() => {
     if (open) {
+      setRevision(spec.source.revision);
       setExpIds(new Set(linkedExpectationIds));
       setIntentionIds(new Set(spec.intentions ?? []));
       setDependsOn(new Set(spec.depends_on ?? []));
@@ -83,18 +85,19 @@ export default function ManageLinksDialog({ open, onOpenChange, spec, linkedExpe
   const intentionTitle = (id: string) => intentions?.find((i) => i.id === id)?.title ?? id;
 
   function toggle(set: Set<string>, setter: (s: Set<string>) => void, id: string) {
+    if(busy.current)return;
     const next = new Set(set);
     if (next.has(id)) next.delete(id); else next.add(id);
     setter(next);
   }
 
-  const isPending = linkExpectations.isPending || updateSpec.isPending;
+  const isPending = updateSpec.isPending;
 
   async function handleSave() {
+    if(busy.current)return;busy.current=true;
     try {
-      await linkExpectations.mutateAsync({ specId: spec.id, expectationIds: [...expIds] });
       await updateSpec.mutateAsync({
-        id: spec.id,
+        id: spec.id, revision, expectation_ids: [...expIds],
         product_id: spec.product_id,
         intentions: [...intentionIds],
         depends_on: [...dependsOn],
@@ -103,13 +106,13 @@ export default function ManageLinksDialog({ open, onOpenChange, spec, linkedExpe
       onOpenChange(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update links');
-    }
+    } finally {busy.current=false;}
   }
 
   const otherSpecs = (siblings ?? []).filter((s) => s.id !== spec.id);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={next=>{if(!busy.current)onOpenChange(next);}}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Manage links</DialogTitle>
@@ -118,7 +121,7 @@ export default function ManageLinksDialog({ open, onOpenChange, spec, linkedExpe
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[55vh] overflow-y-auto space-y-5 pr-1">
+        <fieldset disabled={isPending} className="max-h-[55vh] overflow-y-auto space-y-5 pr-1">
           <section>
             <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
               Expectations
@@ -196,8 +199,9 @@ export default function ManageLinksDialog({ open, onOpenChange, spec, linkedExpe
               ))
             )}
           </section>
-        </div>
+        </fieldset>
 
+        {updateSpec.error && <p role="alert" className="text-destructive">{updateSpec.error.message}</p>}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancel

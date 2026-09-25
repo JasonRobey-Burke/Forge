@@ -16,10 +16,10 @@ import type { CreateProductInput, ProductContext, WipLimits } from '@shared/type
 
 // Form schema uses {value}[] for arrays (useFieldArray requirement)
 const formSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(255),
-  problem_statement: z.string().min(1, 'Problem statement is required'),
-  vision: z.string().min(1, 'Vision is required'),
-  target_audience: z.string().min(1, 'Target audience is required'),
+  name: z.string().max(255),
+  problem_statement: z.string(),
+  vision: z.string(),
+  target_audience: z.string(),
   status: z.string(),
   context: z.object({
     stack: z.array(z.object({ value: z.string() })),

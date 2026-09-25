@@ -7,6 +7,9 @@ export interface Expectation {
   description: string;
   status: ExpectationStatus;
   edge_cases: string[];
+  validation_criteria?: string;
+  complexity?: string;
+  deferred_reason?: string;
   owner?: string;
   product_id?: string;
   extras: Record<string, unknown>;
@@ -24,6 +27,10 @@ export interface CreateExpectationInput {
 }
 
 export interface UpdateExpectationInput {
+  validation_criteria?: string;
+  complexity?: string;
+  deferred_reason?: string;
+  owner?: string;
   title?: string;
   description?: string;
   status?: ExpectationStatus;

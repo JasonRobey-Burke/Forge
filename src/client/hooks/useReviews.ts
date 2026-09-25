@@ -1,3 +1,4 @@
+import { evidenceSuffix, classifyEvidenceSuffix } from '@shared/lib/evidenceNames';
 import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 
@@ -42,13 +43,11 @@ export interface SpecReviewFile extends ReviewSummary {
 
 /** Classify a review filename that belongs to a spec (IDD suffix conventions). */
 export function classifyReviewName(name: string, specId: string): ReviewKind | null {
-  if (!name.startsWith(`${specId}-`)) return null;
-  const suffix = name.slice(specId.length + 1);
-  if (suffix === 'gap-check') return 'gap-check';
-  if (suffix === 'review') return 'review';
+  const suffix = evidenceSuffix(name, specId);
+  if (suffix === null) return null;
   if (suffix === 'deep-review') return 'deep-review';
-  if (/^\d{8}T\d{6}Z-execution$/.test(suffix) || suffix === 'execution') return 'execution';
-  return 'other';
+  const kind = classifyEvidenceSuffix(suffix);
+  return kind === 'pipeline' ? 'other' : kind;
 }
 
 /** Every review file associated with a spec, classified by kind. */

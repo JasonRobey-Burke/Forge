@@ -1,33 +1,35 @@
 import { test, expect } from '@playwright/test';
+import { resetLegacyDocs } from './helpers';
+test.beforeEach(async () => resetLegacyDocs());
 import { createProduct, createSpec, deleteEntity, transitionSpec } from './helpers';
 
 test.describe('Flow Board', () => {
   let productId: string;
 
-  test.beforeAll(async () => {
+  test.beforeEach(async () => {
     const product = await createProduct({ name: 'E2E Flow Board Product' });
     productId = product.id;
   });
 
-  test.afterAll(async () => {
+  test.afterEach(async () => {
     await deleteEntity('products', productId);
   });
 
   test('navigate to flow board from product detail', async ({ page }) => {
     await page.goto(`/products/${productId}`);
-    await page.getByRole('link', { name: 'View Board' }).click();
+    await page.getByRole('link', { name: 'Delivery', exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/products/${productId}/board`));
-    await expect(page.getByRole('heading', { name: /Flow Board/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Delivery|Flow Board/ })).toBeVisible();
   });
 
   test('renders six phase columns', async ({ page }) => {
     await page.goto(`/products/${productId}/board`);
-    await expect(page.getByText('Draft')).toBeVisible();
-    await expect(page.getByText('Ready')).toBeVisible();
-    await expect(page.getByText('In Progress')).toBeVisible();
-    await expect(page.getByText('Review')).toBeVisible();
-    await expect(page.getByText('Validating')).toBeVisible();
-    await expect(page.getByText('Done')).toBeVisible();
+    await expect(page.getByText('Draft', { exact: true }).filter({ visible: true })).toBeVisible();
+    await expect(page.getByText('Ready', { exact: true }).filter({ visible: true })).toBeVisible();
+    await expect(page.getByText('In Progress', { exact: true }).filter({ visible: true })).toBeVisible();
+    await expect(page.getByText('Review', { exact: true }).filter({ visible: true })).toBeVisible();
+    await expect(page.getByText('Validating', { exact: true }).filter({ visible: true })).toBeVisible();
+    await expect(page.getByText('Done', { exact: true }).filter({ visible: true })).toBeVisible();
   });
 
   test('shows empty state in columns with no specs', async ({ page }) => {
@@ -38,11 +40,7 @@ test.describe('Flow Board', () => {
 
   test('displays spec cards in correct columns', async ({ page }) => {
     const spec1 = await createSpec(productId, { title: 'Draft Card E2E' });
-    const spec2 = await createSpec(productId, { title: 'Review Card E2E' });
-    // Move spec2 through phases using override to bypass gates
-    await transitionSpec(spec2.id, 'Ready', 'E2E bypass');
-    await transitionSpec(spec2.id, 'InProgress', 'E2E bypass');
-    await transitionSpec(spec2.id, 'Review', 'E2E bypass');
+    const spec2 = await createSpec(productId, { title: 'Review Card E2E', status: 'review' });
 
     await page.goto(`/products/${productId}/board`);
 
@@ -77,7 +75,9 @@ test.describe('Flow Board', () => {
     const spec = await createSpec(productId, { title: 'Clickable Card E2E' });
 
     await page.goto(`/products/${productId}/board`);
-    await page.getByText('Clickable Card E2E').click();
+    await page.getByRole('button', { name: 'Clickable Card E2E', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Spec Preview' })).toBeVisible();
+    await page.getByRole('link', { name: 'Open Full Spec', exact: true }).or(page.getByRole('button', { name: 'Open Full Spec', exact: true })).click();
     await expect(page).toHaveURL(new RegExp(`/specs/${spec.id}`));
 
     await deleteEntity('specs', spec.id);
@@ -85,7 +85,7 @@ test.describe('Flow Board', () => {
 
   test('back to product link works', async ({ page }) => {
     await page.goto(`/products/${productId}/board`);
-    await page.getByRole('link', { name: 'Back to Product' }).click();
+    await page.getByRole('link', { name: 'Overview', exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/products/${productId}`));
   });
 });

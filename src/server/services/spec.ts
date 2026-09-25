@@ -9,12 +9,12 @@ export async function getSpec(id: string): Promise<Spec | null> {
   return getStore().getSpec(id);
 }
 
-export async function updateSpec(id: string, input: UpdateSpecInput): Promise<Spec | null> {
-  return getStore().updateSpec(id, input);
+export async function updateSpec(id: string, input: UpdateSpecInput, expectedRevision: string): Promise<Spec | null> {
+  return getStore().updateSpec(id, input, expectedRevision);
 }
 
-export async function linkExpectations(specId: string, expectationIds: string[]): Promise<boolean> {
-  return getStore().linkExpectations(specId, expectationIds);
+export async function linkExpectations(specId: string, expectationIds: string[], expectedRevision: string): Promise<boolean> {
+  return getStore().linkExpectations(specId, expectationIds, expectedRevision);
 }
 
 export async function getSpecExpectations(specId: string) {
@@ -29,8 +29,8 @@ export async function checkSpecStaleness(specId: string) {
   return getStore().checkSpecStaleness(specId);
 }
 
-export async function acknowledgeGapCheckWarnings(specId: string) {
-  return getStore().acknowledgeGapCheckWarnings(specId);
+export async function acknowledgeGapCheckWarnings(specId: string, expectedRevision: string) {
+  return getStore().acknowledgeGapCheckWarnings(specId, expectedRevision);
 }
 
 export async function getStaleSpecIds(productId: string): Promise<string[]> {

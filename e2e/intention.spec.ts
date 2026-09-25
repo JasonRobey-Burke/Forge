@@ -1,68 +1,38 @@
-import { test, expect } from '@playwright/test';
-import { createProduct, createIntention, createExpectation, deleteEntity } from './helpers';
-
-test.describe('Intention CRUD', () => {
-  let productId: string;
-
-  test.beforeAll(async () => {
-    const product = await createProduct({ name: 'E2E Intention Test Product' });
-    productId = product.id;
-  });
-
-  test.afterAll(async () => {
-    await deleteEntity('products', productId);
-  });
-
-  test('navigate to intentions list from product detail', async ({ page }) => {
-    await page.goto(`/products/${productId}`);
-    await page.getByRole('link', { name: 'View Intentions' }).click();
-    await expect(page).toHaveURL(new RegExp(`/products/${productId}/intentions`));
-    await expect(page.getByRole('heading', { name: 'Intentions' })).toBeVisible();
-  });
-
-  test('create a new intention', async ({ page }) => {
-    await page.goto(`/products/${productId}/intentions/new`);
-    await page.getByLabel('Title').fill('Test Intention E2E');
-    await page.getByLabel('Description').fill('Created by E2E test');
-    await page.getByRole('button', { name: 'Create Intention' }).click();
-    await expect(page.getByText('Test Intention E2E')).toBeVisible();
-  });
-
-  test('edit an intention', async ({ page }) => {
-    const intention = await createIntention(productId, { title: 'Intention to Edit' });
-    await page.goto(`/intentions/${intention.id}`);
-    await page.getByRole('button', { name: 'Edit' }).click();
-    const titleInput = page.locator('input[name="title"]');
-    await titleInput.fill('Edited Intention');
-    await page.getByRole('button', { name: 'Save' }).click();
-    await expect(page.getByText('Edited Intention')).toBeVisible();
-  });
-
-  test('delete an intention with no children', async ({ page }) => {
-    const intention = await createIntention(productId, { title: 'Intention to Delete' });
-    await page.goto(`/intentions/${intention.id}`);
-    await page.getByRole('button', { name: 'Delete' }).click();
-    const dialog = page.getByRole('dialog');
-    await dialog.getByRole('button', { name: 'Delete' }).click();
-    await expect(page).toHaveURL(new RegExp(`/products/${productId}/intentions`));
-  });
-
-  test('cannot delete an intention with expectations', async ({ page }) => {
-    const intention = await createIntention(productId, { title: 'Protected Intention' });
-    await createExpectation(intention.id, { title: 'Child Expectation' });
-    await page.goto(`/intentions/${intention.id}`);
-
-    // Listen for the alert dialog before triggering the delete
-    page.on('dialog', async (dialog) => {
-      expect(dialog.message()).toContain('Cannot delete intention with active expectations');
-      await dialog.accept();
-    });
-
-    await page.getByRole('button', { name: 'Delete' }).click();
-    const confirmDialog = page.getByRole('dialog');
-    await confirmDialog.getByRole('button', { name: 'Delete' }).click();
-
-    // Should stay on the same page after alert is dismissed
-    await expect(page).toHaveURL(new RegExp(`/intentions/${intention.id}`));
-  });
+import { test, expect } from './workspace-fixtures';
+import { parse } from 'yaml';
+import { createProduct, createIntention, createExpectation, resetLegacyDocs, reviewCreationDraft } from './helpers';
+test.beforeEach(async () => resetLegacyDocs());
+test('Overview shows existing intention purposes', async ({ page }) => {
+  const product = await createProduct(); await createIntention(product.id, { statement: 'Purpose on Overview' });
+  await page.goto(`/products/${product.id}`);
+  await expect(page.getByRole('button', { name: 'Expand Purpose on Overview' })).toBeVisible();
 });
+test('creates an intention only after reviewing its Draft', async ({ page, read }) => {
+  const product = await createProduct();
+  await page.goto(`/products/${product.id}`);
+  await page.getByRole('button', { name: /new intention/i }).click();
+  await reviewCreationDraft(page, 'intention');
+  await expect(page.getByText(/Status: Draft/i)).toBeVisible();
+  const response = page.waitForResponse(r => r.request().method() === 'POST' && /\/api\/intentions$/.test(r.url()));
+  await page.getByRole('button', { name: /create draft/i }).click();
+  const created = await response; expect(created.status()).toBe(201);
+  const { data } = await created.json();
+  expect(parse(await read(`intentions/${data.id}.yaml`)).intention).toMatchObject({ statement: 'New intentional outcome', status: 'draft', product: product.id });
+});
+test('edits canonical purpose independently of legacy display title', async ({ page, read }) => {
+  const product = await createProduct(); const intention = await createIntention(product.id, { title: 'Legacy display title', statement: 'Original purpose' });
+  await page.goto(`/intentions/${intention.id}`);
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  await page.getByRole('textbox', { name: /^purpose$/i }).fill('Edited purpose');
+  await page.getByRole('button', { name: /save intention/i }).click();
+  await expect.poll(async () => parse(await read(`intentions/${intention.id}.yaml`)).intention.statement).toBe('Edited purpose');
+  expect(parse(await read(`intentions/${intention.id}.yaml`)).intention.title).toBe('Legacy display title');
+});
+for (const children of [false, true]) {
+  test(`intention ${children ? 'with' : 'without'} children does not offer unsupported deletion`, async ({ page }) => {
+    const product = await createProduct(); const intention = await createIntention(product.id);
+    if (children) await createExpectation(intention.id);
+    await page.goto(`/intentions/${intention.id}`);
+    await expect(page.getByRole('button', { name: /^delete(?: intention)?$/i })).toHaveCount(0);
+  });
+}

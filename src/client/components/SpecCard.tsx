@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+type Spec = BaseSpec & {source: import('@shared/types/source').SourceMeta};
 import { useDraggable } from '@dnd-kit/core';
 import { GripVertical, AlertTriangle, MoreHorizontal } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { Spec } from '@shared/types';
+import type { Spec as BaseSpec } from '@shared/types';
 
 export function daysInPhase(phaseChangedAt: string): number {
   const changed = new Date(phaseChangedAt);
@@ -25,6 +27,8 @@ const complexityVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
 
 interface SpecCardProps {
   spec: Spec;
+  outcomes?: {id:string;title:string}[];
+  gate?: {message:string;href:string;label:string};
   onClick?: () => void;
   stale?: boolean;
   onMoveToPhase?: (spec: Spec, phase: string) => void;
@@ -32,7 +36,7 @@ interface SpecCardProps {
 
 const PHASES = ['Draft', 'Ready', 'InProgress', 'Review', 'Validating', 'Done'] as const;
 
-export default function SpecCard({ spec, onClick, stale, onMoveToPhase }: SpecCardProps) {
+export default function SpecCard({ spec, onClick, stale, onMoveToPhase, outcomes, gate }: SpecCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: spec.id,
     data: { spec },
@@ -61,9 +65,9 @@ export default function SpecCard({ spec, onClick, stale, onMoveToPhase }: SpecCa
           <GripVertical className="h-4 w-4" />
         </button>
         <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
-          <p className="text-sm font-medium line-clamp-2 mb-2">{spec.title}</p>
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1">
+          <button type="button" className="mb-2 text-left text-sm font-medium line-clamp-2">{spec.title}</button>
+          <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
+            <div className="flex flex-wrap items-center gap-1">
               <Badge variant={complexityVariant[spec.complexity] ?? 'outline'} className="text-xs">
                 {spec.complexity}
               </Badge>
@@ -72,7 +76,7 @@ export default function SpecCard({ spec, onClick, stale, onMoveToPhase }: SpecCa
               )}
               {stale && <AlertTriangle className="h-3 w-3 text-amber-500" aria-label="Expectations changed since gate" />}
             </div>
-            <span className="text-muted-foreground">{days}d</span>
+            <span className="text-muted-foreground">{Number.isFinite(days)?`${days}d`:'Age unknown'}</span>
           </div>
         </div>
         {onMoveToPhase && (
@@ -103,6 +107,8 @@ export default function SpecCard({ spec, onClick, stale, onMoveToPhase }: SpecCa
           </DropdownMenu>
         )}
       </div>
+      {outcomes && outcomes.length > 0 && <ul aria-label="Related outcomes" className="space-y-1 border-t px-3 py-2 text-xs">{outcomes.map(outcome=><li key={outcome.id}><Link className="text-emerald-800 underline" to={`/products/${spec.product_id}/board?outcome=${encodeURIComponent(outcome.id)}`}>{outcome.title}</Link></li>)}</ul>}
+      {gate && <div className="space-y-1 border-t bg-amber-50/70 px-3 py-2 text-xs"><p>{gate.message}</p><Link className="text-emerald-900 underline" to={gate.href}>{gate.label}</Link></div>}
     </div>
   );
 }

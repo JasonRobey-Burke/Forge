@@ -26,14 +26,15 @@ export const createProductSchema = z.object({
 });
 
 export const updateProductSchema = z.object({
+  owner: z.string().optional(),
   name: z.string().min(1).max(255).optional(),
   problem_statement: z.string().min(1).optional(),
   vision: z.string().min(1).optional(),
   target_audience: z.string().min(1).optional(),
   status: z.string().optional(),
-  context: productContextSchema.optional(),
-  wip_limits: wipLimitsSchema.optional(),
-});
+  context: productContextSchema.partial().optional(),
+  wip_limits: wipLimitsSchema.partial().optional(),
+}).strict();
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;

@@ -24,6 +24,7 @@ export const IntentionStatus = {
 export type IntentionStatus = (typeof IntentionStatus)[keyof typeof IntentionStatus];
 
 export const ExpectationStatus = {
+  Deferred: 'Deferred',
   Draft: 'Draft',
   Ready: 'Ready',
   Specced: 'Specced',

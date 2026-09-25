@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useSpec, useSpecs, useSpecExpectations } from '@/hooks/useSpecs';
 import { useSpecStaleness } from '@/hooks/useStaleness';
@@ -48,8 +48,13 @@ import GapCheckSection from '@/components/GapCheckSection';
 import ManageLinksDialog from '@/components/ManageLinksDialog';
 
 export default function SpecDetailPage() {
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
-  const { data: spec, isLoading, error } = useSpec(id!);
+  const { data: latestSpec, isLoading, error } = useSpec(id!);
+  const retainedSpec = useRef(latestSpec);
+  if(retainedSpec.current?.id!==id)retainedSpec.current=undefined;
+  if(latestSpec)retainedSpec.current=latestSpec;
+  const spec=latestSpec??retainedSpec.current;
   const { data: linkedExpectations } = useSpecExpectations(id!);
   const { data: product } = useProduct(spec?.product_id ?? '');
   const { data: siblings } = useSpecs(spec?.product_id ?? '');
@@ -58,14 +63,22 @@ export default function SpecDetailPage() {
   useDocumentTitle(spec?.title ?? 'Spec');
   const transitionSpec = useTransitionSpec();
 
+  const [overrideRevision, setOverrideRevision] = useState('');
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideReason, setOverrideReason] = useState('');
-  const [editingYaml, setEditingYaml] = useState(false);
+  const [editingYaml, setEditingYaml] = useState(()=>new URLSearchParams(window.location.search).has('yaml'));
   const [transitioning, setTransitioning] = useState(false);
   const [linksOpen, setLinksOpen] = useState(false);
 
-  if (isLoading) return <DetailPageSkeleton />;
-  if (error || !spec) return <div className="text-destructive">Spec not found.</div>;
+  useEffect(() => {
+    if (!spec || !['#checklist','#review'].includes(location.hash)) return;
+    const target = document.getElementById(location.hash.slice(1));
+    target?.scrollIntoView({block:'start'});
+    target?.focus({preventScroll:true});
+  }, [spec?.id, location.hash]);
+
+  if (isLoading && !spec) return <DetailPageSkeleton />;
+  if (!spec) return <div className="text-destructive">Spec not found.</div>;
 
   // Build ChecklistExpectation[] from linked expectations data
   const checklistExpectations: ChecklistExpectation[] = (linkedExpectations ?? []).map((e) => ({
@@ -88,15 +101,16 @@ export default function SpecDetailPage() {
 
   function handleTransitionToReady() {
     if (checklistResult.ready) {
-      transitionSpec.mutate({ specId: id!, toPhase: 'Ready' });
+      transitionSpec.mutate({ specId: id!, toPhase: 'Ready', revision: spec!.source.revision });
     } else {
+      setOverrideRevision(spec!.source.revision);
       setOverrideOpen(true);
     }
   }
 
   function handleOverrideTransition() {
     transitionSpec.mutate(
-      { specId: id!, toPhase: 'Ready', overrideReason: overrideReason.trim() || undefined },
+      { specId: id!, revision: overrideRevision, toPhase: 'Ready', overrideReason: overrideReason.trim() || undefined },
       { onSuccess: () => { setOverrideOpen(false); setOverrideReason(''); } },
     );
   }
@@ -104,7 +118,7 @@ export default function SpecDetailPage() {
   function handleTransitionTo(phase: string) {
     setTransitioning(true);
     transitionSpec.mutate(
-      { specId: id!, toPhase: phase },
+      { specId: id!, toPhase: phase, revision: spec!.source.revision },
       { onSettled: () => setTransitioning(false) },
     );
   }
@@ -141,9 +155,9 @@ export default function SpecDetailPage() {
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
       {/* Main content */}
       <div>
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
           <div>
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex flex-wrap items-center gap-3 mb-2">
               <h1 className="text-xl font-semibold">
                 <span className="text-sm text-muted-foreground font-mono mr-2">{spec.id}</span>
                 {spec.title}
@@ -160,7 +174,7 @@ export default function SpecDetailPage() {
                   size="sm"
                   variant={checklistResult.ready ? 'default' : 'outline'}
                   onClick={handleTransitionToReady}
-                  disabled={transitionSpec.isPending}
+                  disabled={transitionSpec.isPending||editingYaml||!!error}
                 >
                   Transition to Ready
                 </Button>
@@ -216,7 +230,7 @@ export default function SpecDetailPage() {
             </div>
           </div>
 
-          <div className="flex gap-2 shrink-0">
+          <div className="flex flex-wrap gap-2">
             <Button asChild size="sm">
               <Link to={`/specs/${spec.id}/edit`}>Edit</Link>
             </Button>
@@ -269,7 +283,7 @@ export default function SpecDetailPage() {
               <Button variant="outline" onClick={() => setOverrideOpen(false)}>Cancel</Button>
               <Button
                 onClick={handleOverrideTransition}
-                disabled={transitionSpec.isPending}
+                disabled={transitionSpec.isPending||editingYaml||!!error}
               >
                 {transitionSpec.isPending ? 'Transitioning...' : 'Override and Transition'}
               </Button>
@@ -286,7 +300,7 @@ export default function SpecDetailPage() {
 
         {editingYaml && (
           <div className="mb-6">
-            <YamlEditor type="specs" id={id!} onClose={() => setEditingYaml(false)} />
+            <YamlEditor key={id} type="specs" id={id!} onClose={() => setEditingYaml(false)} />
           </div>
         )}
 
@@ -460,7 +474,7 @@ export default function SpecDetailPage() {
             linkedExpectationIds={(linkedExpectations ?? []).map((e) => e.id)}
           />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div id="review" tabIndex={-1} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <CopyCommand
               label="Tech review this spec in Claude Code:"
               command={`/idd-framework:tech-review ${spec.id}`}
@@ -490,7 +504,7 @@ export default function SpecDetailPage() {
       </div>
 
       {/* Checklist sidebar */}
-      <div className="lg:sticky lg:top-6 self-start">
+      <div id="checklist" tabIndex={-1} className="lg:sticky lg:top-6 self-start">
         <CompletenessChecklist spec={spec} expectations={checklistExpectations} result={checklistResult} />
       </div>
     </div>

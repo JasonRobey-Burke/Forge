@@ -9,6 +9,6 @@ export async function getIntention(id: string): Promise<(Intention & { dependenc
   return getStore().getIntention(id);
 }
 
-export async function updateIntention(id: string, input: UpdateIntentionInput): Promise<Intention | null> {
-  return getStore().updateIntention(id, input);
+export async function updateIntention(id: string, input: UpdateIntentionInput, expectedRevision: string): Promise<Intention | null> {
+  return getStore().updateIntention(id, input, expectedRevision);
 }

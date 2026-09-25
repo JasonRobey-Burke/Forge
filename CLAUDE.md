@@ -61,7 +61,7 @@ $ npx forge                  ← starts local server
 
 **Startup:** Scans `docs/**/*.yaml`, parses each file, builds in-memory Maps per entity type.
 **Reads:** Sub-millisecond lookups from in-memory maps.
-**Writes:** Update in-memory map → `yaml.dump()` → write file to disk.
+**Writes:** Check exact disk revision → validate a source-preserving YAML candidate → checked temporary-file rename → publish index and change notification only after success. Creation/reparenting uses recovery journals for reciprocal multi-file updates.
 **External changes:** chokidar detects file changes → re-parses → SSE push → React Query invalidates.
 
 ## Architecture
@@ -110,7 +110,7 @@ The central data layer. Key concepts:
   - `spec.status` → `phase`
   - `spec.validation.automated` → `validation_automated`
   - `spec.phase_history` → embedded phase transition audit trail
-- **Write-back:** On edit, reverse-maps Forge types back to IDD YAML format and writes the file
+- **Write-back:** Applies edited field paths to the original YAML document, preserving unrelated structure/comments and canonical aliases; unsupported structured form fields stay read-only
 - **Relationship resolution:** `spec.expectations: [EXP-001, EXP-002]` resolved via map lookup
 - **Singleton:** `getStore()` / `initStore(docsDir)` pattern
 
@@ -123,7 +123,12 @@ The central data layer. Key concepts:
 - **Prose rendering:** Artifact prose fields (descriptions, problem statement, vision, boundaries, deliverables, validation, `context.auth`, etc.) render as formatted markdown via `MarkdownRenderer` (`src/client/components/MarkdownRenderer.tsx`) rather than raw text. It supports two variants: `block` (default; full typography for long-form review/plan content) and `inline` (compact; no block spacing or heading scaling, for short fields and list items). Typography styling depends on the `@tailwindcss/typography` plugin registered in `tailwind.config.ts`.
 - **Server state:** React Query (TanStack Query) for all data fetching/mutations
 - **Form state:** React Hook Form with Zod resolvers
-- **View + Edit only:** Forge does not create or delete artifacts — creation is done by the IDD plugin, deletion by removing YAML files
+- **Narrow Draft creation:** Forge may create user-authored Draft intentions and Draft expectations after explicit content review; expectations require distinct confirmed edge cases. Preserve reciprocal parent links. Product/spec creation, deletion, AI authoring/execution and automatic lifecycle advancement are outside this policy.
+- **Write preconditions:** All artifact mutations require captured source revisions (`If-Match`); missing revisions return 428, stale/deleted source returns 409 `REVISION_CONFLICT`. Ordinary/raw updates cannot bypass phase transitions.
+- **Draft protection:** External updates never reset form values. Keep the original revision, explicit conflict compare/copy/reload, unsaved-change guards and repository-scoped session recovery; never add force overwrite or automatic recovery replay.
+- **Pending requests:** Protect submitted inputs until completion. The API client applies a 30-second deadline through response-body reads, composes caller cancellation and never automatically replays writes. A timeout can have committed server-side; creation requires explicit source/child reconciliation before another submission. Broader uncertain transport/invalid-response reconciliation remains a follow-up.
+- **Refresh failures:** Keep cached workspace content coherent and show a warning with Retry, including inside the editor and on Delivery. Do not replace pending drafts during refresh.
+- **Workspace state:** Use the shared projection and one product workspace query, not per-expectation requests. Coverage, delivery and reported validation remain separate; Done does not prove validation and report presence does not prove success. Optional `forge.roadmap` placement never changes lifecycle state or triggers migration.
 - **Dates:** Stored as UTC ISO strings in YAML, displayed in user's local timezone
 
 ## Flow Board and Phase Transitions
@@ -132,9 +137,12 @@ The central data layer. Key concepts:
 - **Phase colors:** Centralized semantic color system in `src/client/lib/phaseColors.tsx` — Draft=slate, Ready=blue, InProgress=amber, Review=purple, Validating=orange, Done=green
 - **WIP limits:** Stored per-Product in YAML `wip_limits` field; enforced by `src/shared/lib/wipCheck.ts`
 - **Validation gates:**
-  - Draft → Ready: completeness checklist must pass (or `override_reason` provided)
+  - Every phase change checks the destination WIP limit against all specs in the product, even when Delivery is filtered by outcome; zero means unlimited and Done has no WIP limit
+  - Draft → Ready: completeness checklist must pass
+  - Ready → In Progress: gap-check must be passed, or warnings must have recorded human acknowledgment
   - Review → Validating: `peer_reviewed` flag must be true
-  - All other transitions: unrestricted
+  - A supplied `override_reason` bypasses WIP and validation gates and is recorded in phase history; same-phase requests are still rejected
+  - Other transitions have no additional phase-specific gate; revision preconditions and destination WIP checks still apply
 - **Phase history:** Embedded in each Spec's YAML as `phase_history` array (replaces the old PhaseTransition database table)
 
 ## Spec Export
@@ -147,8 +155,14 @@ The central data layer. Key concepts:
 ## Testing
 
 - **Unit tests:** Vitest with separate server and client projects (`npm run test:server`, `npm run test:client`)
-- **E2E tests:** Playwright (`npm run test:e2e`, `npm run test:e2e:ui`)
+- **E2E tests:** Playwright (`npm run test:e2e`, `npm run test:e2e:ui`) uses the disposable docs-root harness on port 4181 with server reuse disabled. Build first; `npm run test:e2e:workspace` builds and runs the workspace selection. Fixture creation/deletion helpers operate on temporary files, not product APIs or real repository YAML.
 - **Test commands:** `npm test` runs all unit tests; `npm run test:watch` for watch mode
+
+## Persistence Limits and Recovery
+
+Per-file queues and a final source check protect Forge writes, but an uncooperative external writer can change bytes in the check-to-rename interval. Do not claim cross-process compare-and-swap or multi-file atomicity. Creation/reparenting records mode-0600 journals in `docs/.forge-transactions/`; rollback and startup recovery preserve intervening external edits and block unresolved affected paths with `RECOVERY_REQUIRED`. Keep journals and affected source intact for inspection; never bypass recovery by deleting journals. See the [workspace verification report](docs/superpowers/reports/2026-09-24-product-workspace-verification.md) for observed checks and limitations.
+
+The [local upgrade and recovery runbook](docs/guildhall/plans/2026-09-24-product-workspace.md#garran-final-runbook-verbatim) describes future authorized operations. Back up source and hidden journals before upgrades; a code rollback does not roll back YAML, and older writers may strip optional metadata. Missed native Markdown events remain a freshness limitation; protect drafts before using focus/reload to refresh evidence.
 
 ## Domain Model
 
